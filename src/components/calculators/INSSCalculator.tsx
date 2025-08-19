@@ -6,7 +6,9 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Percent, Lock } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync } from "@/lib/tabelas";
-import { useCalculatorLimits } from "@/hooks/useCalculatorLimits";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import { UsageBanner } from "@/components/ui/usage-banner";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const INSSCalculator = () => {
   const [salario, setSalario] = useState<number | undefined>();
