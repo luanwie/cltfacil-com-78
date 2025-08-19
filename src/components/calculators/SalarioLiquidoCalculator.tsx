@@ -6,15 +6,36 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Percent } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync, calcularIRRFSync } from "@/lib/tabelas";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
 const SalarioLiquidoCalculator = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, isLogged, remaining, canUse } = ctx;
+
   const [salarioBruto, setSalarioBruto] = useState<number | undefined>();
   const [dependentes, setDependentes] = useState<number | undefined>(0);
   const [pensaoAlimenticia, setPensaoAlimenticia] = useState<number | undefined>(0);
   const [custoValeTransporte, setCustoValeTransporte] = useState<number | undefined>(0);
 
-  const calcular = () => {
-    if (!salarioBruto || salarioBruto <= 0) return null;
+  const [resultado, setResultado] = useState<any>(null);
+
+  const calcular = async () => {
+    if (!salarioBruto || salarioBruto <= 0) return;
+
+    const ok = await ensureCanCalculate({ 
+      ...ctx, 
+      navigate, 
+      currentPath: location.pathname, 
+      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    });
+    if (!ok) return;
 
     const dependentesValidados = Math.max(0, dependentes || 0);
     const pensaoValidada = Math.max(0, pensaoAlimenticia || 0);
@@ -37,7 +58,10 @@ const SalarioLiquidoCalculator = () => {
     const totalDescontos = inss.valor + irrf.valor + descontoVT;
     const salarioLiquido = salarioBruto - totalDescontos;
 
-    return {
+    // Increment usage count for non-PRO users
+    await incrementCalcIfNeeded(isPro);
+
+    const result = {
       salarioBruto: formatBRL(salarioBruto),
       inssValor: formatBRL(inss.valor),
       inssAliquota: formatPercent(inss.aliquotaEfetiva),
@@ -48,15 +72,16 @@ const SalarioLiquidoCalculator = () => {
       salarioLiquido: formatBRL(salarioLiquido),
       percentualLiquido: formatPercent(salarioLiquido / salarioBruto)
     };
-  };
 
-  const resultado = calcular();
+    setResultado(result);
+  };
 
   const limpar = () => {
     setSalarioBruto(undefined);
     setDependentes(0);
     setPensaoAlimenticia(0);
     setCustoValeTransporte(0);
+    setResultado(null);
   };
 
   return (
@@ -122,14 +147,21 @@ const SalarioLiquidoCalculator = () => {
             </div>
           </div>
 
+          <UsageBanner 
+            remaining={remaining} 
+            isPro={isPro} 
+            isLogged={isLogged} 
+            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
+          />
+
           <div className="flex gap-2">
             <Button
-              onClick={() => {}}
-              disabled={!salarioBruto || salarioBruto <= 0}
+              onClick={calcular}
+              disabled={!salarioBruto || salarioBruto <= 0 || !canUse}
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular Salário Líquido
+              {!canUse ? 'Limite atingido' : 'Calcular Salário Líquido'}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

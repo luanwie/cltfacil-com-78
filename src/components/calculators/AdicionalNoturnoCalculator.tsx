@@ -6,6 +6,12 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
 interface CalculationInputs {
   salarioBase: number | undefined;
@@ -28,6 +34,10 @@ const AdicionalNoturnoCalculator = ({
   showAds = true 
 }: AdicionalNoturnoCalculatorProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, isLogged, remaining, canUse } = ctx;
   
   const [inputs, setInputs] = useState<CalculationInputs>({
     salarioBase: undefined,
@@ -43,10 +53,18 @@ const AdicionalNoturnoCalculator = ({
     salarioComAdicional: number;
   } | null>(null);
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!inputs.salarioBase || !inputs.horasNoturnas) {
       return;
     }
+
+    const ok = await ensureCanCalculate({ 
+      ...ctx, 
+      navigate, 
+      currentPath: location.pathname, 
+      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    });
+    if (!ok) return;
 
     // Cálculo fictício para demonstração (TODO: implementar regra real)
     const valorHora = inputs.salarioBase / inputs.jornada;
@@ -61,6 +79,9 @@ const AdicionalNoturnoCalculator = ({
       adicionalTotal,
       salarioComAdicional
     });
+
+    // Increment usage count for non-PRO users
+    await incrementCalcIfNeeded(isPro);
 
     // Telemetria opcional
     if (typeof window !== 'undefined' && window.gtag) {
@@ -184,14 +205,21 @@ const AdicionalNoturnoCalculator = ({
             </div>
           </div>
 
+          <UsageBanner 
+            remaining={remaining} 
+            isPro={isPro} 
+            isLogged={isLogged} 
+            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
+          />
+
           <div className="flex gap-3">
             <Button 
               onClick={handleCalculate}
-              disabled={!canCalculate}
+              disabled={!canCalculate || !canUse}
               className="flex-1"
             >
               <Calculator className="w-4 h-4" />
-              Calcular
+              {!canUse ? 'Limite atingido' : 'Calcular'}
             </Button>
             <Button variant="outline" onClick={handleClear}>
               <RotateCcw className="w-4 h-4" />

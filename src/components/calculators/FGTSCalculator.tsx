@@ -6,15 +6,36 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator, RotateCcw, DollarSign, TrendingUp } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
 const FGTSCalculator = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, isLogged, remaining, canUse } = ctx;
+
   const [salario, setSalario] = useState<number | undefined>();
   const [meses, setMeses] = useState<number | undefined>(12);
   const [saldoAtual, setSaldoAtual] = useState<number | undefined>(0);
   const [tipoMulta, setTipoMulta] = useState<string>("40");
 
-  const calcular = () => {
-    if (!salario || salario <= 0) return null;
+  const [resultado, setResultado] = useState<any>(null);
+
+  const calcular = async () => {
+    if (!salario || salario <= 0) return;
+
+    const ok = await ensureCanCalculate({ 
+      ...ctx, 
+      navigate, 
+      currentPath: location.pathname, 
+      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    });
+    if (!ok) return;
 
     const mesesValidados = Math.max(1, Math.min(12, meses || 12));
     const saldoValidado = Math.max(0, saldoAtual || 0);
@@ -27,7 +48,10 @@ const FGTSCalculator = () => {
       multa = saldoValidado * aliquotaMulta;
     }
     
-    return {
+    // Increment usage count for non-PRO users
+    await incrementCalcIfNeeded(isPro);
+    
+    const result = {
       salario: formatBRL(salario),
       depositoMensal: formatBRL(depositoMensal),
       mesesValidados,
@@ -37,15 +61,16 @@ const FGTSCalculator = () => {
       multa: formatBRL(multa),
       totalComMulta: formatBRL(saldoValidado + multa)
     };
-  };
 
-  const resultado = calcular();
+    setResultado(result);
+  };
 
   const limpar = () => {
     setSalario(undefined);
     setMeses(12);
     setSaldoAtual(0);
     setTipoMulta("40");
+    setResultado(null);
   };
 
   return (
@@ -112,14 +137,21 @@ const FGTSCalculator = () => {
             </div>
           </div>
 
+          <UsageBanner 
+            remaining={remaining} 
+            isPro={isPro} 
+            isLogged={isLogged} 
+            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
+          />
+
           <div className="flex gap-2">
             <Button
-              onClick={() => {}}
-              disabled={!salario || salario <= 0}
+              onClick={calcular}
+              disabled={!salario || salario <= 0 || !canUse}
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular FGTS
+              {!canUse ? 'Limite atingido' : 'Calcular FGTS'}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

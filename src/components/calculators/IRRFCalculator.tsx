@@ -6,36 +6,59 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Percent } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularIRRFSync } from "@/lib/tabelas";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
 const IRRFCalculator = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, isLogged, remaining, canUse } = ctx;
+
   const [basePosINSS, setBasePosINSS] = useState<number | undefined>();
   const [dependentes, setDependentes] = useState<number | undefined>(0);
   const [pensao, setPensao] = useState<number | undefined>(0);
+  const [resultado, setResultado] = useState<any>(null);
 
-  const calcular = () => {
-    if (!basePosINSS || basePosINSS <= 0) return null;
+  const calcular = async () => {
+    if (!basePosINSS || basePosINSS <= 0) return;
+
+    const ok = await ensureCanCalculate({ 
+      ...ctx, 
+      navigate, 
+      currentPath: location.pathname, 
+      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    });
+    if (!ok) return;
 
     const dependentesValidados = Math.max(0, dependentes || 0);
     const pensaoValidada = Math.max(0, pensao || 0);
     
-    const resultado = calcularIRRFSync(basePosINSS, dependentesValidados, pensaoValidada);
+    const calculoIRRF = calcularIRRFSync(basePosINSS, dependentesValidados, pensaoValidada);
     
-    return {
+    await incrementCalcIfNeeded(isPro);
+    
+    const result = {
       basePosINSS: formatBRL(basePosINSS),
-      totalDeducoes: formatBRL(resultado.totalDeducoes),
-      baseCalculoFinal: formatBRL(resultado.baseCalculoFinal),
-      valorIRRF: formatBRL(resultado.valor),
-      aliquotaEfetiva: formatPercent(resultado.aliquotaEfetiva),
-      valorLiquido: formatBRL(basePosINSS - resultado.valor)
+      totalDeducoes: formatBRL(calculoIRRF.totalDeducoes),
+      baseCalculoFinal: formatBRL(calculoIRRF.baseCalculoFinal),
+      valorIRRF: formatBRL(calculoIRRF.valor),
+      aliquotaEfetiva: formatPercent(calculoIRRF.aliquotaEfetiva),
+      valorLiquido: formatBRL(basePosINSS - calculoIRRF.valor)
     };
-  };
 
-  const resultado = calcular();
+    setResultado(result);
+  };
 
   const limpar = () => {
     setBasePosINSS(undefined);
     setDependentes(0);
     setPensao(0);
+    setResultado(null);
   };
 
   return (
@@ -89,14 +112,21 @@ const IRRFCalculator = () => {
             </div>
           </div>
 
+          <UsageBanner 
+            remaining={remaining} 
+            isPro={isPro} 
+            isLogged={isLogged} 
+            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
+          />
+
           <div className="flex gap-2">
             <Button
-              onClick={() => {}}
-              disabled={!basePosINSS || basePosINSS <= 0}
+              onClick={calcular}
+              disabled={!basePosINSS || basePosINSS <= 0 || !canUse}
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular IRRF
+              {!canUse ? 'Limite atingido' : 'Calcular IRRF'}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

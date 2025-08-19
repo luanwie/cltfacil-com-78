@@ -5,15 +5,35 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, Clock, DollarSign } from "lucide-react";
 import { formatBRL } from "@/lib/currency";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
 const HorasExtrasCalculator = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, isLogged, remaining, canUse } = ctx;
+
   const [salario, setSalario] = useState<number | undefined>();
   const [jornada, setJornada] = useState<number | undefined>(220);
   const [horas50, setHoras50] = useState<number | undefined>(0);
   const [horas100, setHoras100] = useState<number | undefined>(0);
+  const [resultado, setResultado] = useState<any>(null);
 
-  const calcular = () => {
-    if (!salario || salario <= 0) return null;
+  const calcular = async () => {
+    if (!salario || salario <= 0) return;
+
+    const ok = await ensureCanCalculate({ 
+      ...ctx, 
+      navigate, 
+      currentPath: location.pathname, 
+      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    });
+    if (!ok) return;
 
     const jornadaValidada = Math.max(1, jornada || 220);
     const horas50Validadas = Math.max(0, horas50 || 0);
@@ -25,7 +45,9 @@ const HorasExtrasCalculator = () => {
     const totalHorasExtras = valorHE50 + valorHE100;
     const totalGeral = salario + totalHorasExtras;
     
-    return {
+    await incrementCalcIfNeeded(isPro);
+    
+    const result = {
       salario: formatBRL(salario),
       valorHora: formatBRL(valorHora),
       horas50Validadas,
@@ -36,15 +58,16 @@ const HorasExtrasCalculator = () => {
       totalGeral: formatBRL(totalGeral),
       percentualExtra: ((totalHorasExtras / salario) * 100).toFixed(1)
     };
-  };
 
-  const resultado = calcular();
+    setResultado(result);
+  };
 
   const limpar = () => {
     setSalario(undefined);
     setJornada(220);
     setHoras50(0);
     setHoras100(0);
+    setResultado(null);
   };
 
   return (
@@ -107,14 +130,21 @@ const HorasExtrasCalculator = () => {
             </div>
           </div>
 
+          <UsageBanner 
+            remaining={remaining} 
+            isPro={isPro} 
+            isLogged={isLogged} 
+            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
+          />
+
           <div className="flex gap-2">
             <Button
-              onClick={() => {}}
-              disabled={!salario || salario <= 0}
+              onClick={calcular}
+              disabled={!salario || salario <= 0 || !canUse}
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular Horas Extras
+              {!canUse ? 'Limite atingido' : 'Calcular Horas Extras'}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
