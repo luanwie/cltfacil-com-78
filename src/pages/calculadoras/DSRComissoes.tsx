@@ -5,9 +5,17 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import DSRComissoesCalculator from "@/components/calculators/DSRComissoesCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 const DSRComissoes = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "O que é DSR sobre comissões?",
@@ -46,6 +54,15 @@ const DSRComissoes = () => {
             title="Calculadora de DSR sobre Comissões"
             description="Calcule o Descanso Semanal Remunerado proporcional sobre comissões e vendas variáveis."
           />
+          
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={ctx.remaining}
+              isPro={ctx.isPro}
+              isLogged={ctx.isLogged}
+              onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+            />
+          </div>
           
           <DSRComissoesCalculator />
           

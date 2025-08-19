@@ -5,9 +5,17 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import AvisoPrevioCalculator from "@/components/calculators/AvisoPrevioCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 const AvisoPrevio = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "Como funciona a progressão do aviso prévio?",
@@ -46,6 +54,15 @@ const AvisoPrevio = () => {
             title="Calculadora de Aviso Prévio"
             description="Calcule os dias de aviso prévio e valor da indenização com base no tempo de serviço."
           />
+          
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={ctx.remaining}
+              isPro={ctx.isPro}
+              isLogged={ctx.isLogged}
+              onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+            />
+          </div>
           
           <AvisoPrevioCalculator />
           

@@ -5,9 +5,17 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import ValeTransporteCalculator from "@/components/calculators/ValeTransporteCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 const ValeTransporte = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "O que é o limite de 6% do vale-transporte?",
@@ -46,6 +54,15 @@ const ValeTransporte = () => {
             title="Calculadora de Vale-Transporte (6%)"
             description="Calcule o desconto do empregado e o custo da empresa para o vale-transporte conforme o limite de 6%."
           />
+          
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={ctx.remaining}
+              isPro={ctx.isPro}
+              isLogged={ctx.isLogged}
+              onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+            />
+          </div>
           
           <ValeTransporteCalculator />
           

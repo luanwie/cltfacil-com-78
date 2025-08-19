@@ -3,10 +3,18 @@ import PageHeader from "@/components/ui/page-header";
 import DSRCalculator from "@/components/calculators/DSRCalculator";
 import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { useSEO } from "@/hooks/useSEO";
 
 const DSR = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   useSEO({
     title: "Calculadora DSR - Descanso Semanal Remunerado | CLT Fácil",
     description: "Calcule DSR sobre horas extras. Ferramenta gratuita com cálculo automático do descanso semanal remunerado conforme a CLT.",
@@ -67,6 +75,15 @@ const DSR = () => {
               <p>Este cálculo é estimativo e pode variar conforme convenções coletivas, acordos sindicais e particularidades do contrato de trabalho. Consulte sempre um profissional especializado.</p>
             </div>
           </Notice>
+
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={ctx.remaining}
+              isPro={ctx.isPro}
+              isLogged={ctx.isLogged}
+              onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+            />
+          </div>
 
           <DSRCalculator />
 

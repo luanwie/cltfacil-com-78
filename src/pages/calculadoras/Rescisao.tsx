@@ -1,5 +1,9 @@
 import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import RescisaoCalculator from "@/components/calculators/RescisaoCalculator";
 import FAQ from "@/components/ui/faq";
@@ -7,6 +11,10 @@ import Notice from "@/components/ui/notice";
 import { useSEO } from "@/hooks/useSEO";
 
 const Rescisao = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   useSEO({
     title: "Calculadora de Rescisão Trabalhista | Cálculo CLT Completo",
     description: "Calcule rescisão trabalhista completa: saldo salário, 13º, férias, aviso prévio, FGTS. Todos os tipos de rescisão CLT. Ferramenta gratuita e confiável.",
@@ -66,6 +74,14 @@ const Rescisao = () => {
       <section className="pb-12">
         <Container>
           <div className="max-w-4xl mx-auto space-y-8">
+            <div id="usage-banner">
+              <UsageBanner
+                remaining={ctx.remaining}
+                isPro={ctx.isPro}
+                isLogged={ctx.isLogged}
+                onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+              />
+            </div>
             <RescisaoCalculator />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

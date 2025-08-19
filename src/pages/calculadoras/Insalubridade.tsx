@@ -5,9 +5,17 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import InsalubridadeCalculator from "@/components/calculators/InsalubridadeCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 const Insalubridade = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "Quais são os graus de insalubridade?",
@@ -46,6 +54,15 @@ const Insalubridade = () => {
             title="Calculadora de Insalubridade (10/20/40%)"
             description="Calcule o adicional de insalubridade conforme o grau de exposição a agentes nocivos à saúde."
           />
+          
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={ctx.remaining}
+              isPro={ctx.isPro}
+              isLogged={ctx.isLogged}
+              onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+            />
+          </div>
           
           <InsalubridadeCalculator />
           

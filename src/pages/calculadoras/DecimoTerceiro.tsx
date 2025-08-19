@@ -4,11 +4,19 @@ import PageHeader from "@/components/ui/page-header";
 import DecimoTerceiroCalculator from "@/components/calculators/DecimoTerceiroCalculator";
 import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 
 const DecimoTerceiro = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "Como é calculado o 13º salário proporcional?",
@@ -63,6 +71,14 @@ const DecimoTerceiro = () => {
       />
 
       <div className="max-w-4xl mx-auto space-y-6">
+        <div id="usage-banner">
+          <UsageBanner
+            remaining={ctx.remaining}
+            isPro={ctx.isPro}
+            isLogged={ctx.isLogged}
+            onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+          />
+        </div>
         <DecimoTerceiroCalculator />
         
         <Notice>

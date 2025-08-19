@@ -2,12 +2,20 @@ import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
 import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import FeriasProporcionaisCalculator from "@/components/calculators/FeriasProporcionaisCalculator";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 
 const FeriasProporcionais = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "Como são calculados os dias de férias proporcionais?",
@@ -55,6 +63,14 @@ const FeriasProporcionais = () => {
       <section className="pb-12">
         <Container size="md">
           <div className="max-w-4xl mx-auto space-y-6">
+            <div id="usage-banner">
+              <UsageBanner
+                remaining={ctx.remaining}
+                isPro={ctx.isPro}
+                isLogged={ctx.isLogged}
+                onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+              />
+            </div>
             <FeriasProporcionaisCalculator />
             
             <Notice variant="warning">

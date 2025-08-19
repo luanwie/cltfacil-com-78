@@ -5,9 +5,17 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import PericulosidadeCalculator from "@/components/calculators/PericulosidadeCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
+import { useProAndUsage } from '@/hooks/useProAndUsage';
+import UsageBanner from '@/components/UsageBanner';
+import { goPro } from '@/utils/proRedirect';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 const Periculosidade = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+
   const faqItems = [
     {
       question: "Quem tem direito ao adicional de periculosidade?",
@@ -46,6 +54,15 @@ const Periculosidade = () => {
             title="Calculadora de Periculosidade (30%)"
             description="Calcule o adicional de periculosidade de 30% sobre o salário para atividades perigosas."
           />
+          
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={ctx.remaining}
+              isPro={ctx.isPro}
+              isLogged={ctx.isLogged}
+              onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
+            />
+          </div>
           
           <PericulosidadeCalculator />
           
