@@ -9,17 +9,27 @@ import { calcularINSSSync } from "@/lib/tabelas";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import { UsageBanner } from "@/components/ui/usage-banner";
 import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 const INSSCalculator = () => {
   const [salario, setSalario] = useState<number | undefined>();
   const [calculationResult, setCalculationResult] = useState<any>(null);
-  const { checkAndIncrementLimit, canCalculate, remainingCalculations, loading } = useCalculatorLimits();
+  const { canUse, requireLogin, incrementCount, isPro } = useProAndUsage();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleCalculate = async () => {
     if (!salario || salario <= 0) return;
 
-    const canProceed = await checkAndIncrementLimit();
-    if (!canProceed) return;
+    if (requireLogin) {
+      navigate(`/login?next=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
+
+    if (!canUse) {
+      toast.error('Limite atingido! Torne-se PRO para cálculos ilimitados.');
+      return;
+    }
 
     const resultado = calcularINSSSync(salario);
     
@@ -30,6 +40,9 @@ const INSSCalculator = () => {
       faixaMarginal: formatPercent(resultado.faixaMarginal),
       salarioLiquido: formatBRL(salario - resultado.valor)
     });
+
+    // Increment count for non-PRO users
+    await incrementCount();
   };
 
   const limpar = () => {
@@ -60,34 +73,16 @@ const INSSCalculator = () => {
             />
           </div>
 
-          {!canCalculate && remainingCalculations === 0 && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-center gap-2 text-amber-800">
-                <Lock className="w-4 h-4" />
-                <span className="text-sm font-medium">Limite atingido</span>
-              </div>
-              <p className="text-sm text-amber-700 mt-1">
-                Você atingiu o limite de {4} cálculos gratuitos. Torne-se PRO para cálculos ilimitados!
-              </p>
-            </div>
-          )}
-
-          {canCalculate && remainingCalculations !== Infinity && remainingCalculations > 0 && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-700">
-                ⏳ Você tem <strong>{remainingCalculations}</strong> cálculo{remainingCalculations !== 1 ? 's' : ''} gratuito{remainingCalculations !== 1 ? 's' : ''} restante{remainingCalculations !== 1 ? 's' : ''}
-              </p>
-            </div>
-          )}
+          <UsageBanner />
 
           <div className="flex gap-2">
             <Button
               onClick={handleCalculate}
-              disabled={!salario || salario <= 0 || loading || !canCalculate}
-              className="flex-1"
+              disabled={!salario || salario <= 0 || !canUse}
+              className={`flex-1 ${canUse ? "bg-gradient-primary hover:opacity-90" : "bg-muted"}`}
             >
               <Calculator className="w-4 h-4 mr-2" />
-              {loading ? "Verificando..." : "Calcular INSS"}
+              {canUse ? "Calcular INSS" : "Limite Atingido"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
