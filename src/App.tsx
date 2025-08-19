@@ -33,6 +33,7 @@ import AvisoPrevio from "./pages/calculadoras/AvisoPrevio";
 import ValeTransporte from "./pages/calculadoras/ValeTransporte";
 import DebugCalculadoras from "./pages/DebugCalculadoras";
 import Widget from "./pages/Widget";
+import AssinarPro from "./pages/AssinarPro";
 import Sobre from "./pages/Sobre";
 import Contato from "./pages/Contato";
 import Termos from "./pages/Termos";
@@ -182,6 +183,11 @@ const App = () => (
                 <Route path="/calculadora-adicional-noturno" element={
                   <ProtectedRoute>
                     <AdicionalNoturno />
+                  </ProtectedRoute>
+                } />
+                <Route path="/assinar-pro" element={
+                  <ProtectedRoute>
+                    <AssinarPro />
                   </ProtectedRoute>
                 } />
                 <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />

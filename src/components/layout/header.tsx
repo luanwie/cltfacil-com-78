@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Calculator, LogOut } from "lucide-react";
+import { Menu, X, Calculator, LogOut, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Container from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,11 +65,19 @@ const Header = () => {
             
             {user ? (
               <div className="flex items-center gap-4">
-                {userProfile && (
-                  <span className="text-sm text-muted-foreground">
-                    Olá, {userProfile.nome}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {(userProfile as any)?.is_pro && (
+                    <Badge variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold">
+                      <Crown className="h-3 w-3 mr-1" />
+                      PRO
+                    </Badge>
+                  )}
+                  {userProfile && (
+                    <span className="text-sm text-muted-foreground">
+                      Olá, {userProfile.nome}
+                    </span>
+                  )}
+                </div>
                 <Button asChild variant="hero" size="sm">
                   <Link to="/calculadoras">Calculadoras</Link>
                 </Button>
@@ -126,11 +135,19 @@ const Header = () => {
               
               {user ? (
                 <div className="flex flex-col gap-4">
-                  {userProfile && (
-                    <span className="text-sm text-muted-foreground">
-                      Olá, {userProfile.nome}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {(userProfile as any)?.is_pro && (
+                      <Badge variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold">
+                        <Crown className="h-3 w-3 mr-1" />
+                        PRO
+                      </Badge>
+                    )}
+                    {userProfile && (
+                      <span className="text-sm text-muted-foreground">
+                        Olá, {userProfile.nome}
+                      </span>
+                    )}
+                  </div>
                   <Button asChild variant="hero" size="sm" className="w-fit">
                     <Link to="/calculadoras" onClick={() => setIsMenuOpen(false)}>
                       Calculadoras

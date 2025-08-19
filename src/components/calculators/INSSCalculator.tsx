@@ -3,31 +3,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
-import { Calculator, RotateCcw, DollarSign, Percent } from "lucide-react";
+import { Calculator, RotateCcw, DollarSign, Percent, Lock } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync } from "@/lib/tabelas";
+import { useCalculatorLimits } from "@/hooks/useCalculatorLimits";
 
 const INSSCalculator = () => {
   const [salario, setSalario] = useState<number | undefined>();
+  const [calculationResult, setCalculationResult] = useState<any>(null);
+  const { checkAndIncrementLimit, canCalculate, remainingCalculations, loading } = useCalculatorLimits();
 
-  const calcular = () => {
-    if (!salario || salario <= 0) return null;
+  const handleCalculate = async () => {
+    if (!salario || salario <= 0) return;
+
+    const canProceed = await checkAndIncrementLimit();
+    if (!canProceed) return;
 
     const resultado = calcularINSSSync(salario);
     
-    return {
+    setCalculationResult({
       salario: formatBRL(salario),
       valorINSS: formatBRL(resultado.valor),
       aliquotaEfetiva: formatPercent(resultado.aliquotaEfetiva),
       faixaMarginal: formatPercent(resultado.faixaMarginal),
       salarioLiquido: formatBRL(salario - resultado.valor)
-    };
+    });
   };
-
-  const resultado = calcular();
 
   const limpar = () => {
     setSalario(undefined);
+    setCalculationResult(null);
   };
 
   return (
@@ -53,14 +58,34 @@ const INSSCalculator = () => {
             />
           </div>
 
+          {!canCalculate && remainingCalculations === 0 && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-center gap-2 text-amber-800">
+                <Lock className="w-4 h-4" />
+                <span className="text-sm font-medium">Limite atingido</span>
+              </div>
+              <p className="text-sm text-amber-700 mt-1">
+                Você atingiu o limite de {4} cálculos gratuitos. Torne-se PRO para cálculos ilimitados!
+              </p>
+            </div>
+          )}
+
+          {canCalculate && remainingCalculations !== Infinity && remainingCalculations > 0 && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                ⏳ Você tem <strong>{remainingCalculations}</strong> cálculo{remainingCalculations !== 1 ? 's' : ''} gratuito{remainingCalculations !== 1 ? 's' : ''} restante{remainingCalculations !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button
-              onClick={() => {}}
-              disabled={!salario || salario <= 0}
+              onClick={handleCalculate}
+              disabled={!salario || salario <= 0 || loading || !canCalculate}
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular INSS
+              {loading ? "Verificando..." : "Calcular INSS"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -69,7 +94,7 @@ const INSSCalculator = () => {
         </CardContent>
       </Card>
 
-      {resultado && (
+      {calculationResult && (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card className="border-destructive/20 bg-destructive/5">
@@ -81,7 +106,7 @@ const INSSCalculator = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-destructive">
-                  {resultado.valorINSS}
+                  {calculationResult.valorINSS}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Desconto mensal
@@ -97,16 +122,16 @@ const INSSCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Efetiva:</span>
-                    <span className="font-medium">{resultado.aliquotaEfetiva}</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Efetiva:</span>
+                      <span className="font-medium">{calculationResult.aliquotaEfetiva}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Marginal:</span>
+                      <span className="font-medium">{calculationResult.faixaMarginal}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Marginal:</span>
-                    <span className="font-medium">{resultado.faixaMarginal}</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -123,16 +148,16 @@ const INSSCalculator = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">Salário bruto:</span>
-                    <span className="font-medium">{resultado.salario}</span>
+                    <span className="font-medium">{calculationResult.salario}</span>
                   </div>
                   <div className="flex justify-between text-destructive">
                     <span className="text-sm">INSS:</span>
-                    <span className="font-medium">-{resultado.valorINSS}</span>
+                    <span className="font-medium">-{calculationResult.valorINSS}</span>
                   </div>
                   <hr />
                   <div className="flex justify-between font-medium">
                     <span>Após INSS:</span>
-                    <span className="text-primary">{resultado.salarioLiquido}</span>
+                    <span className="text-primary">{calculationResult.salarioLiquido}</span>
                   </div>
                 </div>
               </div>

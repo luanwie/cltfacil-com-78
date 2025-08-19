@@ -1,0 +1,153 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Star, Zap } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const AssinarPro = () => {
+  const { user, userProfile } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  const handleSubscribe = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('checkout');
+      
+      if (error) {
+        console.error('Checkout error:', error);
+        toast.error('Erro ao criar checkout: ' + error.message);
+        return;
+      }
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        toast.error('URL de checkout não encontrada');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+      toast.error('Erro ao processar assinatura');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const benefits = [
+    "Cálculos ilimitados",
+    "Acesso a todas as calculadoras",
+    "Suporte prioritário",
+    "Novas funcionalidades em primeira mão",
+    "Sem anúncios",
+  ];
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <Badge variant="secondary" className="mb-4">
+            <Star className="h-4 w-4 mr-1" />
+            Plano PRO
+          </Badge>
+          <h1 className="text-4xl font-bold mb-4">
+            Torne-se <span className="text-primary">PRO</span>
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Tenha acesso ilimitado a todas as calculadoras trabalhistas
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Plano Gratuito */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Plano Gratuito
+              </CardTitle>
+              <CardDescription>
+                Ideal para uso ocasional
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-2xl font-bold">R$ 0</div>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">4 cálculos por mês</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Acesso básico</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Plano PRO */}
+          <Card className="border-primary relative">
+            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+              <Badge className="bg-primary text-primary-foreground">
+                Mais Popular
+              </Badge>
+            </div>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Plano PRO
+              </CardTitle>
+              <CardDescription>
+                Para profissionais e empresas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-3xl font-bold text-primary">
+                R$ 29,90
+                <span className="text-sm font-normal text-muted-foreground">/mês</span>
+              </div>
+              
+              <ul className="space-y-3">
+                {benefits.map((benefit, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <span>{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button 
+                onClick={handleSubscribe} 
+                disabled={loading}
+                className="w-full"
+                size="lg"
+              >
+                {loading ? "Processando..." : "Tornar PRO"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-8 text-center text-sm text-muted-foreground">
+          <p>Cancele a qualquer momento. Sem taxas ocultas.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AssinarPro;

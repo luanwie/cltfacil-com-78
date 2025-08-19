@@ -16,23 +16,32 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          calc_count: number | null
           created_at: string
           id: string
+          is_pro: boolean | null
           nome: string
+          pro_since: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          calc_count?: number | null
           created_at?: string
           id?: string
+          is_pro?: boolean | null
           nome: string
+          pro_since?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          calc_count?: number | null
           created_at?: string
           id?: string
+          is_pro?: boolean | null
           nome?: string
+          pro_since?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -43,7 +52,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_calc_count: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
