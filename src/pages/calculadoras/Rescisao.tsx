@@ -1,9 +1,9 @@
 import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
-import { useProAndUsage } from '@/hooks/useProAndUsage';
-import UsageBanner from '@/components/UsageBanner';
-import { goPro } from '@/utils/proRedirect';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import RescisaoCalculator from "@/components/calculators/RescisaoCalculator";
 import FAQ from "@/components/ui/faq";
@@ -17,36 +17,44 @@ const Rescisao = () => {
 
   useSEO({
     title: "Calculadora de Rescisão Trabalhista | Cálculo CLT Completo",
-    description: "Calcule rescisão trabalhista completa: saldo salário, 13º, férias, aviso prévio, FGTS. Todos os tipos de rescisão CLT. Ferramenta gratuita e confiável.",
-    keywords: "rescisão trabalhista, cálculo rescisão, CLT, demissão, aviso prévio, FGTS, 13º salário, férias proporcionais",
-    canonical: "/clt/rescisao"
+    description:
+      "Calcule rescisão trabalhista completa: saldo salário, 13º, férias, aviso prévio, FGTS. Todos os tipos de rescisão CLT. Ferramenta gratuita e confiável.",
+    keywords:
+      "rescisão trabalhista, cálculo rescisão, CLT, demissão, aviso prévio, FGTS, 13º salário, férias proporcionais",
+    canonical: "/clt/rescisao",
   });
 
   const faqItems = [
     {
       question: "Quais tipos de rescisão posso calcular?",
-      answer: "Nossa calculadora contempla todos os tipos: demissão sem justa causa, pedido de demissão, acordo (484-A), término de contrato determinado e justa causa."
+      answer:
+        "Nossa calculadora contempla todos os tipos: demissão sem justa causa, pedido de demissão, acordo (484-A), término de contrato determinado e justa causa.",
     },
     {
       question: "Como é calculado o aviso prévio progressivo?",
-      answer: "30 dias base + 3 dias por ano completo trabalhado após o primeiro ano, limitado a 90 dias. Ex: 3 anos = 30 + (2×3) = 36 dias."
+      answer:
+        "30 dias base + 3 dias por ano completo trabalhado após o primeiro ano, limitado a 90 dias. Ex: 3 anos = 30 + (2×3) = 36 dias.",
     },
     {
       question: "Quando tenho direito ao saque do FGTS?",
-      answer: "Demissão sem justa causa: 100% + multa 40%. Acordo 484-A: até 80% + multa 20%. Pedido de demissão: sem direito ao saque."
+      answer:
+        "Demissão sem justa causa: 100% + multa 40%. Acordo 484-A: até 80% + multa 20%. Pedido de demissão: sem direito ao saque.",
     },
     {
       question: "Como funciona o acordo 484-A?",
-      answer: "No acordo: aviso prévio pela metade, multa FGTS 20%, saque até 80% do FGTS, mas sem direito ao seguro-desemprego."
+      answer:
+        "No acordo: aviso prévio pela metade, multa FGTS 20%, saque até 80% do FGTS, mas sem direito ao seguro-desemprego.",
     },
     {
       question: "Os valores são líquidos ou brutos?",
-      answer: "Os valores apresentados são brutos, antes dos descontos de INSS e IRRF que podem incidir sobre algumas parcelas."
+      answer:
+        "Os valores apresentados são brutos, antes dos descontos de INSS e IRRF que podem incidir sobre algumas parcelas.",
     },
     {
       question: "Como são calculadas as férias proporcionais?",
-      answer: "2,5 dias por mês completo trabalhado no período aquisitivo atual + 1/3 constitucional. Mês conta se trabalhou 15+ dias."
-    }
+      answer:
+        "2,5 dias por mês completo trabalhado no período aquisitivo atual + 1/3 constitucional. Mês conta se trabalhou 15+ dias.",
+    },
   ];
 
   return (
@@ -65,7 +73,10 @@ const Rescisao = () => {
           <Notice>
             <div>
               <h4 className="font-semibold mb-2">Informação Importante</h4>
-              <p>Esta calculadora fornece estimativas baseadas na legislação CLT vigente. Para situações específicas, consulte sempre um advogado trabalhista ou contador.</p>
+              <p>
+                Esta calculadora fornece estimativas baseadas na legislação CLT vigente. Para situações específicas, consulte sempre um
+                advogado trabalhista ou contador.
+              </p>
             </div>
           </Notice>
         </Container>
@@ -74,6 +85,7 @@ const Rescisao = () => {
       <section className="pb-12">
         <Container>
           <div className="max-w-4xl mx-auto space-y-8">
+            {/* Banner GLOBAL + CTA PRO */}
             <div id="usage-banner">
               <UsageBanner
                 remaining={ctx.remaining}
@@ -82,8 +94,9 @@ const Rescisao = () => {
                 onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
               />
             </div>
+
             <RescisaoCalculator />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card rounded-lg p-6 border">
                 <h3 className="font-semibold mb-4">Documentos Necessários</h3>
@@ -111,13 +124,9 @@ const Rescisao = () => {
 
       <section className="py-12 bg-muted/30">
         <Container>
-          <FAQ 
-            title="Perguntas Frequentes sobre Rescisão"
-            items={faqItems}
-          />
+          <FAQ title="Perguntas Frequentes sobre Rescisão" items={faqItems} />
         </Container>
       </section>
-
     </>
   );
 };

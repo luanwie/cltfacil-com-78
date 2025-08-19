@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Calculator, RotateCcw, Clock, TrendingUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,25 +6,42 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Input } from "@/components/ui/input";
 import Notice from "@/components/ui/notice";
+import { useToast } from "@/hooks/use-toast";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+
+type Resultado = {
+  saldo: number;
+  saldoFormatado: string;
+  classificacao: string;
+  diasEquivalentes: number;
+  dataLimite: string | null;
+  horasPorDia: number;
+};
+
+const toHours = (v: string | number) => {
+  if (typeof v === "number") return v;
+  if (!v) return 0;
+  if (v.includes(":")) {
+    const [hh, mm = "0"] = v.split(":");
+    return Number(hh) + Number(mm) / 60;
+  }
+  return Number(v);
+};
 
 const BancoDeHorasCalculator = () => {
+  const { toast } = useToast();
+  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
+
   const [jornadaMensal, setJornadaMensal] = useState<number | undefined>(220);
   const [horasTrabalhadas, setHorasTrabalhadas] = useState<string>("");
   const [horasCompensadas, setHorasCompensadas] = useState<string>("");
   const [dataFechamento, setDataFechamento] = useState<string>("");
   const [prazoMeses, setPrazoMeses] = useState<number | undefined>(6);
 
-  const toHours = (v: string | number) => {
-    if (typeof v === "number") return v;
-    if (!v) return 0;
-    if (v.includes(":")) {
-      const [hh, mm="0"] = v.split(":");
-      return Number(hh) + Number(mm)/60;
-    }
-    return Number(v);
-  };
+  const [resultado, setResultado] = useState<Resultado | null>(null);
+  const countingRef = useRef(false); // evita descontar 2x no mesmo clique
 
-  const calcularBancoHoras = () => {
+  const calcularInterno = (): Resultado | null => {
     if (!jornadaMensal || jornadaMensal <= 0 || !horasTrabalhadas) return null;
 
     const jornada = Math.max(0, Number(jornadaMensal));
@@ -53,10 +70,10 @@ const BancoDeHorasCalculator = () => {
     if (dataFechamento && prazoMeses && prazoMeses > 0) {
       const d = new Date(dataFechamento);
       d.setMonth(d.getMonth() + Number(prazoMeses));
-      dataLimite = d.toISOString().slice(0,10);
+      dataLimite = d.toISOString().slice(0, 10);
     }
 
-    const classificacao = saldo >= 0 
+    const classificacao = saldo >= 0
       ? `Crédito de ${fmt(Math.abs(saldo))}h`
       : `Débito de ${fmt(Math.abs(saldo))}h`;
 
@@ -66,19 +83,56 @@ const BancoDeHorasCalculator = () => {
       classificacao,
       diasEquivalentes: Number(diasEquivalentes.toFixed(2)),
       dataLimite,
-      horasPorDia: Number(horasPorDia.toFixed(2))
+      horasPorDia: Number(horasPorDia.toFixed(2)),
     };
   };
 
-  const resultado = calcularBancoHoras();
+  async function handleCalcular() {
+    if (loading) return;
 
-  const limparFormulario = () => {
+    const freeLeft = typeof remaining === "number" ? remaining : 0;
+    if (!isPro && freeLeft <= 0) {
+      toast({
+        title: "Limite atingido",
+        description: "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const res = calcularInterno();
+    if (!res) {
+      toast({
+        title: "Preencha os campos",
+        description: "Informe jornada, horas trabalhadas e demais campos obrigatórios.",
+      });
+      return;
+    }
+
+    setResultado(res);
+
+    // desconta 1 (somente não-PRO) após cálculo bem-sucedido
+    if (!isPro && !countingRef.current) {
+      countingRef.current = true;
+      try {
+        await (incrementCount?.() ?? Promise.resolve());
+      } finally {
+        setTimeout(() => (countingRef.current = false), 300);
+      }
+    }
+  }
+
+  function limparFormulario() {
     setJornadaMensal(220);
     setHorasTrabalhadas("");
     setHorasCompensadas("");
     setDataFechamento("");
     setPrazoMeses(6);
-  };
+    setResultado(null);
+  }
+
+  const botaoDisabled =
+    loading || !jornadaMensal || jornadaMensal <= 0 || !horasTrabalhadas;
 
   return (
     <div className="w-full space-y-6">
@@ -157,18 +211,11 @@ const BancoDeHorasCalculator = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => {}} 
-              disabled={!jornadaMensal || !horasTrabalhadas}
-              className="flex-1"
-            >
+            <Button onClick={handleCalcular} disabled={botaoDisabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
               Calcular
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={limparFormulario}
-            >
+            <Button variant="outline" onClick={limparFormulario}>
               <RotateCcw className="w-4 h-4" />
             </Button>
           </div>
@@ -202,12 +249,12 @@ const BancoDeHorasCalculator = () => {
                       {resultado.diasEquivalentes > 0 ? '+' : ''}{resultado.diasEquivalentes} dias
                     </div>
                   </div>
-                  
+
                   {resultado.dataLimite && (
                     <div className="p-3 rounded-lg bg-background border">
                       <div className="text-sm text-muted-foreground">Data limite para compensar</div>
                       <div className="text-xl font-semibold">
-                        {new Date(resultado.dataLimite).toLocaleDateString('pt-BR')}
+                        {new Date(resultado.dataLimite).toLocaleDateString("pt-BR")}
                       </div>
                     </div>
                   )}
@@ -223,57 +270,41 @@ const BancoDeHorasCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    1
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
                   <div>
                     <p className="font-medium">Conversão para horas</p>
-                    <p className="text-sm text-muted-foreground">
-                      Formato hh:mm convertido para decimal (ex: 10:30 = 10.5h)
-                    </p>
+                    <p className="text-sm text-muted-foreground">Formato hh:mm convertido para decimal (ex: 10:30 = 10.5h)</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    2
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
                   <div>
                     <p className="font-medium">Cálculo do saldo</p>
-                    <p className="text-sm text-muted-foreground">
-                      Saldo = (Horas trabalhadas - Jornada contratual) - Horas compensadas
-                    </p>
+                    <p className="text-sm text-muted-foreground">Saldo = (Horas trabalhadas - Jornada contratual) - Horas compensadas</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    3
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
                   <div>
                     <p className="font-medium">Equivalência em dias</p>
-                    <p className="text-sm text-muted-foreground">
-                      Dias = Saldo ÷ ({resultado.horasPorDia}h por dia)
-                    </p>
+                    <p className="text-sm text-muted-foreground">Dias = Saldo ÷ ({resultado.horasPorDia}h por dia)</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    4
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">4</div>
                   <div>
                     <p className="font-medium">Prazo para compensação</p>
-                    <p className="text-sm text-muted-foreground">
-                      Data limite = Data de fechamento + {prazoMeses || 6} meses
-                    </p>
+                    <p className="text-sm text-muted-foreground">Data limite = Data de fechamento + {prazoMeses || 6} meses</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4 p-3 bg-accent rounded-lg">
                 <p className="text-sm text-accent-foreground">
-                  <strong>Lembre-se:</strong> O banco de horas deve ser compensado dentro do prazo legal 
+                  <strong>Lembre-se:</strong> O banco de horas deve ser compensado dentro do prazo legal
                   para evitar o pagamento como hora extra com adicional de 50%.
                 </p>
               </div>

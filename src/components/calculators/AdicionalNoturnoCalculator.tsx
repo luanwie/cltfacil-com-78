@@ -1,3 +1,8 @@
+
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/integrations/supabase/user-data";
 import { useState } from "react";
 import { Calculator, RotateCcw, Clock, DollarSign, Percent, Calendar, Share2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,12 +11,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import UsageBanner from "@/components/UsageBanner";
-import { goPro } from "@/utils/proRedirect";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 interface CalculationInputs {
   salarioBase: number | undefined;
@@ -20,30 +20,33 @@ interface CalculationInputs {
   jornada: number;
 }
 
-interface AdicionalNoturnoCalculatorProps {
+type Props = {
   cargo?: string;
   uf?: string;
   showShareButtons?: boolean;
   showAds?: boolean;
-}
+  /** Evita qualquer aviso interno de limite para centralizar o aviso na página. */
+  suppressUsageUi?: boolean; // mantido para compat com outras calculadoras
+};
 
-const AdicionalNoturnoCalculator = ({ 
-  cargo, 
-  uf, 
+export default function AdicionalNoturnoCalculator({
+  cargo,
+  uf,
   showShareButtons = false,
-  showAds = true 
-}: AdicionalNoturnoCalculatorProps) => {
+  showAds = true,
+  suppressUsageUi = true,
+}: Props) {
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, isLogged, remaining, canUse } = ctx;
-  
+
+  // Gate global (4 grátis no total, PRO ilimitado)
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
+
   const [inputs, setInputs] = useState<CalculationInputs>({
     salarioBase: undefined,
     horasNoturnas: undefined,
-    percentualAdicional: 20, // Padrão CLT
-    jornada: 220 // Horas mensais padrão
+    percentualAdicional: 20,
+    jornada: 220,
   });
 
   const [result, setResult] = useState<{
@@ -54,19 +57,13 @@ const AdicionalNoturnoCalculator = ({
   } | null>(null);
 
   const handleCalculate = async () => {
-    if (!inputs.salarioBase || !inputs.horasNoturnas) {
-      return;
-    }
+    if (!inputs.salarioBase || !inputs.horasNoturnas) return;
 
-    const ok = await ensureCanCalculate({ 
-      ...ctx, 
-      navigate, 
-      currentPath: location.pathname, 
-      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
-    });
+    // Verifica limite global; redireciona para /assinar-pro se necessário
+    const ok = await allowOrRedirect();
     if (!ok) return;
 
-    // Cálculo fictício para demonstração (TODO: implementar regra real)
+    // Cálculo (placeholder; ajuste a regra quando precisar)
     const valorHora = inputs.salarioBase / inputs.jornada;
     const adicionalHora = (valorHora * inputs.percentualAdicional) / 100;
     const valorHoraNoturna = valorHora + adicionalHora;
@@ -77,17 +74,17 @@ const AdicionalNoturnoCalculator = ({
       valorHora,
       valorHoraNoturna,
       adicionalTotal,
-      salarioComAdicional
+      salarioComAdicional,
     });
 
-    // Increment usage count for non-PRO users
-    await incrementCalcIfNeeded(isPro);
+    // Incrementa uso (apenas para não-PRO)
+    await incrementCount();
 
     // Telemetria opcional
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'calculate_adicional_noturno', {
-        cargo: cargo || 'unknown',
-        uf: uf || 'unknown'
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "calculate_adicional_noturno", {
+        cargo: cargo || "unknown",
+        uf: uf || "unknown",
       });
     }
   };
@@ -97,54 +94,54 @@ const AdicionalNoturnoCalculator = ({
       salarioBase: undefined,
       horasNoturnas: undefined,
       percentualAdicional: 20,
-      jornada: 220
+      jornada: 220,
     });
     setResult(null);
   };
 
   const handleShareLink = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
       toast({
         title: "Link copiado!",
         description: "O link foi copiado para a área de transferência.",
       });
 
-      // Telemetria
-      if (window.gtag) {
-        window.gtag('event', 'copy_link', {
-          cargo: cargo || 'unknown',
-          uf: uf || 'unknown'
+      if ((window as any).gtag) {
+        (window as any).gtag("event", "copy_link", {
+          cargo: cargo || "unknown",
+          uf: uf || "unknown",
         });
       }
     }
   };
 
   const handleCopyEmbed = () => {
-    const origin = import.meta.env.VITE_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-    const cargoParam = cargo ? `cargo=${cargo}` : '';
-    const ufParam = uf ? `uf=${uf}` : '';
-    const params = [cargoParam, ufParam].filter(Boolean).join('&');
-    const embedCode = `<iframe src="${origin}/widget/adicional-noturno${params ? '?' + params : ''}" width="100%" height="560" loading="lazy"></iframe>`;
-    
-    if (typeof window !== 'undefined') {
+    const origin =
+      import.meta.env.VITE_PUBLIC_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    const params = [cargo ? `cargo=${cargo}` : "", uf ? `uf=${uf}` : ""]
+      .filter(Boolean)
+      .join("&");
+    const embedCode = `<iframe src="${origin}/widget/adicional-noturno${params ? "?" + params : ""}" width="100%" height="560" loading="lazy"></iframe>`;
+
+    if (typeof window !== "undefined") {
       navigator.clipboard.writeText(embedCode);
       toast({
         title: "Código copiado!",
         description: "O código de incorporação foi copiado para a área de transferência.",
       });
 
-      // Telemetria
-      if (window.gtag) {
-        window.gtag('event', 'copy_embed', {
-          cargo: cargo || 'unknown',
-          uf: uf || 'unknown'
+      if ((window as any).gtag) {
+        (window as any).gtag("event", "copy_embed", {
+          cargo: cargo || "unknown",
+          uf: uf || "unknown",
         });
       }
     }
   };
 
-  const canCalculate = inputs.salarioBase && inputs.horasNoturnas;
+  const canCalculate = Boolean(inputs.salarioBase && inputs.horasNoturnas);
 
   return (
     <div className="space-y-6">
@@ -159,6 +156,7 @@ const AdicionalNoturnoCalculator = ({
             {cargo && uf && ` para ${cargo} em ${uf}`}
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -169,7 +167,7 @@ const AdicionalNoturnoCalculator = ({
                 decimal
                 placeholder="0,00"
                 value={inputs.salarioBase}
-                onChange={(value) => setInputs(prev => ({ ...prev, salarioBase: value }))}
+                onChange={(value) => setInputs((prev) => ({ ...prev, salarioBase: value }))}
               />
             </div>
 
@@ -180,7 +178,7 @@ const AdicionalNoturnoCalculator = ({
                 suffix="h"
                 placeholder="0"
                 value={inputs.horasNoturnas}
-                onChange={(value) => setInputs(prev => ({ ...prev, horasNoturnas: value }))}
+                onChange={(value) => setInputs((prev) => ({ ...prev, horasNoturnas: value }))}
               />
             </div>
 
@@ -190,7 +188,7 @@ const AdicionalNoturnoCalculator = ({
                 id="percentual"
                 suffix="%"
                 value={inputs.percentualAdicional}
-                onChange={(value) => setInputs(prev => ({ ...prev, percentualAdicional: value || 20 }))}
+                onChange={(value) => setInputs((prev) => ({ ...prev, percentualAdicional: value || 20 }))}
               />
             </div>
 
@@ -200,27 +198,24 @@ const AdicionalNoturnoCalculator = ({
                 id="jornada"
                 suffix="h"
                 value={inputs.jornada}
-                onChange={(value) => setInputs(prev => ({ ...prev, jornada: value || 220 }))}
+                onChange={(value) => setInputs((prev) => ({ ...prev, jornada: value || 220 }))}
               />
             </div>
           </div>
 
-          <UsageBanner 
-            remaining={remaining} 
-            isPro={isPro} 
-            isLogged={isLogged} 
-            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
-          />
+          {/* Nenhum aviso interno aqui: centralizamos o aviso na página */}
+          {/* suppressUsageUi existe para manter compat com outras calculadoras */}
 
           <div className="flex gap-3">
-            <Button 
+            <Button
               onClick={handleCalculate}
-              disabled={!canCalculate || !canUse}
+              disabled={!canCalculate || overLimit}
               className="flex-1"
             >
               <Calculator className="w-4 h-4" />
-              {!canUse ? 'Limite atingido' : 'Calcular'}
+              {overLimit ? "Limite atingido" : "Calcular"}
             </Button>
+
             <Button variant="outline" onClick={handleClear}>
               <RotateCcw className="w-4 h-4" />
               Limpar
@@ -325,13 +320,11 @@ const AdicionalNoturnoCalculator = ({
           </div>
 
           <Notice variant="info">
-            <strong>Importante:</strong> A hora noturna urbana tem duração de 52 minutos e 30 segundos, 
+            <strong>Importante:</strong> A hora noturna urbana tem duração de 52 minutos e 30 segundos,
             o que significa que 8 horas noturnas equivalem a aproximadamente 9 horas e 9 minutos.
           </Notice>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default AdicionalNoturnoCalculator;
+}

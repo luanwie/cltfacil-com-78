@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, DollarSign, Clock, Calendar } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
 
 interface DSRData {
   salario: number;
@@ -25,6 +26,9 @@ interface DSRResult {
 }
 
 const DSRCalculator = () => {
+  const { toast } = useToast();
+  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
+
   const [data, setData] = useState<DSRData>({
     salario: 0,
     horasExtras: 0,
@@ -35,34 +39,79 @@ const DSRCalculator = () => {
   });
 
   const [result, setResult] = useState<DSRResult | null>(null);
+  const countingRef = useRef(false); // evita descontar 2x no mesmo clique
 
   const updateField = (field: keyof DSRData, value: number | undefined) => {
-    setData(prev => ({
+    setData((prev) => ({
       ...prev,
-      [field]: value || 0
+      [field]: value || 0,
     }));
   };
 
-  const calculateDSR = () => {
-    if (data.salario <= 0 || data.horasExtras <= 0 || data.jornadaMensal <= 0 || 
-        data.diasTrabalhados <= 0) {
-      return;
+  const calculateInternal = (): DSRResult | null => {
+    if (
+      data.salario <= 0 ||
+      data.horasExtras <= 0 ||
+      data.jornadaMensal <= 0 ||
+      data.diasTrabalhados <= 0
+    ) {
+      return null;
     }
 
     const valorHora = data.salario / data.jornadaMensal;
     const valorHoraExtra = valorHora * (1 + data.adicionalHE / 100);
     const valorHorasExtras = valorHoraExtra * data.horasExtras;
-    const dsr = data.diasTrabalhados > 0 ? (valorHorasExtras / data.diasTrabalhados) * data.diasDescanso : 0;
+    const dsr =
+      data.diasTrabalhados > 0
+        ? (valorHorasExtras / data.diasTrabalhados) * data.diasDescanso
+        : 0;
     const total = valorHorasExtras + dsr;
 
-    setResult({
+    return {
       valorHora,
       valorHoraExtra,
       valorHorasExtras,
       dsr,
-      total
-    });
+      total,
+    };
   };
+
+  async function calculateDSR() {
+    if (loading) return;
+
+    const freeLeft = typeof remaining === "number" ? remaining : 0;
+    if (!isPro && freeLeft <= 0) {
+      toast({
+        title: "Limite atingido",
+        description:
+          "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const res = calculateInternal();
+    if (!res) {
+      toast({
+        title: "Preencha os campos obrigatórios",
+        description:
+          "Informe salário, horas extras, jornada mensal e dias trabalhados.",
+      });
+      return;
+    }
+
+    setResult(res);
+
+    // desconta 1 do global somente para não-PRO e uma única vez por clique
+    if (!isPro && !countingRef.current) {
+      countingRef.current = true;
+      try {
+        await (incrementCount?.() ?? Promise.resolve());
+      } finally {
+        setTimeout(() => (countingRef.current = false), 300);
+      }
+    }
+  }
 
   const clearForm = () => {
     setData({
@@ -77,13 +126,17 @@ const DSRCalculator = () => {
   };
 
   const formatCurrency = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     });
   };
 
-  const isValid = data.salario > 0 && data.horasExtras > 0 && data.jornadaMensal > 0 && data.diasTrabalhados > 0;
+  const isValid =
+    data.salario > 0 &&
+    data.horasExtras > 0 &&
+    data.jornadaMensal > 0 &&
+    data.diasTrabalhados > 0;
 
   return (
     <div className="space-y-6">
@@ -104,7 +157,7 @@ const DSRCalculator = () => {
                 prefix="R$"
                 decimal
                 value={data.salario}
-                onChange={(value) => updateField('salario', value)}
+                onChange={(value) => updateField("salario", value)}
                 placeholder="0,00"
               />
             </div>
@@ -115,7 +168,7 @@ const DSRCalculator = () => {
                 id="horasExtras"
                 decimal
                 value={data.horasExtras}
-                onChange={(value) => updateField('horasExtras', value)}
+                onChange={(value) => updateField("horasExtras", value)}
                 placeholder="0"
               />
             </div>
@@ -126,7 +179,7 @@ const DSRCalculator = () => {
                 id="adicionalHE"
                 suffix="%"
                 value={data.adicionalHE}
-                onChange={(value) => updateField('adicionalHE', value)}
+                onChange={(value) => updateField("adicionalHE", value)}
                 placeholder="50"
               />
             </div>
@@ -142,7 +195,7 @@ const DSRCalculator = () => {
                 id="jornadaMensal"
                 suffix="h"
                 value={data.jornadaMensal}
-                onChange={(value) => updateField('jornadaMensal', value)}
+                onChange={(value) => updateField("jornadaMensal", value)}
                 placeholder="220"
               />
             </div>
@@ -157,7 +210,7 @@ const DSRCalculator = () => {
               <NumberInput
                 id="diasTrabalhados"
                 value={data.diasTrabalhados}
-                onChange={(value) => updateField('diasTrabalhados', value)}
+                onChange={(value) => updateField("diasTrabalhados", value)}
                 placeholder="22"
               />
             </div>
@@ -172,7 +225,7 @@ const DSRCalculator = () => {
               <NumberInput
                 id="diasDescanso"
                 value={data.diasDescanso}
-                onChange={(value) => updateField('diasDescanso', value)}
+                onChange={(value) => updateField("diasDescanso", value)}
                 placeholder="8"
               />
             </div>
@@ -181,17 +234,17 @@ const DSRCalculator = () => {
           <Separator />
 
           <div className="flex gap-3 flex-wrap">
-            <Button 
+            <Button
               onClick={calculateDSR}
-              disabled={!isValid}
+              disabled={loading || !isValid}
               className="flex-1 min-w-[120px]"
             >
               <Calculator className="mr-2 h-4 w-4" />
               Calcular DSR
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={clearForm}
               className="flex-1 min-w-[120px]"
             >
@@ -213,7 +266,9 @@ const DSRCalculator = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-1">Valor da hora</p>
-              <p className="text-lg font-semibold">{formatCurrency(result.valorHora)}</p>
+              <p className="text-lg font-semibold">
+                {formatCurrency(result.valorHora)}
+              </p>
             </CardContent>
           </Card>
 
@@ -227,11 +282,17 @@ const DSRCalculator = () => {
             <CardContent className="space-y-2">
               <div>
                 <p className="text-sm text-muted-foreground">Valor hora extra</p>
-                <p className="font-medium">{formatCurrency(result.valorHoraExtra)}</p>
+                <p className="font-medium">
+                  {formatCurrency(result.valorHoraExtra)}
+                </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total horas extras</p>
-                <p className="text-lg font-semibold">{formatCurrency(result.valorHorasExtras)}</p>
+                <p className="text-sm text-muted-foreground">
+                  Total horas extras
+                </p>
+                <p className="text-lg font-semibold">
+                  {formatCurrency(result.valorHorasExtras)}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -244,8 +305,12 @@ const DSRCalculator = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-1">DSR sobre horas extras</p>
-              <p className="text-xl font-bold text-primary">{formatCurrency(result.dsr)}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                DSR sobre horas extras
+              </p>
+              <p className="text-xl font-bold text-primary">
+                {formatCurrency(result.dsr)}
+              </p>
             </CardContent>
           </Card>
 
@@ -257,8 +322,12 @@ const DSRCalculator = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-1">Horas extras + DSR</p>
-              <p className="text-xl font-bold text-green-700 dark:text-green-400">{formatCurrency(result.total)}</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                Horas extras + DSR
+              </p>
+              <p className="text-xl font-bold text-green-700 dark:text-green-400">
+                {formatCurrency(result.total)}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -280,27 +349,31 @@ const DSRCalculator = () => {
                 <p className="text-sm text-muted-foreground">Salário ÷ jornada mensal</p>
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
                 2
               </div>
               <div>
                 <p className="font-medium">Valor hora extra</p>
-                <p className="text-sm text-muted-foreground">Valor hora × (1 + adicional%)</p>
+                <p className="text-sm text-muted-foreground">
+                  Valor hora × (1 + adicional%)
+                </p>
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
                 3
               </div>
               <div>
                 <p className="font-medium">DSR sobre horas extras</p>
-                <p className="text-sm text-muted-foreground">(Valor horas extras ÷ dias trabalhados) × dias descanso</p>
+                <p className="text-sm text-muted-foreground">
+                  (Valor horas extras ÷ dias trabalhados) × dias descanso
+                </p>
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
                 4

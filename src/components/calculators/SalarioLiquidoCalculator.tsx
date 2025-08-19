@@ -8,8 +8,6 @@ import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync, calcularIRRFSync } from "@/lib/tabelas";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
-import UsageBanner from "@/components/UsageBanner";
-import { goPro } from "@/utils/proRedirect";
 import { ensureCanCalculate } from "@/utils/usageGuard";
 import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
@@ -17,7 +15,7 @@ const SalarioLiquidoCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ctx = useProAndUsage();
-  const { isPro, isLogged, remaining, canUse } = ctx;
+  const { isPro, canUse } = ctx;
 
   const [salarioBruto, setSalarioBruto] = useState<number | undefined>();
   const [dependentes, setDependentes] = useState<number | undefined>(0);
@@ -29,11 +27,12 @@ const SalarioLiquidoCalculator = () => {
   const calcular = async () => {
     if (!salarioBruto || salarioBruto <= 0) return;
 
-    const ok = await ensureCanCalculate({ 
-      ...ctx, 
-      navigate, 
-      currentPath: location.pathname, 
-      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    const ok = await ensureCanCalculate({
+      ...ctx,
+      navigate,
+      currentPath: location.pathname,
+      focusUsage: () =>
+        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
     });
     if (!ok) return;
 
@@ -41,24 +40,23 @@ const SalarioLiquidoCalculator = () => {
     const pensaoValidada = Math.max(0, pensaoAlimenticia || 0);
     const custoVT = Math.max(0, custoValeTransporte || 0);
 
-    // Cálculo INSS
+    // INSS
     const inss = calcularINSSSync(salarioBruto);
-    
-    // Base para IRRF = salário bruto - INSS
+
+    // Base IRRF = bruto - INSS
     const baseIRRF = salarioBruto - inss.valor;
-    
-    // Cálculo IRRF
+
+    // IRRF
     const irrf = calcularIRRFSync(baseIRRF, dependentesValidados, pensaoValidada);
-    
-    // Vale-transporte (máximo 6% do salário)
+
+    // Vale-transporte (máx. 6% do salário bruto)
     const maxDescontoVT = salarioBruto * 0.06;
     const descontoVT = Math.min(maxDescontoVT, custoVT);
-    
+
     // Salário líquido
     const totalDescontos = inss.valor + irrf.valor + descontoVT;
     const salarioLiquido = salarioBruto - totalDescontos;
 
-    // Increment usage count for non-PRO users
     await incrementCalcIfNeeded(isPro);
 
     const result = {
@@ -70,7 +68,7 @@ const SalarioLiquidoCalculator = () => {
       descontoVT: formatBRL(descontoVT),
       totalDescontos: formatBRL(totalDescontos),
       salarioLiquido: formatBRL(salarioLiquido),
-      percentualLiquido: formatPercent(salarioLiquido / salarioBruto)
+      percentualLiquido: formatPercent(salarioLiquido / salarioBruto),
     };
 
     setResultado(result);
@@ -147,21 +145,10 @@ const SalarioLiquidoCalculator = () => {
             </div>
           </div>
 
-          <UsageBanner 
-            remaining={remaining} 
-            isPro={isPro} 
-            isLogged={isLogged} 
-            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
-          />
-
           <div className="flex gap-2">
-            <Button
-              onClick={calcular}
-              disabled={!salarioBruto || salarioBruto <= 0 || !canUse}
-              className="flex-1"
-            >
+            <Button onClick={calcular} disabled={!salarioBruto || salarioBruto <= 0 || !canUse} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? 'Limite atingido' : 'Calcular Salário Líquido'}
+              {!canUse ? "Limite atingido" : "Calcular Salário Líquido"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -181,12 +168,8 @@ const SalarioLiquidoCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-destructive">
-                  {resultado.inssValor}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Alíquota efetiva: {resultado.inssAliquota}
-                </p>
+                <div className="text-xl font-bold text-destructive">{resultado.inssValor}</div>
+                <p className="text-sm text-muted-foreground">Alíquota efetiva: {resultado.inssAliquota}</p>
               </CardContent>
             </Card>
 
@@ -198,12 +181,8 @@ const SalarioLiquidoCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-destructive">
-                  {resultado.irrfValor}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Alíquota efetiva: {resultado.irrfAliquota}
-                </p>
+                <div className="text-xl font-bold text-destructive">{resultado.irrfValor}</div>
+                <p className="text-sm text-muted-foreground">Alíquota efetiva: {resultado.irrfAliquota}</p>
               </CardContent>
             </Card>
 
@@ -215,12 +194,8 @@ const SalarioLiquidoCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-destructive">
-                  {resultado.descontoVT}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Máximo 6% do salário
-                </p>
+                <div className="text-xl font-bold text-destructive">{resultado.descontoVT}</div>
+                <p className="text-sm text-muted-foreground">Máximo 6% do salário</p>
               </CardContent>
             </Card>
           </div>
@@ -235,12 +210,8 @@ const SalarioLiquidoCalculator = () => {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-2">
-                    {resultado.salarioLiquido}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {resultado.percentualLiquido} do salário bruto
-                  </p>
+                  <div className="text-3xl font-bold text-primary mb-2">{resultado.salarioLiquido}</div>
+                  <p className="text-sm text-muted-foreground">{resultado.percentualLiquido} do salário bruto</p>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -268,28 +239,36 @@ const SalarioLiquidoCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
                   <div>
                     <p className="font-medium">INSS (Previdência Social)</p>
                     <p className="text-sm text-muted-foreground">Cálculo progressivo por faixas de contribuição</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium">IRRF (Imposto de Renda)</p>
                     <p className="text-sm text-muted-foreground">Calculado sobre (Salário - INSS - Dependentes - Pensão)</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium">Vale-Transporte</p>
                     <p className="text-sm text-muted-foreground">Desconto limitado a 6% do salário bruto</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">4</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    4
+                  </div>
                   <div>
                     <p className="font-medium">Salário Líquido</p>
                     <p className="text-sm text-muted-foreground">Salário bruto menos todos os descontos obrigatórios</p>

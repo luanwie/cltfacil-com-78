@@ -7,31 +7,63 @@ import { Switch } from "@/components/ui/switch";
 import { Calculator, RotateCcw, DollarSign, AlertTriangle } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import UsageBanner from "@/components/UsageBanner";
+import { goPro } from "@/utils/proRedirect";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+
+type Resultado = {
+  salarioBase: string;
+  adicional: string;
+  percentualAdicional: string;
+  salarioTotal: string;
+  aumentoPercentual: string;
+  elegivel: boolean;
+};
+
 const PericulosidadeCalculator = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, isLogged, remaining, canUse } = ctx;
+
   const [salario, setSalario] = useState<number | undefined>();
   const [elegivel, setElegivel] = useState<boolean>(true);
+  const [resultado, setResultado] = useState<Resultado | null>(null);
 
-  const calcular = () => {
-    if (!salario || salario <= 0) return null;
+  const calcular = async () => {
+    if (!salario || salario <= 0) return;
 
-    const adicional = elegivel ? salario * 0.30 : 0;
+    const ok = await ensureCanCalculate({
+      ...ctx,
+      navigate,
+      currentPath: location.pathname,
+      focusUsage: () =>
+        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
+    });
+    if (!ok) return;
+
+    const adicional = elegivel ? salario * 0.3 : 0;
     const salarioTotal = salario + adicional;
-    
-    return {
+
+    await incrementCalcIfNeeded(isPro);
+
+    setResultado({
       salarioBase: formatBRL(salario),
       adicional: formatBRL(adicional),
-      percentualAdicional: formatPercent(0.30),
+      percentualAdicional: formatPercent(0.3),
       salarioTotal: formatBRL(salarioTotal),
-      aumentoPercentual: elegivel ? formatPercent(0.30) : formatPercent(0),
-      elegivel
-    };
+      aumentoPercentual: elegivel ? formatPercent(0.3) : formatPercent(0),
+      elegivel,
+    });
   };
-
-  const resultado = calcular();
 
   const limpar = () => {
     setSalario(undefined);
     setElegivel(true);
+    setResultado(null);
   };
 
   return (
@@ -61,11 +93,7 @@ const PericulosidadeCalculator = () => {
             <div className="space-y-2">
               <Label htmlFor="elegivel">Elegível para periculosidade?</Label>
               <div className="flex items-center space-x-2">
-                <Switch
-                  id="elegivel"
-                  checked={elegivel}
-                  onCheckedChange={setElegivel}
-                />
+                <Switch id="elegivel" checked={elegivel} onCheckedChange={setElegivel} />
                 <Label htmlFor="elegivel" className="text-sm">
                   {elegivel ? "Sim, trabalha em atividade perigosa" : "Não elegível"}
                 </Label>
@@ -76,14 +104,20 @@ const PericulosidadeCalculator = () => {
             </div>
           </div>
 
+          {/* Banner padronizado: contador global / CTA PRO */}
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={remaining}
+              isPro={isPro}
+              isLogged={isLogged}
+              onGoPro={() => goPro(navigate, isLogged, location.pathname)}
+            />
+          </div>
+
           <div className="flex gap-2">
-            <Button
-              onClick={() => {}}
-              disabled={!salario || salario <= 0}
-              className="flex-1"
-            >
+            <Button onClick={calcular} disabled={!salario || salario <= 0 || !canUse} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular Periculosidade
+              {!canUse ? "Limite atingido" : "Calcular Periculosidade"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -103,12 +137,8 @@ const PericulosidadeCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {resultado.salarioBase}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Valor contratual
-                </p>
+                <div className="text-2xl font-bold">{resultado.salarioBase}</div>
+                <p className="text-sm text-muted-foreground">Valor contratual</p>
               </CardContent>
             </Card>
 
@@ -120,7 +150,11 @@ const PericulosidadeCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${resultado.elegivel ? 'text-primary' : 'text-muted-foreground'}`}>
+                <div
+                  className={`text-2xl font-bold ${
+                    resultado.elegivel ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
                   {resultado.adicional}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -140,9 +174,7 @@ const PericulosidadeCalculator = () => {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-2">
-                    {resultado.salarioTotal}
-                  </div>
+                  <div className="text-3xl font-bold text-primary mb-2">{resultado.salarioTotal}</div>
                   <p className="text-sm text-muted-foreground">
                     {resultado.elegivel ? `Aumento de ${resultado.aumentoPercentual}` : "Sem adicional"}
                   </p>
@@ -175,26 +207,36 @@ const PericulosidadeCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
                   <div>
                     <p className="font-medium">Verificação de Elegibilidade</p>
                     <p className="text-sm text-muted-foreground">Trabalho em atividade perigosa conforme NR-16</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium">Cálculo do Adicional</p>
                     <p className="text-sm text-muted-foreground">
-                      {resultado.elegivel ? `30% × ${resultado.salarioBase} = ${resultado.adicional}` : "Não aplicável para esta atividade"}
+                      {resultado.elegivel
+                        ? `30% × ${resultado.salarioBase} = ${resultado.adicional}`
+                        : "Não aplicável para esta atividade"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium">Integração Salarial</p>
-                    <p className="text-sm text-muted-foreground">Adicional integra o salário para todos os demais cálculos trabalhistas</p>
+                    <p className="text-sm text-muted-foreground">
+                      Adicional integra o salário para todos os demais cálculos trabalhistas
+                    </p>
                   </div>
                 </div>
               </div>
