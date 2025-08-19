@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://clt-facil-calculadoras.lovable.app/sitemap.xml
+
+# Crawl-delay for bots (optional)
+Crawl-delay: 1

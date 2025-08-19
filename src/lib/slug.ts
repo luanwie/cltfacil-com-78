@@ -1,0 +1,1 @@
+export const slugToTitle = (s: string) => s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());

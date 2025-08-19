@@ -1,0 +1,32 @@
+{
+  "ano": 2024,
+  "faixas": [
+    {
+      "ate": 2112.00,
+      "aliquota": 0,
+      "deducao": 0
+    },
+    {
+      "ate": 2826.65,
+      "aliquota": 0.075,
+      "deducao": 158.40
+    },
+    {
+      "ate": 3751.05,
+      "aliquota": 0.15,
+      "deducao": 370.40
+    },
+    {
+      "ate": 4664.68,
+      "aliquota": 0.225,
+      "deducao": 651.73
+    },
+    {
+      "ate": 999999999,
+      "aliquota": 0.275,
+      "deducao": 884.96
+    }
+  ],
+  "deducaoPorDependente": 189.59,
+  "limiteDependentes": 999
+}

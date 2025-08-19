@@ -1,0 +1,27 @@
+{
+  "ano": 2024,
+  "faixas": [
+    {
+      "ate": 1320.00,
+      "aliquota": 0.075,
+      "deducao": 0
+    },
+    {
+      "ate": 2571.29,
+      "aliquota": 0.09,
+      "deducao": 19.80
+    },
+    {
+      "ate": 3856.94,
+      "aliquota": 0.12,
+      "deducao": 96.94
+    },
+    {
+      "ate": 7507.49,
+      "aliquota": 0.14,
+      "deducao": 174.08
+    }
+  ],
+  "teto": 7507.49,
+  "salarioMinimo": 1320.00
+}
