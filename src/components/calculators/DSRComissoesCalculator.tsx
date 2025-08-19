@@ -1,44 +1,98 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Calendar } from "lucide-react";
 import { formatBRL } from "@/lib/currency";
+import { useToast } from "@/hooks/use-toast";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+
+type Resultado = {
+  comissoes: string;
+  diasTrabalhados: number;
+  diasDescanso: number;
+  mediaDiaria: string;
+  valorDSR: string;
+  totalComDSR: string;
+  percentualDSR: string;
+};
 
 const DSRComissoesCalculator = () => {
+  const { toast } = useToast();
+  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
+
   const [comissoes, setComissoes] = useState<number | undefined>();
   const [diasTrabalhados, setDiasTrabalhados] = useState<number | undefined>(22);
   const [diasDescanso, setDiasDescanso] = useState<number | undefined>(8);
 
-  const calcular = () => {
+  const [resultado, setResultado] = useState<Resultado | null>(null);
+  const countingRef = useRef(false); // evita descontar 2x no mesmo clique
+
+  function calcularInterno(): Resultado | null {
     if (!comissoes || comissoes <= 0 || !diasTrabalhados || diasTrabalhados <= 0) return null;
 
     const diasTrabalhadosValidados = Math.max(1, diasTrabalhados);
     const diasDescansoValidados = Math.max(0, diasDescanso || 0);
-    
-    const mediaDiaria = comissoes / diasTrabalhadosValidados;
-    const valorDSR = mediaDiaria * diasDescansoValidados;
-    const totalComDSR = comissoes + valorDSR;
-    
+
+    const mediaDiariaNum = comissoes / diasTrabalhadosValidados;
+    const valorDSRNum = mediaDiariaNum * diasDescansoValidados;
+    const totalComDSRNum = comissoes + valorDSRNum;
+
     return {
       comissoes: formatBRL(comissoes),
       diasTrabalhados: diasTrabalhadosValidados,
       diasDescanso: diasDescansoValidados,
-      mediaDiaria: formatBRL(mediaDiaria),
-      valorDSR: formatBRL(valorDSR),
-      totalComDSR: formatBRL(totalComDSR),
-      percentualDSR: ((valorDSR / comissoes) * 100).toFixed(1)
+      mediaDiaria: formatBRL(mediaDiariaNum),
+      valorDSR: formatBRL(valorDSRNum),
+      totalComDSR: formatBRL(totalComDSRNum),
+      percentualDSR: ((valorDSRNum / comissoes) * 100).toFixed(1),
     };
-  };
+  }
 
-  const resultado = calcular();
+  async function handleCalcular() {
+    if (loading) return;
 
-  const limpar = () => {
+    const freeLeft = typeof remaining === "number" ? remaining : 0;
+    if (!isPro && freeLeft <= 0) {
+      toast({
+        title: "Limite atingido",
+        description: "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const res = calcularInterno();
+    if (!res) {
+      toast({
+        title: "Preencha os campos corretamente",
+        description: "Informe comissões e dias trabalhados válidos.",
+      });
+      return;
+    }
+
+    setResultado(res);
+
+    // desconta 1 do global (somente não-PRO) após cálculo bem-sucedido
+    if (!isPro && !countingRef.current) {
+      countingRef.current = true;
+      try {
+        await (incrementCount?.() ?? Promise.resolve());
+      } finally {
+        setTimeout(() => (countingRef.current = false), 300);
+      }
+    }
+  }
+
+  function limpar() {
     setComissoes(undefined);
     setDiasTrabalhados(22);
     setDiasDescanso(8);
-  };
+    setResultado(null);
+  }
+
+  const botaoDisabled = loading || !comissoes || comissoes <= 0 || !diasTrabalhados || diasTrabalhados <= 0;
 
   return (
     <div className="w-full space-y-6">
@@ -92,11 +146,7 @@ const DSRComissoesCalculator = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => {}}
-              disabled={!comissoes || comissoes <= 0 || !diasTrabalhados || diasTrabalhados <= 0}
-              className="flex-1"
-            >
+            <Button onClick={handleCalcular} disabled={botaoDisabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
               Calcular DSR
             </Button>
@@ -118,12 +168,8 @@ const DSRComissoesCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {resultado.mediaDiaria}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Por dia trabalhado
-                </p>
+                <div className="text-2xl font-bold">{resultado.mediaDiaria}</div>
+                <p className="text-sm text-muted-foreground">Por dia trabalhado</p>
               </CardContent>
             </Card>
 
@@ -135,12 +181,8 @@ const DSRComissoesCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  {resultado.valorDSR}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  +{resultado.percentualDSR}% das comissões
-                </p>
+                <div className="text-2xl font-bold text-primary">{resultado.valorDSR}</div>
+                <p className="text-sm text-muted-foreground">+{resultado.percentualDSR}% das comissões</p>
               </CardContent>
             </Card>
           </div>
@@ -181,21 +223,27 @@ const DSRComissoesCalculator = () => {
                   <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
                   <div>
                     <p className="font-medium">Média Diária</p>
-                    <p className="text-sm text-muted-foreground">Comissões ÷ dias trabalhados = {resultado.mediaDiaria}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Comissões ÷ dias trabalhados = {resultado.mediaDiaria}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
                   <div>
                     <p className="font-medium">DSR Proporcional</p>
-                    <p className="text-sm text-muted-foreground">Média diária × dias de descanso = {resultado.valorDSR}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Média diária × dias de descanso = {resultado.valorDSR}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
                   <div>
                     <p className="font-medium">Total Final</p>
-                    <p className="text-sm text-muted-foreground">Comissões + DSR = {resultado.totalComDSR}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Comissões + DSR = {resultado.totalComDSR}
+                    </p>
                   </div>
                 </div>
               </div>

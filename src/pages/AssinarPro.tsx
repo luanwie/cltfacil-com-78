@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,41 +9,52 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const AssinarPro = () => {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [priceLabel, setPriceLabel] = useState("R$ 19,90/mês"); // fallback
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
+    let mounted = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("get-price");
+        if (!mounted) return;
+        if (error) {
+          console.warn("get-price error:", error);
+          return; // mantém fallback
+        }
+        if (data?.label) setPriceLabel(data.label);
+      } catch (e) {
+        console.warn("get-price failed:", e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const goLogin = () => navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
 
   const handleSubscribe = async () => {
     if (!user) {
-      navigate('/login');
+      goLogin();
       return;
     }
-
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('checkout');
-      
+      const { data, error } = await supabase.functions.invoke("checkout");
       if (error) {
-        console.error('Checkout error:', error);
-        toast.error('Erro ao criar checkout: ' + error.message);
+        console.error("Checkout error:", error);
+        toast.error("Erro ao criar checkout: " + error.message);
         return;
       }
-
       if (data?.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
+        window.open(data.url, "_blank");
       } else {
-        toast.error('URL de checkout não encontrada');
+        toast.error("URL de checkout não encontrada");
       }
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-      toast.error('Erro ao processar assinatura');
+    } catch (err) {
+      console.error("Error creating checkout:", err);
+      toast.error("Erro ao processar assinatura");
     } finally {
       setLoading(false);
     }
@@ -73,16 +84,24 @@ const AssinarPro = () => {
           </p>
         </div>
 
+        {!user && (
+          <Card className="mb-8 border-amber-300">
+            <CardHeader>
+              <CardTitle>Faça login para assinar</CardTitle>
+              <CardDescription>Você precisa entrar para concluir a assinatura PRO.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={goLogin}>Ir para o login</Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid md:grid-cols-2 gap-8">
           {/* Plano Gratuito */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Plano Gratuito
-              </CardTitle>
-              <CardDescription>
-                Ideal para uso ocasional
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2">Plano Gratuito</CardTitle>
+              <CardDescription>Ideal para uso ocasional</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-2xl font-bold">R$ 0</div>
@@ -101,41 +120,31 @@ const AssinarPro = () => {
 
           {/* Plano PRO */}
           <Card className="border-primary relative">
-            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-              <Badge className="bg-primary text-primary-foreground">
-                Mais Popular
-              </Badge>
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+              <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
                 Plano PRO
               </CardTitle>
-              <CardDescription>
-                Para profissionais e empresas
-              </CardDescription>
+              <CardDescription>Para profissionais e empresas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-3xl font-bold text-primary">
-                R$ 29,90
-                <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                {priceLabel}
               </div>
-              
+
               <ul className="space-y-3">
-                {benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-2">
+                {benefits.map((benefit, i) => (
+                  <li key={i} className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-primary" />
                     <span>{benefit}</span>
                   </li>
                 ))}
               </ul>
 
-              <Button 
-                onClick={handleSubscribe} 
-                disabled={loading}
-                className="w-full"
-                size="lg"
-              >
+              <Button onClick={handleSubscribe} disabled={loading} className="w-full" size="lg">
                 {loading ? "Processando..." : "Tornar PRO"}
               </Button>
             </CardContent>

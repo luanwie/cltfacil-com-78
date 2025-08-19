@@ -6,12 +6,22 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Percent } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularIRRFSync } from "@/lib/tabelas";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { ensureCanCalculate } from "@/utils/usageGuard";
 import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+
+type Resultado = {
+  basePosINSS: string;
+  totalDeducoes: string;
+  baseCalculoFinal: string;
+  valorIRRF: string;
+  aliquotaEfetiva: string;
+  valorLiquido: string;
+};
 
 const IRRFCalculator = () => {
   const navigate = useNavigate();
@@ -22,36 +32,35 @@ const IRRFCalculator = () => {
   const [basePosINSS, setBasePosINSS] = useState<number | undefined>();
   const [dependentes, setDependentes] = useState<number | undefined>(0);
   const [pensao, setPensao] = useState<number | undefined>(0);
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<Resultado | null>(null);
 
   const calcular = async () => {
     if (!basePosINSS || basePosINSS <= 0) return;
 
-    const ok = await ensureCanCalculate({ 
-      ...ctx, 
-      navigate, 
-      currentPath: location.pathname, 
-      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
+    const ok = await ensureCanCalculate({
+      ...ctx,
+      navigate,
+      currentPath: location.pathname,
+      focusUsage: () =>
+        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
     });
     if (!ok) return;
 
     const dependentesValidados = Math.max(0, dependentes || 0);
     const pensaoValidada = Math.max(0, pensao || 0);
-    
-    const calculoIRRF = calcularIRRFSync(basePosINSS, dependentesValidados, pensaoValidada);
-    
-    await incrementCalcIfNeeded(isPro);
-    
-    const result = {
-      basePosINSS: formatBRL(basePosINSS),
-      totalDeducoes: formatBRL(calculoIRRF.totalDeducoes),
-      baseCalculoFinal: formatBRL(calculoIRRF.baseCalculoFinal),
-      valorIRRF: formatBRL(calculoIRRF.valor),
-      aliquotaEfetiva: formatPercent(calculoIRRF.aliquotaEfetiva),
-      valorLiquido: formatBRL(basePosINSS - calculoIRRF.valor)
-    };
 
-    setResultado(result);
+    const calc = calcularIRRFSync(basePosINSS, dependentesValidados, pensaoValidada);
+
+    await incrementCalcIfNeeded(isPro);
+
+    setResultado({
+      basePosINSS: formatBRL(basePosINSS),
+      totalDeducoes: formatBRL(calc.totalDeducoes),
+      baseCalculoFinal: formatBRL(calc.baseCalculoFinal),
+      valorIRRF: formatBRL(calc.valor),
+      aliquotaEfetiva: formatPercent(calc.aliquotaEfetiva),
+      valorLiquido: formatBRL(basePosINSS - calc.valor),
+    });
   };
 
   const limpar = () => {
@@ -70,6 +79,7 @@ const IRRFCalculator = () => {
             Cálculo do IRRF
           </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -112,12 +122,15 @@ const IRRFCalculator = () => {
             </div>
           </div>
 
-          <UsageBanner 
-            remaining={remaining} 
-            isPro={isPro} 
-            isLogged={isLogged} 
-            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
-          />
+          {/* Banner padronizado com contador global/CTA */}
+          <div id="usage-banner">
+            <UsageBanner
+              remaining={remaining}
+              isPro={isPro}
+              isLogged={isLogged}
+              onGoPro={() => goPro(navigate, isLogged, location.pathname)}
+            />
+          </div>
 
           <div className="flex gap-2">
             <Button
@@ -126,7 +139,7 @@ const IRRFCalculator = () => {
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? 'Limite atingido' : 'Calcular IRRF'}
+              {!canUse ? "Limite atingido" : "Calcular IRRF"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -163,12 +176,8 @@ const IRRFCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">
-                  {resultado.baseCalculoFinal}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Para cálculo do IR
-                </p>
+                <div className="text-xl font-bold">{resultado.baseCalculoFinal}</div>
+                <p className="text-sm text-muted-foreground">Para cálculo do IR</p>
               </CardContent>
             </Card>
 
@@ -223,24 +232,36 @@ const IRRFCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
                   <div>
                     <p className="font-medium">Deduções Aplicáveis</p>
-                    <p className="text-sm text-muted-foreground">Dependentes (R$ 189,59 cada) + pensão alimentícia</p>
+                    <p className="text-sm text-muted-foreground">
+                      Dependentes (R$ 189,59 cada) + pensão alimentícia
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium">Base Tributável</p>
-                    <p className="text-sm text-muted-foreground">Valor após INSS menos todas as deduções</p>
+                    <p className="text-sm text-muted-foreground">
+                      Valor após INSS menos todas as deduções
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium">Tabela Progressiva</p>
-                    <p className="text-sm text-muted-foreground">Aplicação das alíquotas por faixas de renda</p>
+                    <p className="text-sm text-muted-foreground">
+                      Aplicação das alíquotas por faixas de renda
+                    </p>
                   </div>
                 </div>
               </div>

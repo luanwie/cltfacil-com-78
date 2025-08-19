@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Calculator, RotateCcw, DollarSign, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +6,30 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import Notice from "@/components/ui/notice";
 import { formatBRL, formatPercent } from "@/lib/currency";
+import { useToast } from "@/hooks/use-toast";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+
+type Resultado = {
+  mesesValidos: number;
+  avos: number;
+  avosFracao: string;
+  avosPercentual: string;
+  baseCalculo: string;
+  totalBruto: string;
+  primeiraParcela: string;
+  segundaParcela: string;
+};
 
 const DecimoTerceiroCalculator = () => {
+  const { toast } = useToast();
+  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
+
   const [salarioBase, setSalarioBase] = useState<number | undefined>();
   const [mesesTrabalhados, setMesesTrabalhados] = useState<number | undefined>();
   const [mediaVariaveis, setMediaVariaveis] = useState<number | undefined>();
+
+  const [resultado, setResultado] = useState<Resultado | null>(null);
+  const countingRef = useRef(false); // evita descontar 2x no mesmo clique
 
   const handleMesesChange = (value: number | undefined) => {
     if (value !== undefined) {
@@ -21,12 +40,12 @@ const DecimoTerceiroCalculator = () => {
     }
   };
 
-  const calcularDecimoTerceiro = () => {
+  function calcularInterno(): Resultado | null {
     if (!salarioBase || salarioBase <= 0) return null;
 
-    const mesesValidos = Math.trunc(Math.min(12, Math.max(0, mesesTrabalhados || 0)));
+    const mesesValidos = Math.trunc(Math.min(12, Math.max(0, mesesTrabalhados ?? 0)));
     const avos = mesesValidos / 12;
-    const base = salarioBase + (mediaVariaveis || 0);
+    const base = (salarioBase ?? 0) + (mediaVariaveis ?? 0);
     const totalBruto = base * avos;
     const primeiraParcela = totalBruto / 2;
     const segundaParcela = totalBruto - primeiraParcela;
@@ -39,17 +58,53 @@ const DecimoTerceiroCalculator = () => {
       baseCalculo: formatBRL(base),
       totalBruto: formatBRL(totalBruto),
       primeiraParcela: formatBRL(primeiraParcela),
-      segundaParcela: formatBRL(segundaParcela)
+      segundaParcela: formatBRL(segundaParcela),
     };
-  };
+  }
 
-  const resultado = calcularDecimoTerceiro();
+  async function handleCalcular() {
+    if (loading) return;
 
-  const limparFormulario = () => {
+    const freeLeft = typeof remaining === "number" ? remaining : 0;
+    if (!isPro && freeLeft <= 0) {
+      toast({
+        title: "Limite atingido",
+        description: "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const res = calcularInterno();
+    if (!res) {
+      toast({
+        title: "Preencha os campos",
+        description: "Informe pelo menos o salário base (e revise os demais campos).",
+      });
+      return;
+    }
+
+    setResultado(res);
+
+    // desconta 1 do global após cálculo bem-sucedido (somente não-PRO)
+    if (!isPro && !countingRef.current) {
+      countingRef.current = true;
+      try {
+        await (incrementCount?.() ?? Promise.resolve());
+      } finally {
+        setTimeout(() => (countingRef.current = false), 300);
+      }
+    }
+  }
+
+  function limparFormulario() {
     setSalarioBase(undefined);
     setMesesTrabalhados(undefined);
     setMediaVariaveis(undefined);
-  };
+    setResultado(null);
+  }
+
+  const botaoDisabled = loading || !salarioBase || salarioBase <= 0;
 
   return (
     <div className="w-full space-y-6">
@@ -62,7 +117,8 @@ const DecimoTerceiroCalculator = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <Notice variant="warning">
-            Este cálculo não inclui descontos de INSS/IRRF. A regra dos 15 dias deve ser considerada ao informar os 'meses trabalhados'.
+            Este cálculo não inclui descontos de INSS/IRRF. A regra dos 15 dias deve ser considerada ao
+            informar os “meses trabalhados”.
           </Notice>
 
           <div className="grid gap-4">
@@ -114,18 +170,11 @@ const DecimoTerceiroCalculator = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => {}} 
-              disabled={!salarioBase || salarioBase <= 0}
-              className="flex-1"
-            >
+            <Button onClick={handleCalcular} disabled={botaoDisabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
               Calcular
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={limparFormulario}
-            >
+            <Button variant="outline" onClick={limparFormulario}>
               <RotateCcw className="w-4 h-4" />
             </Button>
           </div>
@@ -164,12 +213,8 @@ const DecimoTerceiroCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  {resultado.baseCalculo}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Salário + variáveis
-                </p>
+                <div className="text-2xl font-bold text-primary">{resultado.baseCalculo}</div>
+                <p className="text-sm text-muted-foreground">Salário + variáveis</p>
               </CardContent>
             </Card>
           </div>
@@ -182,9 +227,7 @@ const DecimoTerceiroCalculator = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary mb-4">
-                {resultado.totalBruto}
-              </div>
+              <div className="text-3xl font-bold text-primary mb-4">{resultado.totalBruto}</div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="p-3 rounded-lg bg-background border">
                   <div className="text-sm text-muted-foreground">1ª parcela (50%)</div>
@@ -205,9 +248,7 @@ const DecimoTerceiroCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    1
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
                   <div>
                     <p className="font-medium">Cálculo dos avos</p>
                     <p className="text-sm text-muted-foreground">
@@ -215,11 +256,9 @@ const DecimoTerceiroCalculator = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    2
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
                   <div>
                     <p className="font-medium">Base de cálculo</p>
                     <p className="text-sm text-muted-foreground">
@@ -227,11 +266,9 @@ const DecimoTerceiroCalculator = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    3
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
                   <div>
                     <p className="font-medium">13º proporcional</p>
                     <p className="text-sm text-muted-foreground">
@@ -239,24 +276,11 @@ const DecimoTerceiroCalculator = () => {
                     </p>
                   </div>
                 </div>
-                
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    4
-                  </div>
-                  <div>
-                    <p className="font-medium">Divisão em parcelas</p>
-                    <p className="text-sm text-muted-foreground">
-                      1ª parcela: 50% = {resultado.primeiraParcela}<br />
-                      2ª parcela: 50% = {resultado.segundaParcela}
-                    </p>
-                  </div>
-                </div>
               </div>
-              
+
               <div className="mt-4 p-3 bg-accent rounded-lg">
                 <p className="text-sm text-accent-foreground">
-                  <strong>Regra dos 15 dias:</strong> Se o trabalhador exerceu atividade por pelo menos 15 dias no mês, 
+                  <strong>Regra dos 15 dias:</strong> Se o trabalhador exerceu atividade por pelo menos 15 dias no mês,
                   considera-se o mês completo para fins de cálculo do 13º salário.
                 </p>
               </div>

@@ -7,38 +7,75 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calculator, RotateCcw, DollarSign, AlertTriangle } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+
 const InsalubridadeCalculator = () => {
+  // ---- USO/PRO (controle global) ----
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, canUse } = ctx;
+
+  // ---- Form state ----
   const [salario, setSalario] = useState<number | undefined>();
   const [grau, setGrau] = useState<string>("20");
   const [baseCalculo, setBaseCalculo] = useState<string>("minimo");
-  const [salarioMinimo] = useState<number>(1412.00); // 2025
+  const [salarioMinimo] = useState<number>(1412.0); // 2025
 
-  const calcular = () => {
-    if (!salario || salario <= 0) return null;
+  // ---- Resultado ----
+  const [resultado, setResultado] = useState<{
+    salarioBase: string;
+    grauPercentual: string;
+    baseUsada: string;
+    baseCalculoTipo: string;
+    adicional: string;
+    salarioTotal: string;
+    aumentoPercentual: string;
+  } | null>(null);
 
-    const grauPercentual = parseInt(grau) / 100;
-    const baseUsada = baseCalculo === "minimo" ? salarioMinimo : salario;
-    const adicional = baseUsada * grauPercentual;
-    const salarioTotal = salario + adicional;
-    
-    return {
+  const calcular = async () => {
+    if (!salario || salario <= 0) return;
+
+    // Gate de uso: bloqueia quando zerou e CTA PRO
+    const ok = await ensureCanCalculate({
+      ...ctx,
+      navigate,
+      currentPath: location.pathname,
+      focusUsage: () =>
+        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
+    });
+    if (!ok) return;
+
+    const grauPercentualNum = parseInt(grau) / 100;
+    const baseUsadaNum = baseCalculo === "minimo" ? salarioMinimo : salario;
+    const adicionalNum = baseUsadaNum * grauPercentualNum;
+    const salarioTotalNum = salario + adicionalNum;
+
+    // Desconta 1 uso global (se não for PRO)
+    await incrementCalcIfNeeded(isPro);
+
+    setResultado({
       salarioBase: formatBRL(salario),
-      grauPercentual: formatPercent(grauPercentual),
-      baseUsada: formatBRL(baseUsada),
+      grauPercentual: formatPercent(grauPercentualNum),
+      baseUsada: formatBRL(baseUsadaNum),
       baseCalculoTipo: baseCalculo === "minimo" ? "Salário Mínimo" : "Salário Contratual",
-      adicional: formatBRL(adicional),
-      salarioTotal: formatBRL(salarioTotal),
-      aumentoPercentual: formatPercent(adicional / salario)
-    };
+      adicional: formatBRL(adicionalNum),
+      salarioTotal: formatBRL(salarioTotalNum),
+      aumentoPercentual: formatPercent(adicionalNum / salario),
+    });
   };
-
-  const resultado = calcular();
 
   const limpar = () => {
     setSalario(undefined);
     setGrau("20");
     setBaseCalculo("minimo");
+    setResultado(null);
   };
+
+  const canSubmit = !!salario && salario > 0 && canUse;
 
   return (
     <div className="w-full space-y-6">
@@ -96,13 +133,9 @@ const InsalubridadeCalculator = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={() => {}}
-              disabled={!salario || salario <= 0}
-              className="flex-1"
-            >
+            <Button onClick={calcular} disabled={!canSubmit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular Insalubridade
+              {!canUse ? "Limite atingido" : "Calcular Insalubridade"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -122,12 +155,8 @@ const InsalubridadeCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">
-                  {resultado.baseUsada}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {resultado.baseCalculoTipo}
-                </p>
+                <div className="text-xl font-bold">{resultado.baseUsada}</div>
+                <p className="text-sm text-muted-foreground">{resultado.baseCalculoTipo}</p>
               </CardContent>
             </Card>
 
@@ -139,12 +168,8 @@ const InsalubridadeCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-orange-600">
-                  {resultado.grauPercentual}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Conforme NR-15
-                </p>
+                <div className="text-xl font-bold text-orange-600">{resultado.grauPercentual}</div>
+                <p className="text-sm text-muted-foreground">Conforme NR-15</p>
               </CardContent>
             </Card>
 
@@ -156,9 +181,7 @@ const InsalubridadeCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold text-primary">
-                  {resultado.adicional}
-                </div>
+                <div className="text-xl font-bold text-primary">{resultado.adicional}</div>
                 <p className="text-sm text-muted-foreground">
                   {resultado.grauPercentual} da base
                 </p>
@@ -209,24 +232,36 @@ const InsalubridadeCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
                   <div>
                     <p className="font-medium">Definição da Base</p>
-                    <p className="text-sm text-muted-foreground">{resultado.baseCalculoTipo}: {resultado.baseUsada}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {resultado.baseCalculoTipo}: {resultado.baseUsada}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium">Aplicação do Grau</p>
-                    <p className="text-sm text-muted-foreground">{resultado.grauPercentual} × {resultado.baseUsada} = {resultado.adicional}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {resultado.grauPercentual} × {resultado.baseUsada} = {resultado.adicional}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium">Integração Salarial</p>
-                    <p className="text-sm text-muted-foreground">Adicional integra o salário para demais cálculos trabalhistas</p>
+                    <p className="text-sm text-muted-foreground">
+                      Adicional integra o salário para demais cálculos trabalhistas
+                    </p>
                   </div>
                 </div>
               </div>

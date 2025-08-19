@@ -1,74 +1,110 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, Clock, DollarSign } from "lucide-react";
 import { formatBRL } from "@/lib/currency";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
-import UsageBanner from "@/components/UsageBanner";
-import { goPro } from "@/utils/proRedirect";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useToast } from "@/hooks/use-toast";
+
+type Resultado = {
+  salario: string;
+  valorHora: string;
+  horas50Validadas: number;
+  horas100Validadas: number;
+  valorHE50: string;
+  valorHE100: string;
+  totalHorasExtras: string;
+  totalGeral: string;
+  percentualExtra: string;
+};
 
 const HorasExtrasCalculator = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, isLogged, remaining, canUse } = ctx;
+  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
+  const { toast } = useToast();
 
   const [salario, setSalario] = useState<number | undefined>();
   const [jornada, setJornada] = useState<number | undefined>(220);
   const [horas50, setHoras50] = useState<number | undefined>(0);
   const [horas100, setHoras100] = useState<number | undefined>(0);
-  const [resultado, setResultado] = useState<any>(null);
+  const [resultado, setResultado] = useState<Resultado | null>(null);
 
-  const calcular = async () => {
-    if (!salario || salario <= 0) return;
+  const countingRef = useRef(false);
+  const freeLeft = typeof remaining === "number" ? remaining : 0;
+  const canUseNow = isPro || freeLeft > 0;
 
-    const ok = await ensureCanCalculate({ 
-      ...ctx, 
-      navigate, 
-      currentPath: location.pathname, 
-      focusUsage: () => document.getElementById('usage-banner')?.scrollIntoView({behavior:'smooth'}) 
-    });
-    if (!ok) return;
+  const canCalcInputs =
+    !!salario && salario > 0 && !!jornada && jornada > 0 &&
+    (horas50 ?? 0) >= 0 && (horas100 ?? 0) >= 0;
 
-    const jornadaValidada = Math.max(1, jornada || 220);
-    const horas50Validadas = Math.max(0, horas50 || 0);
-    const horas100Validadas = Math.max(0, horas100 || 0);
-    
-    const valorHora = salario / jornadaValidada;
-    const valorHE50 = valorHora * 1.5 * horas50Validadas;
-    const valorHE100 = valorHora * 2 * horas100Validadas;
-    const totalHorasExtras = valorHE50 + valorHE100;
-    const totalGeral = salario + totalHorasExtras;
-    
-    await incrementCalcIfNeeded(isPro);
-    
-    const result = {
-      salario: formatBRL(salario),
+  function calcularInterno(): Resultado | null {
+    if (!canCalcInputs) return null;
+
+    const jornadaValidada = Math.max(1, jornada ?? 220);
+    const h50 = Math.max(0, horas50 ?? 0);
+    const h100 = Math.max(0, horas100 ?? 0);
+
+    const valorHora = (salario ?? 0) / jornadaValidada;
+    const valorHE50Num = valorHora * 1.5 * h50;
+    const valorHE100Num = valorHora * 2 * h100;
+    const totalHorasExtrasNum = valorHE50Num + valorHE100Num;
+    const totalGeralNum = (salario ?? 0) + totalHorasExtrasNum;
+
+    return {
+      salario: formatBRL(salario ?? 0),
       valorHora: formatBRL(valorHora),
-      horas50Validadas,
-      horas100Validadas,
-      valorHE50: formatBRL(valorHE50),
-      valorHE100: formatBRL(valorHE100),
-      totalHorasExtras: formatBRL(totalHorasExtras),
-      totalGeral: formatBRL(totalGeral),
-      percentualExtra: ((totalHorasExtras / salario) * 100).toFixed(1)
+      horas50Validadas: h50,
+      horas100Validadas: h100,
+      valorHE50: formatBRL(valorHE50Num),
+      valorHE100: formatBRL(valorHE100Num),
+      totalHorasExtras: formatBRL(totalHorasExtrasNum),
+      totalGeral: formatBRL(totalGeralNum),
+      percentualExtra: ((totalHorasExtrasNum / (salario ?? 1)) * 100).toFixed(1),
     };
+  }
 
-    setResultado(result);
-  };
+  async function handleCalcular() {
+    if (loading) return;
+    if (!canUseNow) {
+      toast({
+        title: "Limite atingido",
+        description: "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const limpar = () => {
+    const r = calcularInterno();
+    if (!r) {
+      toast({
+        title: "Campos inválidos",
+        description: "Preencha salário, jornada e quantidades corretamente.",
+      });
+      return;
+    }
+
+    setResultado(r);
+
+    if (!isPro && !countingRef.current) {
+      countingRef.current = true;
+      try {
+        await (incrementCount?.() ?? Promise.resolve());
+      } finally {
+        setTimeout(() => (countingRef.current = false), 300);
+      }
+    }
+  }
+
+  function limpar() {
     setSalario(undefined);
     setJornada(220);
     setHoras50(0);
     setHoras100(0);
     setResultado(null);
-  };
+  }
+
+  const botaoDisabled = loading || !canCalcInputs || (!isPro && freeLeft === 0);
 
   return (
     <div className="w-full space-y-6">
@@ -79,7 +115,7 @@ const HorasExtrasCalculator = () => {
             Cálculo de Horas Extras
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="salario">Salário mensal (R$)</Label>
@@ -130,21 +166,14 @@ const HorasExtrasCalculator = () => {
             </div>
           </div>
 
-          <UsageBanner 
-            remaining={remaining} 
-            isPro={isPro} 
-            isLogged={isLogged} 
-            onGoPro={() => goPro(navigate, isLogged, location.pathname)} 
-          />
-
           <div className="flex gap-2">
-            <Button
-              onClick={calcular}
-              disabled={!salario || salario <= 0 || !canUse}
-              className="flex-1"
-            >
+            <Button onClick={handleCalcular} disabled={botaoDisabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? 'Limite atingido' : 'Calcular Horas Extras'}
+              {isPro
+                ? "Calcular Horas Extras"
+                : canUseNow
+                ? `Calcular Horas Extras (${freeLeft} restantes)`
+                : "Assine PRO para calcular"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -164,12 +193,8 @@ const HorasExtrasCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {resultado.valorHora}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Hora normal
-                </p>
+                <div className="text-2xl font-bold">{resultado.valorHora}</div>
+                <p className="text-sm text-muted-foreground">Hora normal</p>
               </CardContent>
             </Card>
 
@@ -262,24 +287,36 @@ const HorasExtrasCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
                   <div>
                     <p className="font-medium">Valor da Hora Normal</p>
-                    <p className="text-sm text-muted-foreground">Salário ÷ jornada mensal = {resultado.valorHora}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Salário ÷ jornada mensal = {resultado.valorHora}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium">Horas Extras 50%</p>
-                    <p className="text-sm text-muted-foreground">Valor hora × 1,5 × quantidade = {resultado.valorHE50}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Valor hora × 1,5 × quantidade = {resultado.valorHE50}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium">Horas Extras 100%</p>
-                    <p className="text-sm text-muted-foreground">Valor hora × 2 × quantidade = {resultado.valorHE100}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Valor hora × 2 × quantidade = {resultado.valorHE100}
+                    </p>
                   </div>
                 </div>
               </div>

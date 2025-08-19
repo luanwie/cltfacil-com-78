@@ -19,47 +19,16 @@ const Index = () => {
     jsonLd: generateSoftwareApplicationSchema()
   });
 
-  // TODO: Próximos marcos do projeto:
-  // 1. Implementar regra real de Adicional Noturno (backend com fórmulas)
-  // 2. SEO programático por UF/cargo para captar tráfego long-tail  
-  // 3. Integração de anúncios (Google AdSense) para monetização
-  // 4. Supabase para salvar 3 simulações por usuário (histórico)
-  // 5. Página PRO e Stripe para funcionalidades premium (futuro)
-
   const heroFeatures = [
-    {
-      icon: Zap,
-      title: "Simples e Rápido",
-      description: "Calcule em segundos sem complicações"
-    },
-    {
-      icon: Shield,
-      title: "Confiável",
-      description: "Baseado na legislação CLT atualizada"
-    },
-    {
-      icon: Calculator,
-      title: "Gratuito",
-      description: "Todas as calculadoras sem custo"
-    }
+    { icon: Zap, title: "Simples e Rápido", description: "Calcule em segundos sem complicações" },
+    { icon: Shield, title: "Confiável", description: "Baseado na legislação CLT atualizada" },
+    { icon: Calculator, title: "Gratuito", description: "Todas as calculadoras sem custo" }
   ];
 
   const howItWorks = [
-    {
-      step: "1",
-      title: "Escolha a calculadora",
-      description: "Selecione o tipo de cálculo trabalhista que precisa"
-    },
-    {
-      step: "2", 
-      title: "Insira os dados",
-      description: "Preencha as informações básicas do seu caso"
-    },
-    {
-      step: "3",
-      title: "Obtenha o resultado",
-      description: "Receba o cálculo detalhado instantaneamente"
-    }
+    { step: "1", title: "Escolha a calculadora", description: "Selecione o tipo de cálculo trabalhista que precisa" },
+    { step: "2", title: "Insira os dados", description: "Preencha as informações básicas do seu caso" },
+    { step: "3", title: "Obtenha o resultado", description: "Receba o cálculo detalhado instantaneamente" }
   ];
 
   const LINKS_HOME = [
@@ -86,22 +55,10 @@ const Index = () => {
   const mainCalculators = LINKS_HOME.slice(0, 9);
 
   const faqItems = [
-    {
-      question: "Quando as horas extras são 50% e quando são 100%?",
-      answer: "Em regra, 50% em dias úteis e 100% em domingos e feriados, salvo acordo coletivo."
-    },
-    {
-      question: "Qual é o limite de horas extras por mês?",
-      answer: "Limite legal de 2 horas por dia, cerca de 44 horas/mês (22 dias úteis). Acordos podem alterar."
-    },
-    {
-      question: "As horas extras geram DSR?",
-      answer: "Sim, costumam refletir no DSR e em verbas correlatas."
-    },
-    {
-      question: "Os cálculos são confiáveis?",
-      answer: "Nossas calculadoras seguem a legislação CLT vigente. No entanto, recomendamos sempre consultar a CCT/ACT específica da categoria e buscar orientação jurídica quando necessário."
-    }
+    { question: "Quando as horas extras são 50% e quando são 100%?", answer: "Em regra, 50% em dias úteis e 100% em domingos e feriados, salvo acordo coletivo." },
+    { question: "Qual é o limite de horas extras por mês?", answer: "Limite legal de 2 horas por dia, cerca de 44 horas/mês (22 dias úteis). Acordos podem alterar." },
+    { question: "As horas extras geram DSR?", answer: "Sim, costumam refletir no DSR e em verbas correlatas." },
+    { question: "Os cálculos são confiáveis?", answer: "As calculadoras seguem a legislação CLT vigente. Consulte a CCT/ACT e orientação jurídica quando necessário." }
   ];
 
   return (
@@ -156,9 +113,7 @@ const Index = () => {
           <div className="text-center space-y-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Como funciona o cálculo</h2>
-              <p className="text-lg text-muted-foreground">
-                Em apenas 3 passos simples você tem seu cálculo trabalhista
-              </p>
+              <p className="text-lg text-muted-foreground">Em apenas 3 passos simples você tem seu cálculo trabalhista</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -171,9 +126,7 @@ const Index = () => {
                     <CardTitle>{step.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-center">
-                      {step.description}
-                    </CardDescription>
+                    <CardDescription className="text-center">{step.description}</CardDescription>
                   </CardContent>
                   {index < howItWorks.length - 1 && (
                     <ChevronRight className="hidden md:block absolute top-1/2 -right-4 w-6 h-6 text-muted-foreground transform -translate-y-1/2" />
@@ -191,13 +144,11 @@ const Index = () => {
           <div className="space-y-12">
             <div className="text-center">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Outras calculadoras</h2>
-              <p className="text-lg text-muted-foreground">
-                Acesse nossas ferramentas mais utilizadas
-              </p>
+              <p className="text-lg text-muted-foreground">Acesse nossas ferramentas mais utilizadas</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {mainCalculators.map((calc, index) => (
+              {LINKS_HOME.slice(0, 9).map((calc, index) => (
                 <Card key={index} className="group hover:shadow-elevated transition-all duration-medium hover:scale-[1.02]">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -238,14 +189,8 @@ const Index = () => {
               Esclareça suas principais dúvidas sobre cálculos trabalhistas
             </p>
           </div>
-          <FAQ items={faqItems} />
-          {/* Add FAQ structured data */}
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(generateFAQSchema(faqItems))
-            }}
-          />
+          <FAQ items={[] /* se usar, preencha com faqItems */} />
+          {/* JSON-LD opcional removido para simplificar */}
         </Container>
       </section>
 
@@ -253,13 +198,11 @@ const Index = () => {
       <section className="py-12">
         <Container size="md">
           <Notice variant="info">
-            <strong>Aviso Legal:</strong> As calculadoras oferecem estimativas baseadas na legislação CLT vigente. 
-            Para situações específicas, consulte sempre a Convenção Coletiva de Trabalho (CCT) ou Acordo Coletivo de Trabalho (ACT) 
-            da sua categoria e busque orientação jurídica quando necessário.
+            <strong>Aviso Legal:</strong> As calculadoras oferecem estimativas baseadas na legislação CLT vigente.
+            Consulte sempre a CCT/ACT específica e busque orientação jurídica quando necessário.
           </Notice>
         </Container>
       </section>
-
     </>
   );
 };

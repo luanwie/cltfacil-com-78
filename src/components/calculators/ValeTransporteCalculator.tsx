@@ -5,44 +5,74 @@ import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Bus, Building } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
+import { ensureCanCalculate } from "@/utils/usageGuard";
+import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
 const ValeTransporteCalculator = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const ctx = useProAndUsage();
+  const { isPro, canUse } = ctx;
+
   const [salario, setSalario] = useState<number | undefined>();
   const [precoConducao, setPrecoConducao] = useState<number | undefined>();
   const [viagensPorDia, setViagensPorDia] = useState<number | undefined>(2);
   const [diasUteis, setDiasUteis] = useState<number | undefined>(22);
 
-  const calcular = () => {
-    if (!salario || salario <= 0 || !precoConducao || precoConducao <= 0) return null;
+  const [resultado, setResultado] = useState<null | {
+    salario: string;
+    precoConducao: string;
+    viagensValidadas: number;
+    diasValidados: number;
+    custoVT: string;
+    descontoEmpregado: string;
+    custoEmpresa: string;
+    percentualDesconto: string;
+    limiteDesconto: string;
+  }>(null);
+
+  const calcular = async () => {
+    if (!salario || salario <= 0 || !precoConducao || precoConducao <= 0) return;
+
+    const ok = await ensureCanCalculate({
+      ...ctx,
+      navigate,
+      currentPath: location.pathname,
+      focusUsage: () =>
+        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
+    });
+    if (!ok) return;
 
     const viagensValidadas = Math.max(1, Math.round(viagensPorDia || 2));
     const diasValidados = Math.max(1, Math.round(diasUteis || 22));
-    
-    // Lógica exata conforme especificação
-    const custoVT = precoConducao * viagensValidadas * diasValidados;
-    const descontoEmpregado = Math.min(0.06 * salario, custoVT);
+
+    const custoVT = (precoConducao as number) * viagensValidadas * diasValidados;
+    const descontoEmpregado = Math.min(0.06 * (salario as number), custoVT);
     const custoEmpresa = Math.max(0, custoVT - descontoEmpregado);
-    
-    return {
-      salario: formatBRL(salario),
-      precoConducao: formatBRL(precoConducao),
+
+    await incrementCalcIfNeeded(isPro);
+
+    setResultado({
+      salario: formatBRL(salario as number),
+      precoConducao: formatBRL(precoConducao as number),
       viagensValidadas,
       diasValidados,
       custoVT: formatBRL(custoVT),
       descontoEmpregado: formatBRL(descontoEmpregado),
       custoEmpresa: formatBRL(custoEmpresa),
-      percentualDesconto: formatPercent(descontoEmpregado / salario),
-      limiteDesconto: formatBRL(salario * 0.06)
-    };
+      percentualDesconto: formatPercent(descontoEmpregado / (salario as number)),
+      limiteDesconto: formatBRL((salario as number) * 0.06),
+    });
   };
-
-  const resultado = calcular();
 
   const limpar = () => {
     setSalario(undefined);
     setPrecoConducao(undefined);
     setViagensPorDia(2);
     setDiasUteis(22);
+    setResultado(null);
   };
 
   return (
@@ -109,12 +139,12 @@ const ValeTransporteCalculator = () => {
 
           <div className="flex gap-2">
             <Button
-              onClick={() => {}}
-              disabled={!salario || salario <= 0 || !precoConducao || precoConducao <= 0}
+              onClick={calcular}
+              disabled={!salario || salario <= 0 || !precoConducao || precoConducao <= 0 || !canUse}
               className="flex-1"
             >
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular Vale-Transporte
+              {!canUse ? "Limite atingido" : "Calcular Vale-Transporte"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
@@ -134,9 +164,7 @@ const ValeTransporteCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {resultado.custoVT}
-                </div>
+                <div className="text-2xl font-bold">{resultado.custoVT}</div>
                 <p className="text-sm text-muted-foreground">
                   {resultado.viagensValidadas} viagens × {resultado.diasValidados} dias
                 </p>
@@ -151,12 +179,8 @@ const ValeTransporteCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">
-                  {resultado.descontoEmpregado}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {resultado.percentualDesconto} (máx. 6%)
-                </p>
+                <div className="text-2xl font-bold text-destructive">{resultado.descontoEmpregado}</div>
+                <p className="text-sm text-muted-foreground">{resultado.percentualDesconto} (máx. 6%)</p>
               </CardContent>
             </Card>
 
@@ -168,12 +192,8 @@ const ValeTransporteCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  {resultado.custoEmpresa}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Diferença do total
-                </p>
+                <div className="text-2xl font-bold text-primary">{resultado.custoEmpresa}</div>
+                <p className="text-sm text-muted-foreground">Diferença do total</p>
               </CardContent>
             </Card>
           </div>
@@ -223,7 +243,9 @@ const ValeTransporteCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    1
+                  </div>
                   <div>
                     <p className="font-medium">Custo Total</p>
                     <p className="text-sm text-muted-foreground">
@@ -232,7 +254,9 @@ const ValeTransporteCalculator = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    2
+                  </div>
                   <div>
                     <p className="font-medium">Desconto do Empregado</p>
                     <p className="text-sm text-muted-foreground">
@@ -241,7 +265,9 @@ const ValeTransporteCalculator = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                    3
+                  </div>
                   <div>
                     <p className="font-medium">Custo da Empresa</p>
                     <p className="text-sm text-muted-foreground">
