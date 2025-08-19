@@ -5,7 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import Layout from "./components/layout/layout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import AuthRedirect from "./pages/AuthRedirect";
 import Calculadoras from "./pages/Calculadoras";
 import AdicionalNoturno from "./pages/calculadoras/AdicionalNoturno";
 import AdicionalNoturnoCargoUF from "./pages/calculadoras/AdicionalNoturnoCargoUF";
@@ -48,37 +52,138 @@ const App = () => (
           {/* Widget routes - sem layout */}
           <Route path="/widget/adicional-noturno" element={<Widget />} />
           
+          {/* Authentication routes - sem layout */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/auth-redirect" element={<AuthRedirect />} />
+          
           {/* Rotas com layout */}
           <Route path="/*" element={
             <Layout>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/calculadoras" element={<Calculadoras />} />
-                <Route path="/clt/adicional-noturno" element={<AdicionalNoturno />} />
-                <Route path="/clt/adicional-noturno/:cargo/:uf" element={<AdicionalNoturnoCargoUF />} />
-                <Route path="/clt/ferias-proporcionais" element={<FeriasProporcionais />} />
-                <Route path="/clt/dsr" element={<DSR />} />
-                <Route path="/clt/13o-proporcional" element={<DecimoTerceiro />} />
-                <Route path="/clt/banco-de-horas" element={<BancoDeHoras />} />
-                <Route path="/clt/rescisao" element={<Rescisao />} />
+                <Route path="/calculadoras" element={
+                  <ProtectedRoute>
+                    <Calculadoras />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/adicional-noturno" element={
+                  <ProtectedRoute>
+                    <AdicionalNoturno />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/adicional-noturno/:cargo/:uf" element={
+                  <ProtectedRoute>
+                    <AdicionalNoturnoCargoUF />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/ferias-proporcionais" element={
+                  <ProtectedRoute>
+                    <FeriasProporcionais />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/dsr" element={
+                  <ProtectedRoute>
+                    <DSR />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/13o-proporcional" element={
+                  <ProtectedRoute>
+                    <DecimoTerceiro />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/banco-de-horas" element={
+                  <ProtectedRoute>
+                    <BancoDeHoras />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/rescisao" element={
+                  <ProtectedRoute>
+                    <Rescisao />
+                  </ProtectedRoute>
+                } />
                 {/* 12 novas calculadoras */}
-                <Route path="/clt/salario-liquido" element={<SalarioLiquido />} />
-                <Route path="/clt/inss" element={<INSS />} />
-                <Route path="/clt/irrf" element={<IRRF />} />
-                <Route path="/clt/fgts" element={<FGTS />} />
-                <Route path="/clt/horas-extras" element={<HorasExtras />} />
-                <Route path="/clt/dsr-comissoes" element={<DSRComissoes />} />
-                <Route path="/clt/periculosidade" element={<Periculosidade />} />
-                <Route path="/clt/insalubridade" element={<Insalubridade />} />
-                <Route path="/clt/ferias-abono" element={<FeriasAbono />} />
-                <Route path="/clt/ferias-dobro" element={<FeriasDobro />} />
-                <Route path="/clt/aviso-previo" element={<AvisoPrevio />} />
-                <Route path="/clt/vale-transporte" element={<ValeTransporte />} />
+                <Route path="/clt/salario-liquido" element={
+                  <ProtectedRoute>
+                    <SalarioLiquido />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/inss" element={
+                  <ProtectedRoute>
+                    <INSS />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/irrf" element={
+                  <ProtectedRoute>
+                    <IRRF />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/fgts" element={
+                  <ProtectedRoute>
+                    <FGTS />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/horas-extras" element={
+                  <ProtectedRoute>
+                    <HorasExtras />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/dsr-comissoes" element={
+                  <ProtectedRoute>
+                    <DSRComissoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/periculosidade" element={
+                  <ProtectedRoute>
+                    <Periculosidade />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/insalubridade" element={
+                  <ProtectedRoute>
+                    <Insalubridade />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/ferias-abono" element={
+                  <ProtectedRoute>
+                    <FeriasAbono />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/ferias-dobro" element={
+                  <ProtectedRoute>
+                    <FeriasDobro />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/aviso-previo" element={
+                  <ProtectedRoute>
+                    <AvisoPrevio />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clt/vale-transporte" element={
+                  <ProtectedRoute>
+                    <ValeTransporte />
+                  </ProtectedRoute>
+                } />
                 {/* URLs SEO-friendly */}
-                <Route path="/calculadora-rescisao" element={<Rescisao />} />
-                <Route path="/calculadora-horas-extras" element={<HorasExtras />} />
-                <Route path="/calculadora-dsr" element={<DSR />} />
-                <Route path="/calculadora-adicional-noturno" element={<AdicionalNoturno />} />
+                <Route path="/calculadora-rescisao" element={
+                  <ProtectedRoute>
+                    <Rescisao />
+                  </ProtectedRoute>
+                } />
+                <Route path="/calculadora-horas-extras" element={
+                  <ProtectedRoute>
+                    <HorasExtras />
+                  </ProtectedRoute>
+                } />
+                <Route path="/calculadora-dsr" element={
+                  <ProtectedRoute>
+                    <DSR />
+                  </ProtectedRoute>
+                } />
+                <Route path="/calculadora-adicional-noturno" element={
+                  <ProtectedRoute>
+                    <AdicionalNoturno />
+                  </ProtectedRoute>
+                } />
                 <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/contato" element={<Contato />} />

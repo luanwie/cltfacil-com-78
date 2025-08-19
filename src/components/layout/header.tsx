@@ -1,13 +1,17 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Calculator } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Calculator, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, userProfile, signOut } = useAuth();
 
   const navItems = [
     { label: "Sobre", href: "/sobre" },
@@ -15,6 +19,23 @@ const Header = () => {
   ];
 
   const isActive = (href: string) => location.pathname === href;
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      navigate('/login');
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer logout. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
@@ -40,9 +61,37 @@ const Header = () => {
                 {item.label}
               </Link>
             ))}
-            <Button asChild variant="hero" size="sm">
-              <Link to="/calculadoras">Abrir Calculadoras</Link>
-            </Button>
+            
+            {user ? (
+              <div className="flex items-center gap-4">
+                {userProfile && (
+                  <span className="text-sm text-muted-foreground">
+                    Olá, {userProfile.nome}
+                  </span>
+                )}
+                <Button asChild variant="hero" size="sm">
+                  <Link to="/calculadoras">Calculadoras</Link>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleLogout}
+                  className="gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sair
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/login">Entrar</Link>
+                </Button>
+                <Button asChild variant="hero" size="sm">
+                  <Link to="/calculadoras">Abrir Calculadoras</Link>
+                </Button>
+              </div>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -74,11 +123,46 @@ const Header = () => {
                   {item.label}
                 </Link>
               ))}
-              <Button asChild variant="hero" size="sm" className="w-fit">
-                <Link to="/calculadoras" onClick={() => setIsMenuOpen(false)}>
-                  Abrir Calculadoras
-                </Link>
-              </Button>
+              
+              {user ? (
+                <div className="flex flex-col gap-4">
+                  {userProfile && (
+                    <span className="text-sm text-muted-foreground">
+                      Olá, {userProfile.nome}
+                    </span>
+                  )}
+                  <Button asChild variant="hero" size="sm" className="w-fit">
+                    <Link to="/calculadoras" onClick={() => setIsMenuOpen(false)}>
+                      Calculadoras
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-fit gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sair
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <Button asChild variant="ghost" size="sm" className="w-fit">
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                      Entrar
+                    </Link>
+                  </Button>
+                  <Button asChild variant="hero" size="sm" className="w-fit">
+                    <Link to="/calculadoras" onClick={() => setIsMenuOpen(false)}>
+                      Abrir Calculadoras
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </nav>
           </div>
         )}
