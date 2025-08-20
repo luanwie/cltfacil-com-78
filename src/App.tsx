@@ -37,6 +37,7 @@ import Contato from "./pages/Contato";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import NotFound from "./pages/NotFound";
+import MeuPerfil from "./pages/MeuPerfil";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,9 @@ const App = () => (
 
                   {/* 🔓 Assinar PRO – sem ProtectedRoute */}
                   <Route path="/assinar-pro" element={<AssinarPro />} />
+
+                  {/* 🔐 Meu Perfil – com ProtectedRoute */}
+                  <Route path="/meu-perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
 
                   <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />
                   <Route path="/sobre" element={<Sobre />} />

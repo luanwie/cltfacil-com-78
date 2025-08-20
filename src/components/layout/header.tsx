@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Calculator, LogOut, Crown } from "lucide-react";
+import { Menu, X, Calculator, LogOut, Crown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Container from "@/components/ui/container";
@@ -81,6 +81,12 @@ const Header = () => {
                 <Button asChild variant="hero" size="sm">
                   <Link to="/calculadoras">Calculadoras</Link>
                 </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/meu-perfil" className="gap-2">
+                    <User className="w-4 h-4" />
+                    Perfil
+                  </Link>
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="sm"
@@ -151,6 +157,12 @@ const Header = () => {
                   <Button asChild variant="hero" size="sm" className="w-fit">
                     <Link to="/calculadoras" onClick={() => setIsMenuOpen(false)}>
                       Calculadoras
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="w-fit">
+                    <Link to="/meu-perfil" onClick={() => setIsMenuOpen(false)} className="gap-2">
+                      <User className="w-4 h-4" />
+                      Meu Perfil
                     </Link>
                   </Button>
                   <Button 
