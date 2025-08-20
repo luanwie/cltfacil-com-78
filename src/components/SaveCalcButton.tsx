@@ -29,12 +29,9 @@ export default function SaveCalcButton({ calculator, input, result, note, disabl
         return;
       }
 
-      const saved = await saveCalc({ calculator, input, result, note: note ?? null });
-      if (saved) {
-        toast.success("Cálculo salvo na sua conta.");
-      } else {
-        toast.error("Não foi possível salvar o cálculo.");
-      }
+      const saved = await saveCalc();
+      // Note: saveCalc is currently a placeholder - this will be implemented when saved_calcs table is created
+      toast.info("Recurso de salvar cálculos será implementado em breve.");
     } catch (e) {
       console.error(e);
       toast.error("Erro ao salvar cálculo.");
