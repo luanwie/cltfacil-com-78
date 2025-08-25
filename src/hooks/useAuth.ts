@@ -18,7 +18,6 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setAuthState(prev => ({
@@ -28,18 +27,14 @@ export const useAuth = () => {
           loading: false,
         }));
 
-        // Defer profile fetch with setTimeout to avoid deadlock
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
+          setTimeout(() => { fetchUserProfile(session.user.id); }, 0);
         } else {
           setAuthState(prev => ({ ...prev, userProfile: null }));
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthState(prev => ({
         ...prev,
@@ -49,9 +44,7 @@ export const useAuth = () => {
       }));
 
       if (session?.user) {
-        setTimeout(() => {
-          fetchUserProfile(session.user.id);
-        }, 0);
+        setTimeout(() => { fetchUserProfile(session.user.id); }, 0);
       }
     });
 
@@ -104,17 +97,16 @@ export const useAuth = () => {
     return { error };
   };
 
+  // ⬇️ ALTERADO: manda o usuário para /forgot-password após clicar no e-mail
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/forgot-password`,
     });
     return { error };
   };
 
   const updatePassword = async (password: string) => {
-    const { error } = await supabase.auth.updateUser({
-      password: password,
-    });
+    const { error } = await supabase.auth.updateUser({ password });
     return { error };
   };
 
