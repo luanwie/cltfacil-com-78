@@ -9,39 +9,46 @@ import { useAuth } from '@/hooks/useAuth';
 import { Calculator } from 'lucide-react';
 import Container from '@/components/ui/container';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
+const ResetPassword = () => {
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { signIn, user } = useAuth();
+  const { updatePassword, session } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/calculadoras';
 
   useEffect(() => {
-    if (user) {
-      navigate(redirectTo);
+    // Check if user has a valid session from password reset
+    if (!session) {
+      setError('Link de redefinição inválido ou expirado. Solicite um novo link.');
     }
-  }, [user, navigate, redirectTo]);
+  }, [session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await updatePassword(password);
       
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Email ou senha incorretos');
-        } else {
-          setError(error.message);
-        }
+        setError('Erro ao redefinir senha. Tente novamente.');
       } else {
-        navigate(redirectTo);
+        navigate('/calculadoras');
       }
     } catch (err) {
       setError('Erro inesperado. Tente novamente.');
@@ -64,9 +71,9 @@ const Login = () => {
           <Card className="p-6">
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-foreground">Entrar</h1>
+                <h1 className="text-2xl font-bold text-foreground">Nova senha</h1>
                 <p className="text-muted-foreground">
-                  Acesse suas calculadoras CLT
+                  Digite sua nova senha
                 </p>
               </div>
 
@@ -78,54 +85,45 @@ const Login = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
+                  <Label htmlFor="password">Nova senha</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || !session}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    disabled={isLoading || !session}
                   />
                 </div>
 
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || !session}
                 >
-                  {isLoading ? 'Entrando...' : 'Entrar'}
+                  {isLoading ? 'Redefinindo...' : 'Redefinir senha'}
                 </Button>
               </form>
 
-              <div className="text-center space-y-2">
+              <div className="text-center">
                 <Link 
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:underline block"
+                  to="/login"
+                  className="text-sm text-primary hover:underline"
                 >
-                  Esqueci minha senha
+                  Voltar ao login
                 </Link>
-                <p className="text-sm text-muted-foreground">
-                  Não tem uma conta?{' '}
-                  <Link 
-                    to={`/signup${searchParams.toString() ? `?${searchParams.toString()}` : ''}`}
-                    className="text-primary hover:underline"
-                  >
-                    Cadastre-se
-                  </Link>
-                </p>
               </div>
             </div>
           </Card>
@@ -135,4 +133,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ResetPassword;

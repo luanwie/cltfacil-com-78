@@ -9,6 +9,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AuthRedirect from "./pages/AuthRedirect";
 import Calculadoras from "./pages/Calculadoras";
 import AdicionalNoturno from "./pages/calculadoras/AdicionalNoturno";
@@ -55,6 +57,8 @@ const App = () => (
           {/* Auth sem layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth-redirect" element={<AuthRedirect />} />
 
           {/* Rotas com layout */}

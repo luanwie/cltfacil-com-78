@@ -1,47 +1,35 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
-import { Calculator } from 'lucide-react';
+import { Calculator, ArrowLeft } from 'lucide-react';
 import Container from '@/components/ui/container';
 
-const Login = () => {
+const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { signIn, user } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/calculadoras';
-
-  useEffect(() => {
-    if (user) {
-      navigate(redirectTo);
-    }
-  }, [user, navigate, redirectTo]);
+  const { resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await resetPassword(email);
       
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Email ou senha incorretos');
-        } else {
-          setError(error.message);
-        }
+        setError('Erro ao enviar email de redefinição. Verifique se o email está correto.');
       } else {
-        navigate(redirectTo);
+        setMessage('Email de redefinição enviado! Verifique sua caixa de entrada.');
       }
     } catch (err) {
       setError('Erro inesperado. Tente novamente.');
@@ -64,15 +52,21 @@ const Login = () => {
           <Card className="p-6">
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-foreground">Entrar</h1>
+                <h1 className="text-2xl font-bold text-foreground">Esqueci minha senha</h1>
                 <p className="text-muted-foreground">
-                  Acesse suas calculadoras CLT
+                  Digite seu email para receber as instruções de redefinição
                 </p>
               </div>
 
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {message && (
+                <Alert>
+                  <AlertDescription>{message}</AlertDescription>
                 </Alert>
               )}
 
@@ -89,43 +83,23 @@ const Login = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-
                 <Button 
                   type="submit" 
                   className="w-full"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Entrando...' : 'Entrar'}
+                  {isLoading ? 'Enviando...' : 'Enviar email de redefinição'}
                 </Button>
               </form>
 
-              <div className="text-center space-y-2">
+              <div className="text-center">
                 <Link 
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:underline block"
+                  to="/login"
+                  className="text-sm text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  Esqueci minha senha
+                  <ArrowLeft className="w-4 h-4" />
+                  Voltar ao login
                 </Link>
-                <p className="text-sm text-muted-foreground">
-                  Não tem uma conta?{' '}
-                  <Link 
-                    to={`/signup${searchParams.toString() ? `?${searchParams.toString()}` : ''}`}
-                    className="text-primary hover:underline"
-                  >
-                    Cadastre-se
-                  </Link>
-                </p>
               </div>
             </div>
           </Card>
@@ -135,4 +109,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgotPassword;
