@@ -28,6 +28,29 @@ type SubSummary = {
 
 type Step = "LOADING" | "NEEDS_LOGIN" | "FREE" | "PRO_ACTIVE" | "PRO_CANCELLED_PENDING" | "ERROR";
 
+/** Extrai a mensagem real de erro do Supabase Functions (context.body). */
+function extractFnError(err: any): string {
+  // Supabase normalmente retorna: { name, message, context: { status, body } }
+  const ctx = err?.context;
+  const body = ctx?.body;
+
+  if (typeof body === "string") {
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed?.error) return String(parsed.error);
+      return body;
+    } catch {
+      return body;
+    }
+  }
+  if (typeof body === "object" && body !== null) {
+    if (body.error) return String(body.error);
+    return JSON.stringify(body);
+  }
+  if (err?.message) return String(err.message);
+  return "Falha ao chamar a Edge Function (erro desconhecido)";
+}
+
 const MeuPerfil = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -85,7 +108,7 @@ const MeuPerfil = () => {
       setSubMsg(null);
 
       const { data, error } = await supabase.functions.invoke("get-subscription-summary");
-      if (error) throw error; // o SDK inclui error.message e error.context
+      if (error) throw error; // quando non-2xx, cai aqui com context.status e context.body
 
       if (!data?.found || !data?.subscription) {
         setSub(null);
@@ -93,9 +116,7 @@ const MeuPerfil = () => {
         setSub(data.subscription as SubSummary);
       }
     } catch (e: any) {
-      const msg =
-        e?.context?.error || e?.message || "Falha ao carregar assinatura (erro desconhecido)";
-      setSubError(msg);
+      setSubError(extractFnError(e));
     } finally {
       setSubLoading(false);
     }
@@ -121,14 +142,13 @@ const MeuPerfil = () => {
       );
       await fetchSubscription();
     } catch (e: any) {
-      const msg =
-        e?.context?.error || e?.message || "Falha ao cancelar assinatura (erro desconhecido)";
-      setSubError(msg);
+      setSubError(extractFnError(e));
     } finally {
       setBusy(false);
     }
   };
 
+  // Deriva a etapa atual
   const step: Step = (() => {
     if (authLoading || profileLoading || subLoading) return "LOADING";
     if (!user) return "NEEDS_LOGIN";
@@ -166,6 +186,9 @@ const MeuPerfil = () => {
           <Alert variant="destructive">
             <AlertDescription>{subError || "Erro ao carregar assinatura"}</AlertDescription>
           </Alert>
+          <div className="mt-3">
+            <Button variant="outline" onClick={fetchSubscription}>Tentar novamente</Button>
+          </div>
         </CardContent>
       );
     }
