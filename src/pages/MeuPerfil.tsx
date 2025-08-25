@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Settings, Crown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,6 @@ const MeuPerfil = () => {
   const [busy, setBusy] = useState(false);
   const [sub, setSub] = useState<SubSummary | null>(null);
 
-  const edgeBase = useMemo(() => `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`, []);
   useSEO({
     title: "Meu Perfil - CLT Fácil",
     description: "Gerencie seus dados pessoais e assinatura no CLT Fácil",
@@ -86,20 +85,16 @@ const MeuPerfil = () => {
       setSubError(null);
       setSubMsg(null);
 
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch(`${edgeBase}/get-subscription-summary`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Falha ao carregar assinatura");
+      const { data, error } = await supabase.functions.invoke("get-subscription-summary");
+      if (error) throw error;
 
-      if (!json.found || !json.subscription) {
+      if (!data?.found || !data?.subscription) {
         setSub(null);
       } else {
-        setSub(json.subscription as SubSummary);
+        setSub(data.subscription as SubSummary);
       }
     } catch (e: any) {
-      setSubError(e.message);
+      setSubError(e.message || "Falha ao carregar assinatura");
     } finally {
       setSubLoading(false);
     }
@@ -112,16 +107,10 @@ const MeuPerfil = () => {
       setSubError(null);
       setSubMsg(null);
 
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch(`${edgeBase}/cancel-subscription`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({}),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Falha ao cancelar assinatura");
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", { body: {} });
+      if (error) throw error;
 
-      const dt = json.current_period_end ? new Date(json.current_period_end) : null;
+      const dt = data?.current_period_end ? new Date(data.current_period_end) : null;
       setSubMsg(
         dt
           ? `Sua assinatura foi cancelada. Você tem até ${format(dt, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
@@ -131,7 +120,7 @@ const MeuPerfil = () => {
       );
       await fetchSubscription();
     } catch (e: any) {
-      setSubError(e.message);
+      setSubError(e.message || "Falha ao cancelar assinatura");
     } finally {
       setBusy(false);
     }
