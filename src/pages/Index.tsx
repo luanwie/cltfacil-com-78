@@ -1,296 +1,210 @@
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { User as UserIcon, Settings, Crown } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import Container from "@/components/ui/container";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
+import { Calculator, Clock, Shield, Zap, ChevronRight, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Container from "@/components/ui/container";
+import FAQ from "@/components/ui/faq";
+import Notice from "@/components/ui/notice";
+
 import { useSEO } from "@/hooks/useSEO";
-import ProfileForm from "@/components/profile/ProfileForm";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { generateSoftwareApplicationSchema, generateFAQSchema } from "@/lib/seo";
 
-type SubSummary = {
-  id: string;
-  status: string;
-  cancel_at_period_end: boolean;
-  current_period_end: string | null; // ISO
-  price_id: string | null;
-  price_unit_amount: number | null;
-  currency: string | null;
-  product_name: string | null;
-};
-
-const MeuPerfil = () => {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { isPro, loading: proLoading } = useProAndUsage();
-
-  const [profile, setProfile] = useState<any>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-
-  // Sub/Stripe state
-  const [subLoading, setSubLoading] = useState(true);
-  const [subError, setSubError] = useState<string | null>(null);
-  const [subMsg, setSubMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [sub, setSub] = useState<SubSummary | null>(null);
-
-  const edgeBase = useMemo(
-    () => `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`,
-    []
-  );
-
+const Index = () => {
+  // SEO setup
   useSEO({
-    title: "Meu Perfil - CLT Fácil",
-    description: "Gerencie seus dados pessoais e assinatura no CLT Fácil",
-    canonical: "/meu-perfil",
+    title: "Calculadora de Rescisão Trabalhista (CLT) Online | CLT Fácil",
+    description: "Calcule rescisão, aviso, FGTS, DSR e horas extras em segundos. 100% grátis e online.",
+    keywords: "calculadora rescisão trabalhista, CLT, aviso prévio, FGTS, DSR, horas extras, direitos trabalhistas",
+    canonical: "https://cltfacil.com/",
+    jsonLd: generateSoftwareApplicationSchema()
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login?redirect=" + encodeURIComponent("/meu-perfil"));
-      return;
-    }
-    if (user) {
-      fetchProfile();
-      fetchSubscription();
-    }
-  }, [user, authLoading, navigate]);
+  const heroFeatures = [
+    { icon: Zap, title: "Simples e Rápido", description: "Calcule em segundos sem complicações" },
+    { icon: Shield, title: "Confiável", description: "Baseado na legislação CLT atualizada" },
+    { icon: Calculator, title: "Gratuito", description: "Todas as calculadoras sem custo" }
+  ];
 
-  const fetchProfile = async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("nome, is_pro, calc_count")
-        .eq("user_id", user.id)
-        .single();
+  const howItWorks = [
+    { step: "1", title: "Escolha a calculadora", description: "Selecione o tipo de cálculo trabalhista que precisa" },
+    { step: "2", title: "Insira os dados", description: "Preencha as informações básicas do seu caso" },
+    { step: "3", title: "Obtenha o resultado", description: "Receba o cálculo detalhado instantaneamente" }
+  ];
 
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    } finally {
-      setProfileLoading(false);
-    }
-  };
+  const LINKS_HOME = [
+    { title: "Adicional Noturno", href: "/clt/adicional-noturno" },
+    { title: "DSR - Descanso Semanal", href: "/clt/dsr" },
+    { title: "Férias Proporcionais", href: "/clt/ferias-proporcionais" },
+    { title: "13º Proporcional", href: "/clt/13o-proporcional" },
+    { title: "Banco de Horas", href: "/clt/banco-de-horas" },
+    { title: "Rescisão Trabalhista", href: "/clt/rescisao" },
+    { title: "Salário Líquido", href: "/clt/salario-liquido" },
+    { title: "INSS Mensal", href: "/clt/inss" },
+    { title: "IRRF Mensal", href: "/clt/irrf" },
+    { title: "FGTS + Projeção", href: "/clt/fgts" },
+    { title: "Horas Extras (50%/100%)", href: "/clt/horas-extras" },
+    { title: "DSR sobre Comissões", href: "/clt/dsr-comissoes" },
+    { title: "Periculosidade (30%)", href: "/clt/periculosidade" },
+    { title: "Insalubridade (10/20/40%)", href: "/clt/insalubridade" },
+    { title: "Férias + Abono (1/3)", href: "/clt/ferias-abono" },
+    { title: "Férias em Dobro", href: "/clt/ferias-dobro" },
+    { title: "Aviso Prévio", href: "/clt/aviso-previo" },
+    { title: "Vale-Transporte (6%)", href: "/clt/vale-transporte" },
+  ];
 
-  const fetchSubscription = async () => {
-    if (!user) return;
-    try {
-      setSubLoading(true);
-      setSubError(null);
-      setSubMsg(null);
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch(`${edgeBase}/get-subscription-summary`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Falha ao carregar assinatura");
-      if (!json.found || !json.subscription) {
-        setSub(null);
-      } else {
-        setSub(json.subscription as SubSummary);
-      }
-    } catch (e: any) {
-      setSubError(e.message);
-    } finally {
-      setSubLoading(false);
-    }
-  };
+  const mainCalculators = LINKS_HOME.slice(0, 9);
 
-  const cancelSubscription = async () => {
-    if (!confirm("Tem certeza que deseja cancelar? O acesso continuará até o fim do ciclo atual.")) return;
-    try {
-      setBusy(true);
-      setSubError(null);
-      setSubMsg(null);
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch(`${edgeBase}/cancel-subscription`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Falha ao cancelar assinatura");
-
-      const dt = json.current_period_end ? new Date(json.current_period_end) : null;
-      setSubMsg(
-        dt
-          ? `Sua assinatura foi cancelada. Você tem até ${format(
-              dt,
-              "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
-              { locale: ptBR }
-            )} para utilizar.`
-          : "Sua assinatura foi cancelada ao fim do ciclo."
-      );
-      await fetchSubscription();
-    } catch (e: any) {
-      setSubError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const renderAssinaturaCardBody = () => {
-    if (subLoading || proLoading) {
-      return (
-        <CardContent>
-          <Skeleton className="h-4 w-64 mb-3" />
-          <Skeleton className="h-10 w-44" />
-        </CardContent>
-      );
-    }
-
-    // Quando não achamos assinatura no Stripe (ex.: usuário free)
-    if (!sub) {
-      return (
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Você está no plano gratuito. Faça upgrade para liberar todas as calculadoras.
-          </p>
-          {/* Mantém seu botão atual (se tiver) */}
-          <div className="mt-4">
-            <ProfileForm.ManageSubscriptionButton />
-          </div>
-        </CardContent>
-      );
-    }
-
-    // Com assinatura (Stripe) encontrada
-    return (
-      <CardContent>
-        <div className="space-y-1">
-          <p>
-            <strong>Plano:</strong> {sub.product_name ?? sub.price_id ?? "—"}
-          </p>
-          <p>
-            <strong>Status:</strong> {sub.status}
-            {sub.cancel_at_period_end ? " (terminará no fim do ciclo)" : ""}
-          </p>
-          {sub.current_period_end && (
-            <p>
-              <strong>Próxima renovação:</strong>{" "}
-              {format(new Date(sub.current_period_end), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
-                locale: ptBR,
-              })}
-            </p>
-          )}
-        </div>
-
-        {subError && (
-          <Alert variant="destructive" className="mt-4">
-            <AlertDescription>{subError}</AlertDescription>
-          </Alert>
-        )}
-        {subMsg && (
-          <Alert className="mt-4">
-            <AlertDescription>{subMsg}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="flex flex-wrap gap-3 mt-4">
-          {/* Se quiser manter o portal do Stripe, mantenha seu botão existente */}
-          <ProfileForm.ManageSubscriptionButton />
-
-          {/* Botão de cancelamento direto (ao fim do ciclo) */}
-          <Button variant="destructive" onClick={cancelSubscription} disabled={busy}>
-            {busy ? "Processando…" : "Cancelar assinatura"}
-          </Button>
-        </div>
-      </CardContent>
-    );
-  };
-
-  if (authLoading || profileLoading) {
-    return (
-      <Container className="py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-4 w-64" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-24" />
-            </CardContent>
-          </Card>
-        </div>
-      </Container>
-    );
-  }
-
-  if (!user) return null;
+  const faqItems = [
+    { question: "Quando as horas extras são 50% e quando são 100%?", answer: "Em regra, 50% em dias úteis e 100% em domingos e feriados, salvo acordo coletivo." },
+    { question: "Qual é o limite de horas extras por mês?", answer: "Limite legal de 2 horas por dia, cerca de 44 horas/mês (22 dias úteis). Acordos podem alterar." },
+    { question: "As horas extras geram DSR?", answer: "Sim, costumam refletir no DSR e em verbas correlatas." },
+    { question: "Os cálculos são confiáveis?", answer: "As calculadoras seguem a legislação CLT vigente. Consulte a CCT/ACT e orientação jurídica quando necessário." }
+  ];
 
   return (
-    <Container className="py-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <UserIcon className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
-            <p className="text-muted-foreground">Gerencie seus dados e assinatura</p>
-          </div>
-        </div>
-
-        {/* Status da Assinatura */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Assinatura
-                </CardTitle>
-                <CardDescription>
-                  {isPro
-                    ? "Você tem acesso completo às calculadoras"
-                    : "Acesso limitado às calculadoras"}
-                </CardDescription>
-              </div>
-              {isPro ? (
-                <Badge
-                  variant="default"
-                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold"
-                >
-                  <Crown className="h-3 w-3 mr-1" />
-                  PRO Ativo
-                </Badge>
-              ) : (
-                <Badge variant="outline">Gratuito</Badge>
-              )}
+    <>
+      {/* Hero Section */}
+      <section className="py-20 lg:py-32">
+        <Container>
+          <div className="text-center space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                Calculadoras Trabalhistas CLT
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Calcule rescisão, férias, 13º, INSS, FGTS, horas extras, DSR, adicionais e mais. Rápido, confiável e gratuito.
+              </p>
             </div>
-          </CardHeader>
 
-          {renderAssinaturaCardBody()}
-        </Card>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild variant="hero" size="lg">
+                <Link to="/calculadoras">
+                  Abrir Calculadoras
+                  <ChevronRight className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/sobre">Saiba Mais</Link>
+              </Button>
+            </div>
 
-        <Separator />
+            {/* Hero Features */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto mt-16">
+              {heroFeatures.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={index} className="text-center space-y-2">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                      <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Container>
+      </section>
 
-        {/* Formulário de Perfil */}
-        <ProfileForm
-          initialName={profile?.nome || ""}
-          initialEmail={user.email || ""}
-          onProfileUpdate={fetchProfile}
-        />
-      </div>
-    </Container>
+      {/* How It Works */}
+      <section className="py-20 bg-muted/30">
+        <Container>
+          <div className="text-center space-y-12">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Como funciona o cálculo</h2>
+              <p className="text-lg text-muted-foreground">Em apenas 3 passos simples você tem seu cálculo trabalhista</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              {howItWorks.map((step, index) => (
+                <Card key={index} className="relative">
+                  <CardHeader className="text-center">
+                    <div className="w-12 h-12 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-lg font-bold mx-auto mb-4">
+                      {step.step}
+                    </div>
+                    <CardTitle>{step.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-center">{step.description}</CardDescription>
+                  </CardContent>
+                  {index < howItWorks.length - 1 && (
+                    <ChevronRight className="hidden md:block absolute top-1/2 -right-4 w-6 h-6 text-muted-foreground transform -translate-y-1/2" />
+                  )}
+                </Card>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Main Calculators */}
+      <section className="py-20">
+        <Container>
+          <div className="space-y-12">
+            <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Outras calculadoras</h2>
+              <p className="text-lg text-muted-foreground">Acesse nossas ferramentas mais utilizadas</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {LINKS_HOME.slice(0, 9).map((calc, index) => (
+                <Card key={index} className="group hover:shadow-elevated transition-all duration-medium hover:scale-[1.02]">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calculator className="w-5 h-5 text-primary" />
+                      {calc.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button asChild className="w-full">
+                      <Link to={calc.href}>
+                        Calcular Agora
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <Button asChild variant="outline" size="lg">
+                <Link to="/calculadoras">
+                  Ver Todas as Calculadoras
+                  <ChevronRight className="w-5 h-5" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 bg-muted/30">
+        <Container size="md">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Perguntas frequentes</h2>
+            <p className="text-lg text-muted-foreground">
+              Esclareça suas principais dúvidas sobre cálculos trabalhistas
+            </p>
+          </div>
+          <FAQ items={[] /* se usar, preencha com faqItems */} />
+          {/* JSON-LD opcional removido para simplificar */}
+        </Container>
+      </section>
+
+      {/* Legal Notice */}
+      <section className="py-12">
+        <Container size="md">
+          <Notice variant="info">
+            <strong>Aviso Legal:</strong> As calculadoras oferecem estimativas baseadas na legislação CLT vigente.
+            Consulte sempre a CCT/ACT específica e busque orientação jurídica quando necessário.
+          </Notice>
+        </Container>
+      </section>
+    </>
   );
 };
 
-export default MeuPerfil;
+export default Index;
