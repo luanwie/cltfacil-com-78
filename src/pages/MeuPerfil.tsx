@@ -28,27 +28,32 @@ type SubSummary = {
 
 type Step = "LOADING" | "NEEDS_LOGIN" | "FREE" | "PRO_ACTIVE" | "PRO_CANCELLED_PENDING" | "ERROR";
 
-/** Extrai a mensagem real de erro do Supabase Functions (context.body). */
-function extractFnError(err: any): string {
-  // Supabase normalmente retorna: { name, message, context: { status, body } }
-  const ctx = err?.context;
-  const body = ctx?.body;
+/** Mostra motivo real de erro da Edge Function. */
+function explainInvokeError(err: any): string {
+  const status = err?.context?.status;
+  const body = err?.context?.body;
 
+  let bodyText = "";
   if (typeof body === "string") {
+    bodyText = body;
     try {
       const parsed = JSON.parse(body);
-      if (parsed?.error) return String(parsed.error);
-      return body;
+      bodyText = parsed?.error ? String(parsed.error) : JSON.stringify(parsed);
     } catch {
-      return body;
+      // fica com o body string mesmo
     }
+  } else if (body && typeof body === "object") {
+    bodyText = body.error ? String(body.error) : JSON.stringify(body);
   }
-  if (typeof body === "object" && body !== null) {
-    if (body.error) return String(body.error);
-    return JSON.stringify(body);
-  }
-  if (err?.message) return String(err.message);
-  return "Falha ao chamar a Edge Function (erro desconhecido)";
+
+  const msg = err?.message ? String(err.message) : "";
+  const parts = [
+    status ? `status: ${status}` : null,
+    bodyText ? `body: ${bodyText}` : null,
+    msg && (!bodyText || !bodyText.includes(msg)) ? `message: ${msg}` : null,
+  ].filter(Boolean);
+
+  return parts.length ? parts.join(" | ") : "Falha ao chamar a Edge Function (sem detalhes).";
 }
 
 const MeuPerfil = () => {
@@ -107,8 +112,13 @@ const MeuPerfil = () => {
       setSubError(null);
       setSubMsg(null);
 
-      const { data, error } = await supabase.functions.invoke("get-subscription-summary");
-      if (error) throw error; // quando non-2xx, cai aqui com context.status e context.body
+      // >>> Garantir envio do JWT no invoke
+      const { data: sess } = await supabase.auth.getSession();
+      const jwt = sess.session?.access_token;
+      const { data, error } = await supabase.functions.invoke("get-subscription-summary", {
+        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
+      });
+      if (error) throw error;
 
       if (!data?.found || !data?.subscription) {
         setSub(null);
@@ -116,7 +126,7 @@ const MeuPerfil = () => {
         setSub(data.subscription as SubSummary);
       }
     } catch (e: any) {
-      setSubError(extractFnError(e));
+      setSubError(explainInvokeError(e));
     } finally {
       setSubLoading(false);
     }
@@ -129,7 +139,13 @@ const MeuPerfil = () => {
       setSubError(null);
       setSubMsg(null);
 
-      const { data, error } = await supabase.functions.invoke("cancel-subscription", { body: {} });
+      // >>> Garantir envio do JWT no invoke
+      const { data: sess } = await supabase.auth.getSession();
+      const jwt = sess.session?.access_token;
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: {},
+        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
+      });
       if (error) throw error;
 
       const dt = data?.current_period_end ? new Date(data.current_period_end) : null;
@@ -142,7 +158,7 @@ const MeuPerfil = () => {
       );
       await fetchSubscription();
     } catch (e: any) {
-      setSubError(extractFnError(e));
+      setSubError(explainInvokeError(e));
     } finally {
       setBusy(false);
     }
@@ -206,6 +222,7 @@ const MeuPerfil = () => {
       );
     }
 
+    // PRO ativo/cancelado ao fim do ciclo
     return (
       <CardContent>
         <div className="space-y-1">
