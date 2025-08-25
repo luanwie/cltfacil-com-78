@@ -47,7 +47,6 @@ const MeuPerfil = () => {
     canonical: "/meu-perfil",
   });
 
-  // Redireciona se não logado e carrega dados quando logado
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login?redirect=" + encodeURIComponent("/meu-perfil"));
@@ -86,7 +85,7 @@ const MeuPerfil = () => {
       setSubMsg(null);
 
       const { data, error } = await supabase.functions.invoke("get-subscription-summary");
-      if (error) throw error;
+      if (error) throw error; // o SDK inclui error.message e error.context
 
       if (!data?.found || !data?.subscription) {
         setSub(null);
@@ -94,7 +93,9 @@ const MeuPerfil = () => {
         setSub(data.subscription as SubSummary);
       }
     } catch (e: any) {
-      setSubError(e.message || "Falha ao carregar assinatura");
+      const msg =
+        e?.context?.error || e?.message || "Falha ao carregar assinatura (erro desconhecido)";
+      setSubError(msg);
     } finally {
       setSubLoading(false);
     }
@@ -120,13 +121,14 @@ const MeuPerfil = () => {
       );
       await fetchSubscription();
     } catch (e: any) {
-      setSubError(e.message || "Falha ao cancelar assinatura");
+      const msg =
+        e?.context?.error || e?.message || "Falha ao cancelar assinatura (erro desconhecido)";
+      setSubError(msg);
     } finally {
       setBusy(false);
     }
   };
 
-  // Deriva a etapa atual
   const step: Step = (() => {
     if (authLoading || profileLoading || subLoading) return "LOADING";
     if (!user) return "NEEDS_LOGIN";
@@ -135,10 +137,9 @@ const MeuPerfil = () => {
     const active = sub.status === "active" || sub.status === "trialing" || sub.status === "past_due";
     if (active && sub.cancel_at_period_end) return "PRO_CANCELLED_PENDING";
     if (active) return "PRO_ACTIVE";
-    return "FREE"; // fallback conservador
+    return "FREE";
   })();
 
-  // UI helpers
   const PlanBadge = () =>
     step === "PRO_ACTIVE" || step === "PRO_CANCELLED_PENDING" ? (
       <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold">
@@ -182,7 +183,6 @@ const MeuPerfil = () => {
       );
     }
 
-    // PRO_ACTIVE ou PRO_CANCELLED_PENDING
     return (
       <CardContent>
         <div className="space-y-1">
@@ -222,7 +222,6 @@ const MeuPerfil = () => {
     );
   };
 
-  // Skeleton geral enquanto carrega auth/perfil/sub
   if (step === "LOADING") {
     return (
       <Container className="py-8">
@@ -243,13 +242,11 @@ const MeuPerfil = () => {
     );
   }
 
-  // Se não logado, o effect já redirecionou
   if (step === "NEEDS_LOGIN") return null;
 
   return (
     <Container className="py-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
             <UserIcon className="w-6 h-6 text-primary" />
@@ -260,7 +257,6 @@ const MeuPerfil = () => {
           </div>
         </div>
 
-        {/* Assinatura */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -283,7 +279,6 @@ const MeuPerfil = () => {
 
         <Separator />
 
-        {/* Formulário de Perfil */}
         <ProfileForm
           initialName={profile?.nome || ""}
           initialEmail={user?.email || ""}
