@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { User as UserIcon, Settings, Crown } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import Container from "@/components/ui/container";
+import { useAuth } from "@/hooks/useAuth";
+import { useSEO } from "@/hooks/useSEO";
+import ProfileForm from "@/components/profile/ProfileForm";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type SubSummary = {
   id: string;
-  status: string;
+  status: "active" | "trialing" | "past_due" | "canceled" | "incomplete" | "incomplete_expired" | string;
   cancel_at_period_end: boolean;
   current_period_end: string | null; // ISO
   price_id: string | null;
@@ -18,113 +26,307 @@ type SubSummary = {
   product_name: string | null;
 };
 
-export default function MeuPerfil() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [sub, setSub] = useState<SubSummary | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+type Step = "LOADING" | "NEEDS_LOGIN" | "FREE" | "PRO_ACTIVE" | "PRO_CANCELLED_PENDING" | "ERROR";
 
-  const edgeBase = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+/** Mostra motivo real de erro da Edge Function. */
+function explainInvokeError(err: any): string {
+  const status = err?.context?.status;
+  const body = err?.context?.body;
 
-  async function fetchSummary() {
-    if (!user) return;
-    setLoading(true); setErr(null); setMsg(null);
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
-    const res = await fetch(`${edgeBase}/get-subscription-summary`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      setErr(json.error || 'Falha ao carregar assinatura');
-      setLoading(false);
-      return;
+  let bodyText = "";
+  if (typeof body === "string") {
+    bodyText = body;
+    try {
+      const parsed = JSON.parse(body);
+      bodyText = parsed?.error ? String(parsed.error) : JSON.stringify(parsed);
+    } catch {
+      // fica com o body string mesmo
     }
-    if (!json.found || !json.subscription) {
-      setSub(null);
-    } else {
-      setSub(json.subscription as SubSummary);
-    }
-    setLoading(false);
+  } else if (body && typeof body === "object") {
+    bodyText = body.error ? String(body.error) : JSON.stringify(body);
   }
 
-  useEffect(() => { fetchSummary(); /* eslint-disable-next-line */ }, [user]);
+  const msg = err?.message ? String(err.message) : "";
+  const parts = [
+    status ? `status: ${status}` : null,
+    bodyText ? `body: ${bodyText}` : null,
+    msg && (!bodyText || !bodyText.includes(msg)) ? `message: ${msg}` : null,
+  ].filter(Boolean);
 
-  const cancel = async () => {
-    if (!confirm('Tem certeza que deseja cancelar? O acesso continuará até o fim do ciclo atual.')) return;
+  return parts.length ? parts.join(" | ") : "Falha ao chamar a Edge Function (sem detalhes).";
+}
+
+const MeuPerfil = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  const [subLoading, setSubLoading] = useState(true);
+  const [subError, setSubError] = useState<string | null>(null);
+  const [subMsg, setSubMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [sub, setSub] = useState<SubSummary | null>(null);
+
+  useSEO({
+    title: "Meu Perfil - CLT Fácil",
+    description: "Gerencie seus dados pessoais e assinatura no CLT Fácil",
+    canonical: "/meu-perfil",
+  });
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login?redirect=" + encodeURIComponent("/meu-perfil"));
+      return;
+    }
+    if (user) {
+      fetchProfile();
+      fetchSubscription();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
     try {
-      setBusy(true); setErr(null); setMsg(null);
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch(`${edgeBase}/cancel-subscription`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({})
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Falha ao cancelar');
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("nome, calc_count")
+        .eq("user_id", user.id)
+        .single();
 
-      const dt = json.current_period_end ? new Date(json.current_period_end) : null;
-      setMsg(
-        dt
-          ? `Sua assinatura foi cancelada. Você tem até ${format(dt, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })} para utilizar.`
-          : 'Sua assinatura foi cancelada ao fim do ciclo.'
-      );
-      await fetchSummary();
+      if (error) throw error;
+      setProfile(data);
+    } catch (e) {
+      console.error("Error fetching profile:", e);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const fetchSubscription = async () => {
+    if (!user) return;
+    try {
+      setSubLoading(true);
+      setSubError(null);
+      setSubMsg(null);
+
+      // >>> Garantir envio do JWT no invoke
+      const { data: sess } = await supabase.auth.getSession();
+      const jwt = sess.session?.access_token;
+      const { data, error } = await supabase.functions.invoke("get-subscription-summary", {
+        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
+      });
+      if (error) throw error;
+
+      if (!data?.found || !data?.subscription) {
+        setSub(null);
+      } else {
+        setSub(data.subscription as SubSummary);
+      }
     } catch (e: any) {
-      setErr(e.message);
+      setSubError(explainInvokeError(e));
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  const cancelSubscription = async () => {
+    if (!confirm("Tem certeza que deseja cancelar? O acesso continuará até o fim do ciclo atual.")) return;
+    try {
+      setBusy(true);
+      setSubError(null);
+      setSubMsg(null);
+
+      // >>> Garantir envio do JWT no invoke
+      const { data: sess } = await supabase.auth.getSession();
+      const jwt = sess.session?.access_token;
+      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
+        body: {},
+        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
+      });
+      if (error) throw error;
+
+      const dt = data?.current_period_end ? new Date(data.current_period_end) : null;
+      setSubMsg(
+        dt
+          ? `Sua assinatura foi cancelada. Você tem até ${format(dt, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
+              locale: ptBR,
+            })} para utilizar.`
+          : "Sua assinatura foi cancelada ao fim do ciclo."
+      );
+      await fetchSubscription();
+    } catch (e: any) {
+      setSubError(explainInvokeError(e));
     } finally {
       setBusy(false);
     }
   };
 
-  const renderBody = () => {
-    if (loading) return <p>Carregando…</p>;
-    if (!sub) return <p>Você não possui assinatura ativa.</p>;
+  // Deriva a etapa atual
+  const step: Step = (() => {
+    if (authLoading || profileLoading || subLoading) return "LOADING";
+    if (!user) return "NEEDS_LOGIN";
+    if (subError) return "ERROR";
+    if (!sub) return "FREE";
+    const active = sub.status === "active" || sub.status === "trialing" || sub.status === "past_due";
+    if (active && sub.cancel_at_period_end) return "PRO_CANCELLED_PENDING";
+    if (active) return "PRO_ACTIVE";
+    return "FREE";
+  })();
 
-    return (
-      <>
-        <div className="space-y-1">
-          <p><strong>Plano:</strong> {sub.product_name ?? sub.price_id ?? '—'}</p>
-          <p>
-            <strong>Status:</strong> {sub.status}
-            {sub.cancel_at_period_end ? ' (terminará no fim do ciclo)' : ''}
+  const PlanBadge = () =>
+    step === "PRO_ACTIVE" || step === "PRO_CANCELLED_PENDING" ? (
+      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold">
+        <Crown className="h-3 w-3 mr-1" />
+        PRO Ativo
+      </Badge>
+    ) : (
+      <Badge variant="outline">Gratuito</Badge>
+    );
+
+  const AssinaturaBody = () => {
+    if (step === "LOADING") {
+      return (
+        <CardContent>
+          <Skeleton className="h-4 w-64 mb-3" />
+          <Skeleton className="h-10 w-44" />
+        </CardContent>
+      );
+    }
+
+    if (step === "ERROR") {
+      return (
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>{subError || "Erro ao carregar assinatura"}</AlertDescription>
+          </Alert>
+          <div className="mt-3">
+            <Button variant="outline" onClick={fetchSubscription}>Tentar novamente</Button>
+          </div>
+        </CardContent>
+      );
+    }
+
+    if (step === "FREE") {
+      return (
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Você está no plano gratuito. Faça upgrade para liberar todas as calculadoras.
           </p>
-          {sub.current_period_end && (
+          <div className="mt-4">
+            <ProfileForm.ManageSubscriptionButton />
+          </div>
+        </CardContent>
+      );
+    }
+
+    // PRO ativo/cancelado ao fim do ciclo
+    return (
+      <CardContent>
+        <div className="space-y-1">
+          <p>
+            <strong>Plano:</strong> {sub?.product_name ?? sub?.price_id ?? "—"}
+          </p>
+          <p>
+            <strong>Status:</strong> {sub?.status}
+            {sub?.cancel_at_period_end ? " (terminará no fim do ciclo)" : ""}
+          </p>
+          {sub?.current_period_end && (
             <p>
-              <strong>Próxima renovação:</strong>{' '}
+              <strong>Próxima renovação:</strong>{" "}
               {format(new Date(sub.current_period_end), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
           )}
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <Button variant="destructive" onClick={cancel} disabled={busy}>
-            {busy ? 'Processando…' : 'Cancelar assinatura'}
+        {subError && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{subError}</AlertDescription>
+          </Alert>
+        )}
+        {subMsg && (
+          <Alert className="mt-4">
+            <AlertDescription>{subMsg}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex flex-wrap gap-3 mt-4">
+          <ProfileForm.ManageSubscriptionButton />
+          <Button variant="destructive" onClick={cancelSubscription} disabled={busy}>
+            {busy ? "Processando…" : "Cancelar assinatura"}
           </Button>
         </div>
-      </>
+      </CardContent>
     );
   };
 
+  if (step === "LOADING") {
+    return (
+      <Container className="py-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-24" />
+            </CardContent>
+          </Card>
+        </div>
+      </Container>
+    );
+  }
+
+  if (step === "NEEDS_LOGIN") return null;
+
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <Card className="p-6 space-y-4">
-        <h2 className="text-xl font-semibold">Meu Plano</h2>
+    <Container className="py-8">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <UserIcon className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
+            <p className="text-muted-foreground">Gerencie seus dados e assinatura</p>
+          </div>
+        </div>
 
-        {err && (
-          <Alert variant="destructive">
-            <AlertDescription>{err}</AlertDescription>
-          </Alert>
-        )}
-        {msg && (
-          <Alert>
-            <AlertDescription>{msg}</AlertDescription>
-          </Alert>
-        )}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Assinatura
+                </CardTitle>
+                <CardDescription>
+                  {step === "FREE"
+                    ? "Acesso limitado às calculadoras"
+                    : "Você tem acesso completo às calculadoras"}
+                </CardDescription>
+              </div>
+              <PlanBadge />
+            </div>
+          </CardHeader>
+          <AssinaturaBody />
+        </Card>
 
-        {renderBody()}
-      </Card>
-    </div>
+        <Separator />
+
+        <ProfileForm
+          initialName={profile?.nome || ""}
+          initialEmail={user?.email || ""}
+          onProfileUpdate={fetchProfile}
+        />
+      </div>
+    </Container>
   );
-}
+};
+
+export default MeuPerfil;
