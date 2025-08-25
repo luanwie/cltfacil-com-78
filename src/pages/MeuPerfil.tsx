@@ -12,62 +12,45 @@ import ProfileForm from "@/components/profile/ProfileForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-type SubSummary = {
-  id: string;
-  status: "active" | "trialing" | "past_due" | "canceled" | "incomplete" | "incomplete_expired" | string;
-  cancel_at_period_end: boolean;
-  current_period_end: string | null; // ISO
-  price_id: string | null;
-  price_unit_amount: number | null;
-  currency: string | null;
-  product_name: string | null;
-};
+// --- Botão que abre o Portal do Cliente (Stripe) via Edge Function ---
+function ManageSubscriptionButton() {
+  const [loading, setLoading] = useState(false);
 
-type Step = "LOADING" | "NEEDS_LOGIN" | "FREE" | "PRO_ACTIVE" | "PRO_CANCELLED_PENDING" | "ERROR";
-
-/** Mostra motivo real de erro da Edge Function. */
-function explainInvokeError(err: any): string {
-  const status = err?.context?.status;
-  const body = err?.context?.body;
-
-  let bodyText = "";
-  if (typeof body === "string") {
-    bodyText = body;
+  const openPortal = async () => {
+    setLoading(true);
     try {
-      const parsed = JSON.parse(body);
-      bodyText = parsed?.error ? String(parsed.error) : JSON.stringify(parsed);
-    } catch {
-      // fica com o body string mesmo
+      const { data, error } = await supabase.functions.invoke("create-billing-portal-session", {
+        body: { returnUrl: `${window.location.origin}/meu-perfil` },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("Portal session returned no URL");
+      window.location.href = data.url;
+    } catch (e: any) {
+      alert(`Falha ao abrir o portal: ${e?.message || e}`);
+    } finally {
+      setLoading(false);
     }
-  } else if (body && typeof body === "object") {
-    bodyText = body.error ? String(body.error) : JSON.stringify(body);
-  }
+  };
 
-  const msg = err?.message ? String(err.message) : "";
-  const parts = [
-    status ? `status: ${status}` : null,
-    bodyText ? `body: ${bodyText}` : null,
-    msg && (!bodyText || !bodyText.includes(msg)) ? `message: ${msg}` : null,
-  ].filter(Boolean);
-
-  return parts.length ? parts.join(" | ") : "Falha ao chamar a Edge Function (sem detalhes).";
+  return (
+    <Button onClick={openPortal} disabled={loading}>
+      {loading ? "Abrindo…" : "Gerenciar assinatura"}
+    </Button>
+  );
 }
 
-const MeuPerfil = () => {
+type Step = "LOADING" | "NEEDS_LOGIN" | "READY";
+
+export default function MeuPerfil() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const [subLoading, setSubLoading] = useState(true);
-  const [subError, setSubError] = useState<string | null>(null);
-  const [subMsg, setSubMsg] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [sub, setSub] = useState<SubSummary | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncErr, setSyncErr] = useState<string | null>(null);
 
   useSEO({
     title: "Meu Perfil - CLT Fácil",
@@ -75,14 +58,17 @@ const MeuPerfil = () => {
     canonical: "/meu-perfil",
   });
 
+  // Redireciona se não logado e carrega dados + sincroniza PRO
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login?redirect=" + encodeURIComponent("/meu-perfil"));
       return;
     }
     if (user) {
-      fetchProfile();
-      fetchSubscription();
+      (async () => {
+        await fetchProfile();
+        await syncPro(); // sincroniza com Stripe e atualiza profile.is_pro
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
@@ -92,10 +78,9 @@ const MeuPerfil = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("nome, calc_count")
+        .select("nome, is_pro, calc_count, pro_since")
         .eq("user_id", user.id)
         .single();
-
       if (error) throw error;
       setProfile(data);
     } catch (e) {
@@ -105,163 +90,27 @@ const MeuPerfil = () => {
     }
   };
 
-  const fetchSubscription = async () => {
+  // Chama a Edge Function sync-pro-from-stripe (ATENÇÃO: precisa das secrets certas)
+  const syncPro = async () => {
     if (!user) return;
+    setSyncing(true);
+    setSyncErr(null);
     try {
-      setSubLoading(true);
-      setSubError(null);
-      setSubMsg(null);
-
-      // >>> Garantir envio do JWT no invoke
-      const { data: sess } = await supabase.auth.getSession();
-      const jwt = sess.session?.access_token;
-      const { data, error } = await supabase.functions.invoke("get-subscription-summary", {
-        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
-      });
+      const { data, error } = await supabase.functions.invoke("sync-pro-from-stripe", { body: {} });
       if (error) throw error;
-
-      if (!data?.found || !data?.subscription) {
-        setSub(null);
-      } else {
-        setSub(data.subscription as SubSummary);
-      }
+      // Recarrega o perfil para refletir o is_pro atualizado
+      await fetchProfile();
     } catch (e: any) {
-      setSubError(explainInvokeError(e));
+      setSyncErr(e?.message || "Falha ao sincronizar assinatura");
     } finally {
-      setSubLoading(false);
+      setSyncing(false);
     }
   };
 
-  const cancelSubscription = async () => {
-    if (!confirm("Tem certeza que deseja cancelar? O acesso continuará até o fim do ciclo atual.")) return;
-    try {
-      setBusy(true);
-      setSubError(null);
-      setSubMsg(null);
+  const step: Step = authLoading || profileLoading ? "LOADING" : !user ? "NEEDS_LOGIN" : "READY";
+  const isPro = !!profile?.is_pro;
 
-      // >>> Garantir envio do JWT no invoke
-      const { data: sess } = await supabase.auth.getSession();
-      const jwt = sess.session?.access_token;
-      const { data, error } = await supabase.functions.invoke("cancel-subscription", {
-        body: {},
-        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
-      });
-      if (error) throw error;
-
-      const dt = data?.current_period_end ? new Date(data.current_period_end) : null;
-      setSubMsg(
-        dt
-          ? `Sua assinatura foi cancelada. Você tem até ${format(dt, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", {
-              locale: ptBR,
-            })} para utilizar.`
-          : "Sua assinatura foi cancelada ao fim do ciclo."
-      );
-      await fetchSubscription();
-    } catch (e: any) {
-      setSubError(explainInvokeError(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Deriva a etapa atual
-  const step: Step = (() => {
-    if (authLoading || profileLoading || subLoading) return "LOADING";
-    if (!user) return "NEEDS_LOGIN";
-    if (subError) return "ERROR";
-    if (!sub) return "FREE";
-    const active = sub.status === "active" || sub.status === "trialing" || sub.status === "past_due";
-    if (active && sub.cancel_at_period_end) return "PRO_CANCELLED_PENDING";
-    if (active) return "PRO_ACTIVE";
-    return "FREE";
-  })();
-
-  const PlanBadge = () =>
-    step === "PRO_ACTIVE" || step === "PRO_CANCELLED_PENDING" ? (
-      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold">
-        <Crown className="h-3 w-3 mr-1" />
-        PRO Ativo
-      </Badge>
-    ) : (
-      <Badge variant="outline">Gratuito</Badge>
-    );
-
-  const AssinaturaBody = () => {
-    if (step === "LOADING") {
-      return (
-        <CardContent>
-          <Skeleton className="h-4 w-64 mb-3" />
-          <Skeleton className="h-10 w-44" />
-        </CardContent>
-      );
-    }
-
-    if (step === "ERROR") {
-      return (
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertDescription>{subError || "Erro ao carregar assinatura"}</AlertDescription>
-          </Alert>
-          <div className="mt-3">
-            <Button variant="outline" onClick={fetchSubscription}>Tentar novamente</Button>
-          </div>
-        </CardContent>
-      );
-    }
-
-    if (step === "FREE") {
-      return (
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Você está no plano gratuito. Faça upgrade para liberar todas as calculadoras.
-          </p>
-          <div className="mt-4">
-            <ProfileForm.ManageSubscriptionButton />
-          </div>
-        </CardContent>
-      );
-    }
-
-    // PRO ativo/cancelado ao fim do ciclo
-    return (
-      <CardContent>
-        <div className="space-y-1">
-          <p>
-            <strong>Plano:</strong> {sub?.product_name ?? sub?.price_id ?? "—"}
-          </p>
-          <p>
-            <strong>Status:</strong> {sub?.status}
-            {sub?.cancel_at_period_end ? " (terminará no fim do ciclo)" : ""}
-          </p>
-          {sub?.current_period_end && (
-            <p>
-              <strong>Próxima renovação:</strong>{" "}
-              {format(new Date(sub.current_period_end), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
-            </p>
-          )}
-        </div>
-
-        {subError && (
-          <Alert variant="destructive" className="mt-4">
-            <AlertDescription>{subError}</AlertDescription>
-          </Alert>
-        )}
-        {subMsg && (
-          <Alert className="mt-4">
-            <AlertDescription>{subMsg}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="flex flex-wrap gap-3 mt-4">
-          <ProfileForm.ManageSubscriptionButton />
-          <Button variant="destructive" onClick={cancelSubscription} disabled={busy}>
-            {busy ? "Processando…" : "Cancelar assinatura"}
-          </Button>
-        </div>
-      </CardContent>
-    );
-  };
-
+  // Skeleton
   if (step === "LOADING") {
     return (
       <Container className="py-8">
@@ -281,12 +130,12 @@ const MeuPerfil = () => {
       </Container>
     );
   }
-
   if (step === "NEEDS_LOGIN") return null;
 
   return (
     <Container className="py-8">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
             <UserIcon className="w-6 h-6 text-primary" />
@@ -297,6 +146,7 @@ const MeuPerfil = () => {
           </div>
         </div>
 
+        {/* Assinatura */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -306,19 +156,47 @@ const MeuPerfil = () => {
                   Assinatura
                 </CardTitle>
                 <CardDescription>
-                  {step === "FREE"
-                    ? "Acesso limitado às calculadoras"
-                    : "Você tem acesso completo às calculadoras"}
+                  {isPro ? "Você tem acesso completo às calculadoras" : "Acesso limitado às calculadoras"}
                 </CardDescription>
               </div>
-              <PlanBadge />
+              {isPro ? (
+                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-semibold">
+                  <Crown className="h-3 w-3 mr-1" />
+                  PRO Ativo
+                </Badge>
+              ) : (
+                <Badge variant="outline">Gratuito</Badge>
+              )}
             </div>
           </CardHeader>
-          <AssinaturaBody />
+
+          <CardContent className="space-y-4">
+            {syncErr && (
+              <Alert variant="destructive">
+                <AlertDescription>{syncErr}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              {/* Sempre visível para abrir/cancelar no Portal do Cliente */}
+              <ManageSubscriptionButton />
+              {/* Sincroniza PRO agora */}
+              <Button variant="outline" onClick={syncPro} disabled={syncing}>
+                {syncing ? "Sincronizando…" : "Tentar novamente"}
+              </Button>
+            </div>
+
+            {isPro && profile?.pro_since && (
+              <p className="text-xs text-muted-foreground">
+                PRO desde {new Date(profile.pro_since).toLocaleString()}
+              </p>
+            )}
+          </CardContent>
         </Card>
 
         <Separator />
 
+        {/* Formulário de Perfil */}
         <ProfileForm
           initialName={profile?.nome || ""}
           initialEmail={user?.email || ""}
@@ -327,6 +205,4 @@ const MeuPerfil = () => {
       </div>
     </Container>
   );
-};
-
-export default MeuPerfil;
+}
