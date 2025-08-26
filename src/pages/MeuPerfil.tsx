@@ -132,33 +132,6 @@ const MeuPerfil = () => {
     }
   };
 
-  const openCheckout = async () => {
-    try {
-      setBusy(true);
-      const { data: sess } = await supabase.auth.getSession();
-      const jwt = sess.session?.access_token;
-
-      const priceId = import.meta.env.VITE_STRIPE_PRICE_ID; // use seu PRICE_ID aqui
-      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-        headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined,
-        body: {
-          priceId,
-          successUrl: `${window.location.origin}/meu-perfil?upgraded=1`,
-          cancelUrl: `${window.location.origin}/meu-perfil`,
-        },
-      });
-      if (error) throw error;
-      if (!data?.url) throw new Error("Checkout não retornou URL.");
-
-      window.location.href = data.url;
-    } catch (e: any) {
-      console.error(e);
-      alert(`Não foi possível abrir o checkout: ${e?.message || e}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const cancelSubscription = async () => {
     if (!confirm("Tem certeza que deseja cancelar? O acesso continuará até o fim do ciclo atual.")) return;
     try {
@@ -229,7 +202,7 @@ const MeuPerfil = () => {
           <Alert variant="destructive">
             <AlertDescription>{subError || "Erro ao carregar assinatura"}</AlertDescription>
           </Alert>
-          {/* "Tentar novamente" removido a pedido */}
+          {/* Botão "Tentar novamente" removido a pedido */}
         </CardContent>
       );
     }
@@ -241,10 +214,7 @@ const MeuPerfil = () => {
             Você está no plano gratuito. Faça upgrade para liberar todas as calculadoras.
           </p>
           <div className="mt-4">
-            {/* Aqui trocamos: no plano FREE abre o checkout do Stripe */}
-            <Button onClick={openCheckout} disabled={busy}>
-              {busy ? "Abrindo…" : "Gerenciar assinatura"}
-            </Button>
+            <ProfileForm.ManageSubscriptionButton />
           </div>
         </CardContent>
       );
@@ -257,7 +227,7 @@ const MeuPerfil = () => {
           <p>
             <strong>Plano:</strong> {sub?.product_name ?? sub?.price_id ?? "—"}
           </p>
-        <p>
+          <p>
             <strong>Status:</strong> {sub?.status}
             {sub?.cancel_at_period_end ? " (terminará no fim do ciclo)" : ""}
           </p>
@@ -281,7 +251,6 @@ const MeuPerfil = () => {
         )}
 
         <div className="flex flex-wrap gap-3 mt-4">
-          {/* Mantemos seu botão atual de portal (gerenciar) */}
           <ProfileForm.ManageSubscriptionButton />
           <Button variant="destructive" onClick={cancelSubscription} disabled={busy}>
             {busy ? "Processando…" : "Cancelar assinatura"}
