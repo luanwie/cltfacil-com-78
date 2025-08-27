@@ -1,3 +1,4 @@
+// Navigate to PRO subscription page with proper redirects and UTM preservation
 export function navigateToProPage(navigate: (path: string) => void, isLogged: boolean, currentPath: string) {
   if (!isLogged) {
     navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
