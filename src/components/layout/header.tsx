@@ -78,6 +78,14 @@ const Header = () => {
                     </span>
                   )}
                 </div>
+                {!(userProfile as any)?.is_pro && (
+                  <Button asChild variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    <Link to="/assinar-pro">
+                      <Crown className="w-4 h-4 mr-1" />
+                      Assinar PRO
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="hero" size="sm">
                   <Link to="/calculadoras">Calculadoras</Link>
                 </Button>
@@ -101,6 +109,12 @@ const Header = () => {
               <div className="flex items-center gap-4">
                 <Button asChild variant="ghost" size="sm">
                   <Link to="/login">Entrar</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                  <Link to="/assinar-pro">
+                    <Crown className="w-4 h-4 mr-1" />
+                    Assinar PRO
+                  </Link>
                 </Button>
                 <Button asChild variant="hero" size="sm">
                   <Link to="/calculadoras">Abrir Calculadoras</Link>
@@ -154,6 +168,14 @@ const Header = () => {
                       </span>
                     )}
                   </div>
+                  {!(userProfile as any)?.is_pro && (
+                    <Button asChild variant="outline" size="sm" className="w-fit border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                      <Link to="/assinar-pro" onClick={() => setIsMenuOpen(false)}>
+                        <Crown className="w-4 h-4 mr-1" />
+                        Assinar PRO
+                      </Link>
+                    </Button>
+                  )}
                   <Button asChild variant="hero" size="sm" className="w-fit">
                     <Link to="/calculadoras" onClick={() => setIsMenuOpen(false)}>
                       Calculadoras
@@ -183,6 +205,12 @@ const Header = () => {
                   <Button asChild variant="ghost" size="sm" className="w-fit">
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                       Entrar
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm" className="w-fit border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    <Link to="/assinar-pro" onClick={() => setIsMenuOpen(false)}>
+                      <Crown className="w-4 h-4 mr-1" />
+                      Assinar PRO
                     </Link>
                   </Button>
                   <Button asChild variant="hero" size="sm" className="w-fit">

@@ -14,25 +14,16 @@ export const UsageBanner = () => {
   // Hide banner for PRO users
   if (isPro) return null;
 
-  const handleUpgradeToPro = async () => {
+  const handleUpgradeToPro = () => {
     if (!isLogged) {
-      navigate(`/login?next=${encodeURIComponent(location.pathname)}`);
+      navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('checkout');
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      } else {
-        navigate('/assinar-pro');
-      }
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-      navigate('/assinar-pro');
-    }
+    // Preserve UTM parameters when navigating to /assinar-pro
+    const currentUrl = new URL(window.location.href);
+    const searchParams = currentUrl.search;
+    navigate(`/assinar-pro${searchParams}`);
   };
 
   if (isLogged && remaining > 0) {

@@ -5,11 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Star, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProAndUsage } from "@/hooks/useProAndUsage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const AssinarPro = () => {
   const { user } = useAuth();
+  const { isPro, loading: proLoading } = useProAndUsage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [priceLabel, setPriceLabel] = useState("R$ 19,90/mês"); // fallback
@@ -39,6 +41,13 @@ const AssinarPro = () => {
       goLogin();
       return;
     }
+    
+    // If user is already PRO, navigate to account page
+    if (isPro) {
+      navigate("/meu-perfil");
+      return;
+    }
+    
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("checkout");
@@ -96,6 +105,23 @@ const AssinarPro = () => {
           </Card>
         )}
 
+        {user && isPro && (
+          <Card className="mb-8 border-green-300 bg-green-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Plano PRO Ativo
+              </CardTitle>
+              <CardDescription>Você já possui uma assinatura PRO ativa.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => navigate("/meu-perfil")}>
+                Gerenciar Assinatura
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid md:grid-cols-2 gap-8">
           {/* Plano Gratuito */}
           <Card>
@@ -144,9 +170,15 @@ const AssinarPro = () => {
                 ))}
               </ul>
 
-              <Button onClick={handleSubscribe} disabled={loading} className="w-full" size="lg">
-                {loading ? "Processando..." : "Tornar PRO"}
-              </Button>
+              {!isPro ? (
+                <Button onClick={handleSubscribe} disabled={loading || proLoading} className="w-full" size="lg">
+                  {loading ? "Processando..." : "Tornar PRO"}
+                </Button>
+              ) : (
+                <Button onClick={() => navigate("/meu-perfil")} className="w-full" size="lg" variant="outline">
+                  Gerenciar Assinatura
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
