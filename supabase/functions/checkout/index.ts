@@ -25,20 +25,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Check required environment variables first
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "http://localhost:3000";
-
-    if (!stripeKey) {
-      logStep("ERROR: STRIPE_SECRET_KEY not configured");
-      return new Response(JSON.stringify({ 
-        error: "Stripe não configurado. Configure STRIPE_SECRET_KEY nas variáveis de ambiente." 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
 
@@ -50,11 +36,12 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Parse request body to get price ID
-    const { priceId } = await req.json();
-    if (!priceId) throw new Error("Price ID is required");
-    
-    logStep("Using provided price ID", { priceId });
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const priceId = Deno.env.get("STRIPE_PRICE_ID");
+    const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "http://localhost:3000";
+
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -77,7 +64,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${siteUrl}/meu-perfil?plano=pro`,
+      success_url: `${siteUrl}/calculadoras?pro=ok`,
       cancel_url: `${siteUrl}/assinar-pro`,
       metadata: {
         user_id: user.id,

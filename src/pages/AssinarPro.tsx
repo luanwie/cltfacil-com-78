@@ -13,11 +13,30 @@ const AssinarPro = () => {
   const { user } = useAuth();
   const { isPro, loading: proLoading } = useProAndUsage();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<{ monthly: boolean; annual: boolean }>({ monthly: false, annual: false });
+  const [loading, setLoading] = useState(false);
+  const [priceLabel, setPriceLabel] = useState("R$ 19,90/mês"); // fallback
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("get-price");
+        if (!mounted) return;
+        if (error) {
+          console.warn("get-price error:", error);
+          return; // mantém fallback
+        }
+        if (data?.label) setPriceLabel(data.label);
+      } catch (e) {
+        console.warn("get-price failed:", e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const goLogin = () => navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
 
-  const handleSubscribe = async (priceId: string, planType: 'monthly' | 'annual') => {
+  const handleSubscribe = async () => {
     if (!user) {
       goLogin();
       return;
@@ -29,23 +48,14 @@ const AssinarPro = () => {
       return;
     }
     
-    setLoading(prev => ({ ...prev, [planType]: true }));
+    setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("checkout", {
-        body: { priceId }
-      });
-      
+      const { data, error } = await supabase.functions.invoke("checkout");
       if (error) {
         console.error("Checkout error:", error);
-        // Check if it's a configuration error
-        if (error.message?.includes("Stripe não configurado") || error.message?.includes("STRIPE_SECRET_KEY")) {
-          toast.error("Stripe não configurado. Configure as chaves do Stripe nas variáveis de ambiente antes de continuar.");
-        } else {
-          toast.error("Erro ao criar checkout: " + error.message);
-        }
+        toast.error("Erro ao criar checkout: " + error.message);
         return;
       }
-      
       if (data?.url) {
         window.open(data.url, "_blank");
       } else {
@@ -53,9 +63,9 @@ const AssinarPro = () => {
       }
     } catch (err) {
       console.error("Error creating checkout:", err);
-      toast.error("Erro ao processar assinatura. Verifique se o Stripe está configurado corretamente.");
+      toast.error("Erro ao processar assinatura");
     } finally {
-      setLoading(prev => ({ ...prev, [planType]: false }));
+      setLoading(false);
     }
   };
 
@@ -112,7 +122,7 @@ const AssinarPro = () => {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8">
           {/* Plano Gratuito */}
           <Card>
             <CardHeader>
@@ -134,64 +144,21 @@ const AssinarPro = () => {
             </CardContent>
           </Card>
 
-          {/* Plano PRO Mensal */}
-          <Card className="border-primary relative">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-primary" />
-                Plano PRO Mensal
-              </CardTitle>
-              <CardDescription>Flexibilidade mensal</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold text-primary">
-                R$ 19,90/mês
-              </div>
-
-              <ul className="space-y-3">
-                {benefits.map((benefit, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    <span>{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {!isPro ? (
-                <Button 
-                  onClick={() => handleSubscribe("price_1S04PvJ4DZQ8fu5ua3dZ3OQu", "monthly")} 
-                  disabled={loading.monthly || proLoading} 
-                  className="w-full" 
-                  size="lg"
-                >
-                  {loading.monthly ? "Processando..." : "Assinar Mensal"}
-                </Button>
-              ) : (
-                <Button onClick={() => navigate("/meu-perfil")} className="w-full" size="lg" variant="outline">
-                  Gerenciar Assinatura
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Plano PRO Anual */}
+          {/* Plano PRO */}
           <Card className="border-primary relative">
             <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-              <Badge className="bg-primary text-primary-foreground">2 meses grátis</Badge>
+              <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
             </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                Plano PRO Anual
+                Plano PRO
               </CardTitle>
-              <CardDescription>Melhor custo-benefício</CardDescription>
+              <CardDescription>Para profissionais e empresas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-3xl font-bold text-primary">
-                R$ 149,90/ano
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Equivale a R$ 12,49/mês
+                {priceLabel}
               </div>
 
               <ul className="space-y-3">
@@ -204,14 +171,8 @@ const AssinarPro = () => {
               </ul>
 
               {!isPro ? (
-                <Button 
-                  onClick={() => handleSubscribe("price_1S0uqyJ4DZQ8fu5utjfc9xfw", "annual")} 
-                  disabled={loading.annual || proLoading} 
-                  className="w-full" 
-                  size="lg"
-                  variant="default"
-                >
-                  {loading.annual ? "Processando..." : "Assinar Anual"}
+                <Button onClick={handleSubscribe} disabled={loading || proLoading} className="w-full" size="lg">
+                  {loading ? "Processando..." : "Tornar PRO"}
                 </Button>
               ) : (
                 <Button onClick={() => navigate("/meu-perfil")} className="w-full" size="lg" variant="outline">
