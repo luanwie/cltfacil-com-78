@@ -36,12 +36,15 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Parse request body to get price ID
+    const { priceId } = await req.json();
+    if (!priceId) throw new Error("Price ID is required");
+    
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const priceId = Deno.env.get("STRIPE_PRICE_ID");
     const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "http://localhost:3000";
 
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
+    logStep("Using provided price ID", { priceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
@@ -64,7 +67,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${siteUrl}/calculadoras?pro=ok`,
+      success_url: `${siteUrl}/meu-perfil?plano=pro`,
       cancel_url: `${siteUrl}/assinar-pro`,
       metadata: {
         user_id: user.id,
