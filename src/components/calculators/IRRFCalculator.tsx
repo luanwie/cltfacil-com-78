@@ -10,7 +10,7 @@ import { calcularIRRFSync } from "@/lib/tabelas";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
-import { navigateToProPage } from "@/utils/proRedirect";
+import { goPro } from "@/utils/proRedirect";
 import { ensureCanCalculate } from "@/utils/usageGuard";
 import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
@@ -128,7 +128,7 @@ const IRRFCalculator = () => {
               remaining={remaining}
               isPro={isPro}
               isLogged={isLogged}
-              onGoPro={() => navigateToProPage(navigate, isLogged, location.pathname)}
+              onGoPro={() => goPro(navigate, isLogged, location.pathname)}
             />
           </div>
 

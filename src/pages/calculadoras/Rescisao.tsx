@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
-import { navigateToProPage } from "@/utils/proRedirect";
+import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import RescisaoCalculator from "@/components/calculators/RescisaoCalculator";
@@ -91,7 +91,7 @@ const Rescisao = () => {
                 remaining={ctx.remaining}
                 isPro={ctx.isPro}
                 isLogged={ctx.isLogged}
-                onGoPro={() => navigateToProPage(navigate, ctx.isLogged, location.pathname)}
+                onGoPro={() => goPro(navigate, ctx.isLogged, location.pathname)}
               />
             </div>
 
