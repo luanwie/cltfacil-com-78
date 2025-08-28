@@ -36,12 +36,22 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Get request body to determine plan
+    const body = req.method === "POST" ? await req.json() : {};
+    const plan = body.plan || 'mensal'; // default to mensal
+    logStep("Plan selected", { plan });
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const priceId = Deno.env.get("STRIPE_PRICE_ID");
+    const priceIdMensal = Deno.env.get("STRIPE_PRICE_ID_MENSAL");
+    const priceIdAnual = Deno.env.get("STRIPE_PRICE_ID_ANUAL");
     const siteUrl = Deno.env.get("SITE_URL") || req.headers.get("origin") || "http://localhost:3000";
 
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    if (!priceId) throw new Error("STRIPE_PRICE_ID is not set");
+    if (!priceIdMensal) throw new Error("STRIPE_PRICE_ID_MENSAL is not set");
+    if (!priceIdAnual) throw new Error("STRIPE_PRICE_ID_ANUAL is not set");
+
+    const priceId = plan === 'anual' ? priceIdAnual : priceIdMensal;
+    logStep("Using price ID", { priceId, plan });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     

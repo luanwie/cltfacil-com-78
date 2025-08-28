@@ -34,14 +34,16 @@ const AssinarPro = () => {
 
   const goLogin = () => navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (plan: 'mensal' | 'anual') => {
     if (!user) {
       goLogin();
       return;
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("checkout");
+      const { data, error } = await supabase.functions.invoke("checkout", {
+        body: { plan }
+      });
       if (error) {
         console.error("Checkout error:", error);
         toast.error("Erro ao criar checkout: " + error.message);
@@ -96,7 +98,7 @@ const AssinarPro = () => {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {/* Plano Gratuito */}
           <Card>
             <CardHeader>
@@ -118,21 +120,18 @@ const AssinarPro = () => {
             </CardContent>
           </Card>
 
-          {/* Plano PRO */}
+          {/* Plano PRO Mensal */}
           <Card className="border-primary relative">
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-              <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
-            </div>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                Plano PRO
+                Plano PRO Mensal
               </CardTitle>
               <CardDescription>Para profissionais e empresas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-3xl font-bold text-primary">
-                {priceLabel}
+                R$ 19,90/mês
               </div>
 
               <ul className="space-y-3">
@@ -144,8 +143,53 @@ const AssinarPro = () => {
                 ))}
               </ul>
 
-              <Button onClick={handleSubscribe} disabled={loading} className="w-full" size="lg">
-                {loading ? "Processando..." : "Tornar PRO"}
+              <Button 
+                onClick={() => handleSubscribe('mensal')} 
+                disabled={loading} 
+                className="w-full" 
+                size="lg"
+              >
+                {loading ? "Processando..." : "Assinar Mensal"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Plano PRO Anual */}
+          <Card className="border-primary relative">
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+              <Badge className="bg-primary text-primary-foreground">2 Meses Grátis</Badge>
+            </div>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Plano PRO Anual
+              </CardTitle>
+              <CardDescription>Melhor valor para empresas</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-3xl font-bold text-primary">
+                R$ 149,90/ano
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Equivale a R$ 12,49/mês
+              </div>
+
+              <ul className="space-y-3">
+                {benefits.map((benefit, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <span>{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button 
+                onClick={() => handleSubscribe('anual')} 
+                disabled={loading} 
+                className="w-full" 
+                size="lg"
+              >
+                {loading ? "Processando..." : "Assinar Anual"}
               </Button>
             </CardContent>
           </Card>
