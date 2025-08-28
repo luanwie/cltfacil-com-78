@@ -10,10 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import ProfileForm from "@/components/profile/ProfileForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-// --- Botão que abre o Portal do Cliente (Stripe) via Edge Function ---
+// Botão que abre o Portal do Cliente (Stripe) via Edge Function
 function ManageSubscriptionButton() {
   const [loading, setLoading] = useState(false);
 
@@ -49,16 +48,12 @@ export default function MeuPerfil() {
   const [profile, setProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const [syncing, setSyncing] = useState(false);
-  const [syncErr, setSyncErr] = useState<string | null>(null);
-
   useSEO({
     title: "Meu Perfil - CLT Fácil",
     description: "Gerencie seus dados pessoais e assinatura no CLT Fácil",
     canonical: "/meu-perfil",
   });
 
-  // Redireciona se não logado e carrega dados + sincroniza PRO
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/login?redirect=" + encodeURIComponent("/meu-perfil"));
@@ -67,7 +62,7 @@ export default function MeuPerfil() {
     if (user) {
       (async () => {
         await fetchProfile();
-        await syncPro(); // sincroniza com Stripe e atualiza profile.is_pro
+        await syncProSilencioso();
       })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,27 +85,20 @@ export default function MeuPerfil() {
     }
   };
 
-  // Chama a Edge Function sync-pro-from-stripe (ATENÇÃO: precisa das secrets certas)
-  const syncPro = async () => {
-    if (!user) return;
-    setSyncing(true);
-    setSyncErr(null);
+  // Chama a função de sync apenas em background (sem UI extra)
+  const syncProSilencioso = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("sync-pro-from-stripe", { body: {} });
-      if (error) throw error;
-      // Recarrega o perfil para refletir o is_pro atualizado
-      await fetchProfile();
-    } catch (e: any) {
-      setSyncErr(e?.message || "Falha ao sincronizar assinatura");
-    } finally {
-      setSyncing(false);
+      await supabase.functions.invoke("sync-pro-from-stripe", { body: {} });
+      await fetchProfile(); // reflete is_pro atualizado, se houver mudança
+    } catch (e) {
+      // silencioso para não poluir a UI
+      console.warn("sync-pro-from-stripe falhou (silencioso):", e);
     }
   };
 
   const step: Step = authLoading || profileLoading ? "LOADING" : !user ? "NEEDS_LOGIN" : "READY";
   const isPro = !!profile?.is_pro;
 
-  // Skeleton
   if (step === "LOADING") {
     return (
       <Container className="py-8">
@@ -130,6 +118,7 @@ export default function MeuPerfil() {
       </Container>
     );
   }
+
   if (step === "NEEDS_LOGIN") return null;
 
   return (
@@ -171,21 +160,7 @@ export default function MeuPerfil() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {syncErr && (
-              <Alert variant="destructive">
-                <AlertDescription>{syncErr}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex flex-wrap gap-3">
-              {/* Sempre visível para abrir/cancelar no Portal do Cliente */}
-              <ManageSubscriptionButton />
-              {/* Sincroniza PRO agora */}
-              <Button variant="outline" onClick={syncPro} disabled={syncing}>
-                {syncing ? "Sincronizando…" : "Tentar novamente"}
-              </Button>
-            </div>
-
+            <ManageSubscriptionButton />
             {isPro && profile?.pro_since && (
               <p className="text-xs text-muted-foreground">
                 PRO desde {new Date(profile.pro_since).toLocaleString()}
