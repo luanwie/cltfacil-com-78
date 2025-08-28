@@ -14,6 +14,10 @@ const AssinarPro = () => {
   const [loading, setLoading] = useState(false);
   const [priceLabel, setPriceLabel] = useState("R$ 19,90/mês"); // fallback
 
+  // ⬇️ ADICIONE seus Payment Links do Stripe (LIVE)
+  const LINK_MENSAL = "https://buy.stripe.com/28E00k7A5behaBi1eY1kA00"; // ex: https://buy.stripe.com/...
+  const LINK_ANUAL = "https://SEU-DOMINIO/meu-perfil?plano=pro";   // ex: https://buy.stripe.com/...
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -34,6 +38,7 @@ const AssinarPro = () => {
 
   const goLogin = () => navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
 
+  // ⬇️ ALTERADO: redireciona direto para os Payment Links (sem Edge Function)
   const handleSubscribe = async (plan: 'mensal' | 'anual') => {
     if (!user) {
       goLogin();
@@ -41,21 +46,14 @@ const AssinarPro = () => {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("checkout", {
-        body: { plan }
-      });
-      if (error) {
-        console.error("Checkout error:", error);
-        toast.error("Erro ao criar checkout: " + error.message);
+      const url = plan === 'mensal' ? LINK_MENSAL : LINK_ANUAL;
+      if (!url) {
+        toast.error("Link de pagamento não configurado.");
         return;
       }
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      } else {
-        toast.error("URL de checkout não encontrada");
-      }
+      window.location.href = url; // abre o checkout do Stripe diretamente
     } catch (err) {
-      console.error("Error creating checkout:", err);
+      console.error("Erro ao abrir Payment Link:", err);
       toast.error("Erro ao processar assinatura");
     } finally {
       setLoading(false);
