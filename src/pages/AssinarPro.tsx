@@ -34,11 +34,18 @@ const AssinarPro = () => {
       const { data, error } = await supabase.functions.invoke("checkout", {
         body: { priceId }
       });
+      
       if (error) {
         console.error("Checkout error:", error);
-        toast.error("Erro ao criar checkout: " + error.message);
+        // Check if it's a configuration error
+        if (error.message?.includes("Stripe não configurado") || error.message?.includes("STRIPE_SECRET_KEY")) {
+          toast.error("Stripe não configurado. Configure as chaves do Stripe nas variáveis de ambiente antes de continuar.");
+        } else {
+          toast.error("Erro ao criar checkout: " + error.message);
+        }
         return;
       }
+      
       if (data?.url) {
         window.open(data.url, "_blank");
       } else {
@@ -46,7 +53,7 @@ const AssinarPro = () => {
       }
     } catch (err) {
       console.error("Error creating checkout:", err);
-      toast.error("Erro ao processar assinatura");
+      toast.error("Erro ao processar assinatura. Verifique se o Stripe está configurado corretamente.");
     } finally {
       setLoading(prev => ({ ...prev, [planType]: false }));
     }
