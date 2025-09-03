@@ -1,14 +1,12 @@
+// vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// nome do repositório no GitHub Pages
-const repoBase = "/cltfacil-com-78/";
-
 export default defineConfig(({ mode }) => ({
-  // em produção (Pages) servimos em /cltfacil-com-78/, em dev é /
-  base: mode === "production" ? repoBase : "/",
+  // No Lovable o app fica na raiz do domínio
+  base: "/",
   server: {
     host: "::",
     port: 8080,
