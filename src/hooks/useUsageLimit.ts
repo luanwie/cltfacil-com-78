@@ -30,12 +30,16 @@ export function useUsageLimit() {
         return;
       }
 
-      // sem generics no from(); tipamos manualmente o data
+      console.log("🔍 Buscando profile para user:", user.id);
+      
+      // CORREÇÃO: usar user_id ao invés de id
       const { data, error } = await supabase
         .from("profiles")
         .select("is_pro, calc_count")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .maybeSingle();
+
+      console.log("📊 Profile data:", data, "Error:", error);
 
       if (!mounted) return;
 
@@ -47,6 +51,8 @@ export function useUsageLimit() {
 
       const row = (data || {}) as Partial<ProfileRow>;
 
+      console.log("✅ Definindo estado - isPro:", Boolean(row.is_pro), "count:", Number(row.calc_count ?? 0));
+      
       setIsPro(Boolean(row.is_pro));
       setCount(Number(row.calc_count ?? 0));
       setLoading(false);
@@ -66,17 +72,22 @@ export function useUsageLimit() {
   async function incrementCount() {
     if (!user) return;
 
-    const newCount = count + 1;
-    setCount(newCount); // update otimista
+    console.log("🔢 Incrementando count de", count, "para", count + 1);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ calc_count: newCount })
-      .eq("id", user.id);
+    // CORREÇÃO: Usar a função RPC do Supabase ao invés de update manual
+    const { data: newCount, error } = await supabase.rpc('increment_calc_count');
 
     if (error) {
-      console.warn("increment error", error);
-      setCount((c) => c - 1); // rollback
+      console.error("❌ Erro ao incrementar:", error);
+      toast.error("Erro ao atualizar contador");
+      return;
+    }
+
+    console.log("✅ Novo count retornado:", newCount);
+    
+    // Atualizar o estado local com o valor retornado
+    if (typeof newCount === 'number') {
+      setCount(newCount);
     }
   }
 
