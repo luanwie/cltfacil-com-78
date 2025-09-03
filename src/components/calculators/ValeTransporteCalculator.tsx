@@ -34,10 +34,9 @@ type Resultado = {
 };
 
 const ValeTransporteCalculator = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, isLogged, canUse } = ctx; // <- usamos isLogged
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const { toast } = useToast();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
 
   // ---- Entradas principais
   const [salario, setSalario] = useState<number | undefined>();
@@ -64,13 +63,7 @@ const ValeTransporteCalculator = () => {
     if (modo === "simples" && (!precoConducao || precoConducao <= 0)) return;
     if (modo === "avancado" && ((!precoIda || precoIda <= 0) || (!precoVolta || precoVolta <= 0))) return;
 
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () => document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    if (!(await allowOrRedirect())) return;
 
     const viagens = Math.max(1, Math.round(viagensPorDia || 2));
     const diasTotal = Math.max(1, Math.round(diasUteis || 22));
@@ -98,7 +91,7 @@ const ValeTransporteCalculator = () => {
     const descontoEmpregadoNum = Math.min(limiteValor, custoVTNum);
     const custoEmpresaNum = Math.max(0, custoVTNum - descontoEmpregadoNum);
 
-    // <<< ajuste: agora passamos (isPro, isLogged)
+    // <<< Incrementa uso
     await incrementCount();
 
     setResultado({
@@ -140,7 +133,7 @@ const ValeTransporteCalculator = () => {
   };
 
   const disabled =
-    !canUse ||
+    overLimit ||
     !salario ||
     salario <= 0 ||
     (modo === "simples" ? !precoConducao || precoConducao <= 0 : !precoIda || !precoVolta || precoIda <= 0 || precoVolta <= 0);
@@ -318,7 +311,7 @@ const ValeTransporteCalculator = () => {
           <div className="flex gap-2">
             <Button onClick={calcular} disabled={disabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular Vale-Transporte"}
+              {overLimit ? "Limite atingido" : "Calcular Vale-Transporte"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
