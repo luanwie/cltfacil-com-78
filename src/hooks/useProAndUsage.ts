@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-const FREE_LIMIT = 4;
+// Limite para usuários logados (plano gratuito)
+const FREE_LIMIT = 2;
 
 // Limite para visitantes não logados (1 cálculo grátis)
 const ANON_LIMIT = 1;
@@ -13,12 +14,11 @@ function getAnonCount() {
   return raw ? parseInt(raw, 10) : 0;
 }
 
-// Incrementa o contador anônimo no localStorage
+// Incrementa o contador anônimo no localStorage (mantido para compatibilidade)
 function incrementAnonCount() {
   const current = getAnonCount();
   localStorage.setItem('anonCalcCount', (current + 1).toString());
 }
-
 
 export const useProAndUsage = () => {
   const { user, session, userProfile } = useAuth();
@@ -64,20 +64,20 @@ export const useProAndUsage = () => {
     }
   };
 
-const isLogged = !!session;
+  const isLogged = !!session;
 
-// Número de cálculos restantes considerando usuário logado ou anônimo
-const anonCount = getAnonCount();
-const anonRemaining = Math.max(0, ANON_LIMIT - anonCount);
-const remaining = isLogged
-  ? Math.max(0, FREE_LIMIT - calcCount)
-  : anonRemaining;
+  // Número de cálculos restantes considerando usuário logado ou anônimo
+  const anonCount = getAnonCount();
+  const anonRemaining = Math.max(0, ANON_LIMIT - anonCount);
+  const remaining = isLogged
+    ? Math.max(0, FREE_LIMIT - calcCount)
+    : anonRemaining;
 
-// Usuário pode usar se for PRO, ou se tiver cálculos restantes (logado ou anônimo)
-const canUse = isPro || (isLogged ? calcCount < FREE_LIMIT : anonCount < ANON_LIMIT);
+  // Pode usar se for PRO, ou se tiver cálculos restantes (logado ou anônimo)
+  const canUse = isPro || (isLogged ? calcCount < FREE_LIMIT : anonCount < ANON_LIMIT);
 
-// Se não estiver logado e já excedeu o limite anônimo, exigir login
-const requireLogin = !isLogged && anonCount >= ANON_LIMIT;
+  // Se não estiver logado e já excedeu o limite anônimo, exigir login
+  const requireLogin = !isLogged && anonCount >= ANON_LIMIT;
 
   return {
     isLogged,
@@ -88,6 +88,6 @@ const requireLogin = !isLogged && anonCount >= ANON_LIMIT;
     requireLogin,
     loading,
     incrementCount,
-    refreshProfile: fetchProfile
+    refreshProfile: fetchProfile,
   };
 };

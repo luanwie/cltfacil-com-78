@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Calculator, Clock, Shield, Zap, ChevronRight, HelpCircle } from "lucide-react";
+import { Calculator, Shield, Zap, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Container from "@/components/ui/container";
@@ -7,7 +7,7 @@ import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
 
 import { useSEO } from "@/hooks/useSEO";
-import { generateSoftwareApplicationSchema, generateFAQSchema } from "@/lib/seo";
+import { generateSoftwareApplicationSchema } from "@/lib/seo";
 
 const Index = () => {
   // SEO setup
@@ -22,7 +22,7 @@ const Index = () => {
   const heroFeatures = [
     { icon: Zap, title: "Simples e Rápido", description: "Calcule em segundos sem complicações" },
     { icon: Shield, title: "Confiável", description: "Baseado na legislação CLT atualizada" },
-    { icon: Calculator, title: "Uso limitado", description: "4 cálculos grátis por mês" }
+    { icon: Calculator, title: "Uso limitado", description: "2 cálculos grátis por mês" }
   ];
 
   const howItWorks = [
@@ -52,13 +52,19 @@ const Index = () => {
     { title: "Vale-Transporte (6%)", href: "/clt/vale-transporte" },
   ];
 
-  const mainCalculators = LINKS_HOME.slice(0, 9);
-
   const faqItems = [
-    { question: "Quando as horas extras são 50% e quando são 100%?", answer: "Em regra, 50% em dias úteis e 100% em domingos e feriados, salvo acordo coletivo." },
-    { question: "Qual é o limite de horas extras por mês?", answer: "Limite legal de 2 horas por dia, cerca de 44 horas/mês (22 dias úteis). Acordos podem alterar." },
-    { question: "As horas extras geram DSR?", answer: "Sim, costumam refletir no DSR e em verbas correlatas." },
-    { question: "Os cálculos são confiáveis?", answer: "As calculadoras seguem a legislação CLT vigente. Consulte a CCT/ACT e orientação jurídica quando necessário." }
+    {
+      question: "Quantos cálculos gratuitos tenho por mês?",
+      answer: "O plano gratuito permite até 2 cálculos por mês. Para uso ilimitado, assine o Plano PRO.",
+    },
+    {
+      question: "Preciso fazer cadastro para usar?",
+      answer: "Você pode realizar 1 cálculo sem login. Após isso, é necessário criar uma conta gratuita ou assinar o PRO.",
+    },
+    {
+      question: "Posso cancelar o plano PRO quando quiser?",
+      answer: "Sim. Você pode cancelar a assinatura a qualquer momento pelo portal da Stripe, sem taxas.",
+    },
   ];
 
   return (
@@ -72,25 +78,24 @@ const Index = () => {
                 Calculadoras Trabalhistas CLT
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Calculadoras de rescisão, férias, 13º, INSS, FGTS e mais. Grátis com limite de 4 cálculos por mês. Desbloqueie uso ilimitado com o Plano PRO.
+                Calculadoras de rescisão, férias, 13º, INSS, FGTS e mais.
+                Grátis com limite de <strong>2 cálculos por mês</strong>. Desbloqueie uso ilimitado com o Plano PRO.
               </p>
             </div>
 
-<div className="flex flex-col sm:flex-row gap-4 justify-center">
-<Button asChild variant="hero" size="lg" aria-label="Usar grátis 4 cálculos por mês">
-  <Link to="/calculadoras">
-    Usar grátis (4 cálculos/mês)
-    <ChevronRight className="w-5 h-5" />
-  </Link>
-</Button>
-<Button asChild variant="outline" size="lg" aria-label="Conhecer o plano PRO">
-  <Link to="/assinar-pro">Conhecer Plano PRO</Link>
-</Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild variant="hero" size="lg" aria-label="Usar grátis 2 cálculos por mês">
+                <Link to="/calculadoras">
+                  Usar grátis (2 cálculos/mês)
+                  <ChevronRight className="w-5 h-5" />
+                </Link>
+              </Button>
 
-  <Button asChild variant="outline" size="lg">
-    <Link to="/assinar-pro">Conhecer Plano PRO</Link>
-  </Button>
-</div>
+              {/* Apenas UM botão para o PRO */}
+              <Button asChild variant="outline" size="lg" aria-label="Conhecer o plano PRO">
+                <Link to="/assinar-pro">Conhecer Plano PRO</Link>
+              </Button>
+            </div>
 
             {/* Hero Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto mt-16">
@@ -193,20 +198,23 @@ const Index = () => {
               Esclareça suas principais dúvidas sobre cálculos trabalhistas
             </p>
           </div>
-          <FAQ items={[
-  {
-    question: "Quantos cálculos gratuitos tenho por mês?",
-    answer: "O plano gratuito permite até 4 cálculos por mês. Para uso ilimitado, assine o Plano PRO.",
-  },
-  {
-    question: "Preciso fazer cadastro para usar?",
-    answer: "Você pode realizar 1 cálculo sem login. Após isso, é necessário criar uma conta gratuita ou assinar o PRO.",
-  },
-  {
-    question: "Posso cancelar o plano PRO quando quiser?",
-    answer: "Sim. Você pode cancelar a assinatura a qualquer momento pelo portal da Stripe, sem taxas.",
-  },
-]} />
+
+          <FAQ
+            items={[
+              {
+                question: "Quantos cálculos gratuitos tenho por mês?",
+                answer: "O plano gratuito permite até 2 cálculos por mês. Para uso ilimitado, assine o Plano PRO.",
+              },
+              {
+                question: "Preciso fazer cadastro para usar?",
+                answer: "Você pode realizar 1 cálculo sem login. Após isso, é necessário criar uma conta gratuita ou assinar o PRO.",
+              },
+              {
+                question: "Posso cancelar o plano PRO quando quiser?",
+                answer: "Sim. Você pode cancelar a assinatura a qualquer momento pelo portal da Stripe, sem taxas.",
+              },
+            ]}
+          />
         </Container>
       </section>
 
