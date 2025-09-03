@@ -17,6 +17,7 @@ const Header = () => {
   const navItems = [
     { label: "Sobre", href: "/sobre" },
     { label: "Privacidade", href: "/privacidade" },
+    { label: "Plano PRO", href: "/assinar-pro" },
   ];
 
   const isActive = (href: string) => location.pathname === href;

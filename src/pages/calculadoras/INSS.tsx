@@ -5,7 +5,6 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import INSSCalculator from "@/components/calculators/INSSCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
-
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
@@ -23,27 +22,32 @@ const INSS = () => {
         "O teto do INSS em 2025 é de R$ 7.786,02. Valores acima disso não têm incidência de contribuição previdenciária.",
     },
     {
-      question: "Como funciona o cálculo progressivo do INSS?",
+      question: "O INSS é calculado por faixas?",
       answer:
-        "O INSS é calculado por faixas progressivas. Cada faixa de salário tem uma alíquota diferente, aplicada apenas sobre o valor dentro daquela faixa.",
+        "Sim. O cálculo é progressivo por faixas, com alíquotas aplicadas apenas sobre a parcela que cai em cada faixa. A alíquota efetiva é o percentual médio sobre a base.",
     },
     {
-      question: "Posso pagar INSS complementar?",
+      question: "O INSS do 13º é somado ao do mês?",
       answer:
-        "Sim, contribuintes podem pagar complementação para atingir o teto, melhorando a aposentadoria futura. Consulte a Previdência Social.",
+        "Não. O 13º tem cálculo próprio, feito separadamente da base mensal.",
+    },
+    {
+      question: "Posso incluir comissões/variáveis no mês?",
+      answer:
+        "Sim. Some-as em 'outras remunerações do mês' para ver o efeito no INSS mensal.",
     },
   ];
 
   useSEO({
-    title: "INSS Mensal | CLT Fácil",
+    title: "INSS Mensal + 13º | CLT Fácil",
     description:
-      "Calcule sua contribuição previdenciária mensal. Cálculo oficial do INSS por faixas progressivas com tabelas atualizadas.",
-    keywords: "INSS, previdência social, contribuição, tabela INSS, alíquota",
+      "Calcule sua contribuição ao INSS nas faixas progressivas, com opção de incluir 13º e outras remunerações do mês. Resultado completo e atualizado.",
+    keywords: "INSS, contribuição, faixas progressivas, 13º salário, alíquota efetiva",
     canonical: "/clt/inss",
     jsonLd: {
       ...generateCalculatorSchema(
-        "Calculadora de INSS Mensal",
-        "Calcule a contribuição previdenciária mensal por faixas progressivas",
+        "Calculadora de INSS (Mês + 13º)",
+        "Calcule a contribuição previdenciária mensal e do 13º com faixas progressivas",
         "/clt/inss"
       ),
       ...generateFAQSchema(faqItems),
@@ -55,11 +59,11 @@ const INSS = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de INSS Mensal"
-            description="Calcule sua contribuição previdenciária mensal com base nas faixas progressivas atuais do INSS."
+            title="Calculadora de INSS (Mês + 13º)"
+            description="Cálculo progressivo oficial, com outras remunerações do mês e 13º opcional."
           />
 
-          {/* Opcional: Banner também no topo da página (mantém o padrão) */}
+          {/* Banner global de uso/CTA PRO (mesmo padrão das demais) */}
           <div id="usage-banner">
             <UsageBanner
               remaining={ctx.remaining}
@@ -72,8 +76,8 @@ const INSS = () => {
           <INSSCalculator />
 
           <Notice variant="info">
-            Cálculo baseado na tabela oficial do INSS. O valor pode variar conforme mudanças na
-            legislação previdenciária.
+            Os resultados são estimativas baseadas na tabela vigente. Em casos específicos
+            (múltiplos vínculos, afastamentos, compensações), consulte seu RH/contabilidade.
           </Notice>
 
           <FAQ items={faqItems} />

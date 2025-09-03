@@ -9,20 +9,12 @@ import RescisaoCalculator from "@/components/calculators/RescisaoCalculator";
 import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
 import { useSEO } from "@/hooks/useSEO";
+import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 
 const Rescisao = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ctx = useProAndUsage();
-
-  useSEO({
-    title: "Calculadora de Rescisão Trabalhista | Cálculo CLT Completo",
-    description:
-      "Calcule rescisão trabalhista completa: saldo salário, 13º, férias, aviso prévio, FGTS. Todos os tipos de rescisão CLT. Ferramenta gratuita e confiável.",
-    keywords:
-      "rescisão trabalhista, cálculo rescisão, CLT, demissão, aviso prévio, FGTS, 13º salário, férias proporcionais",
-    canonical: "/clt/rescisao",
-  });
 
   const faqItems = [
     {
@@ -57,6 +49,26 @@ const Rescisao = () => {
     },
   ];
 
+  useSEO({
+    title: "Calculadora de Rescisão Trabalhista | Cálculo CLT Completo",
+    description:
+      "Calcule rescisão trabalhista completa: saldo salário, 13º, férias, aviso prévio e FGTS. Todos os tipos de rescisão CLT. Ferramenta gratuita e confiável.",
+    keywords:
+      "rescisão trabalhista, cálculo rescisão, CLT, demissão, aviso prévio, FGTS, 13º salário, férias proporcionais",
+    canonical: "/clt/rescisao",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@graph": [
+        generateCalculatorSchema(
+          "Calculadora de Rescisão Trabalhista",
+          "Calcule rescisão trabalhista completa com saldo de salário, 13º, férias, aviso prévio e FGTS",
+          "/clt/rescisao"
+        ),
+        generateFAQSchema(faqItems),
+      ],
+    },
+  });
+
   return (
     <>
       <section className="py-12">
@@ -74,8 +86,8 @@ const Rescisao = () => {
             <div>
               <h4 className="font-semibold mb-2">Informação Importante</h4>
               <p>
-                Esta calculadora fornece estimativas baseadas na legislação CLT vigente. Para situações específicas, consulte sempre um
-                advogado trabalhista ou contador.
+                Esta calculadora fornece estimativas baseadas na legislação CLT vigente.
+                Para situações específicas, consulte sempre um advogado trabalhista ou contador.
               </p>
             </div>
           </Notice>

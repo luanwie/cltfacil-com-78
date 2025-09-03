@@ -5,89 +5,72 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import FGTSCalculator from "@/components/calculators/FGTSCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
 import ProUpsell from "@/components/ProUpsell";
-import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const FGTS = () => {
-  const { isPro, remaining, loading } = useProAndUsage();
-
   const faqItems = [
     {
       question: "Como funciona o depósito do FGTS?",
       answer:
-        "O empregador deposita 8% do salário bruto mensalmente na conta do FGTS. O valor é atualizado mensalmente com TR + 3% ao ano.",
+        "O empregador deposita, em regra, 8% do salário bruto (2% para aprendiz). No emprego doméstico, além do 8% de FGTS há 3,2% de indenização mensal. Os valores sofrem atualização por TR + 3% a.a.",
     },
     {
       question: "Quando posso sacar o FGTS?",
       answer:
-        "Principais situações: demissão sem justa causa, compra da casa própria, aposentadoria, doenças graves, ou outros casos previstos em lei.",
+        "Principais hipóteses: demissão sem justa causa, compra da casa própria, aposentadoria, doenças graves, entre outras previstas em lei. Há ainda a modalidade de saque-aniversário.",
     },
     {
       question: "Como funciona a multa de 40%?",
       answer:
-        "Na demissão sem justa causa, o empregador paga multa de 40% sobre todo o saldo do FGTS. No acordo, a multa é de 20%.",
+        "Na demissão sem justa causa, o empregador paga 40% sobre o saldo do FGTS. No acordo (art. 484-A), a multa é de 20%. Outras hipóteses não geram multa.",
+    },
+    {
+      question: "FGTS incide sobre 13º salário?",
+      answer:
+        "Sim. O depósito sobre o 13º é feito aplicando a mesma alíquota do contrato (8% para CLT e doméstico, 2% para aprendiz) sobre o valor proporcional dos avos.",
+    },
+    {
+      question: "Como é calculado o saque-aniversário?",
+      answer:
+        "Aplica-se um percentual por faixa de saldo, somado a uma parcela adicional fixa. A calculadora estima o valor segundo a tabela oficial.",
     },
   ];
 
   useSEO({
-    title: "FGTS + Projeção | CLT Fácil",
+    title: "FGTS + Projeção Completa | CLT Fácil",
     description:
-      "Calcule depósitos mensais do FGTS, projeções e multas. Ferramenta completa para acompanhar seu Fundo de Garantia.",
-    keywords: "FGTS, fundo de garantia, depósito mensal, multa 40%, saque FGTS",
+      "Simule FGTS com CLT, aprendiz e doméstico; 13º proporcional; rendimento estimado (TR + 3% a.a.); multa rescisória e saque-aniversário.",
+    keywords:
+      "FGTS, fundo de garantia, depósito mensal, multa 40%, saque aniversário, trabalhador doméstico, aprendiz, 13º",
     canonical: "/clt/fgts",
     jsonLd: {
       ...generateCalculatorSchema(
-        "Calculadora de FGTS + Projeção",
-        "Calcule depósitos mensais do FGTS e projeções com multas",
+        "Calculadora de FGTS (Completa)",
+        "Simule depósitos do FGTS, projeções com rendimento, 13º, multa e saque-aniversário",
         "/clt/fgts"
       ),
       ...generateFAQSchema(faqItems),
     },
   });
 
-  const canUse = !!isPro || (typeof remaining === "number" && remaining > 0);
-
   return (
     <div className="min-h-screen bg-background">
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de FGTS + Projeção"
-            description="Calcule depósitos mensais do FGTS, projeções para o período e simule multas rescisórias."
+            title="Calculadora de FGTS (Projeção Completa)"
+            description="Depósitos mensais (CLT, aprendiz e doméstico), 13º proporcional, rendimento estimado, multa rescisória e simulação de saque-aniversário."
           />
 
-          {/* Card PRO padronizado (contador/benefícios/CTA) */}
+          {/* Card PRO padronizado (contador/benefícios/CTA). Some automaticamente se o usuário já for PRO */}
           <ProUpsell />
 
-          {/* Gate: calcula se PRO ou ainda há grátis; senão, bloqueia com CTA */}
-          {loading ? (
-            <div className="rounded-2xl border p-6 bg-card shadow-sm">
-              <div className="h-5 w-40 bg-muted rounded mb-3" />
-              <div className="h-4 w-64 bg-muted rounded" />
-            </div>
-          ) : canUse ? (
-            <FGTSCalculator />
-          ) : (
-            <div className="rounded-2xl border bg-card shadow-sm p-6 flex flex-col items-start gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">Você já usou seus cálculos grátis</h3>
-              <p className="text-sm text-muted-foreground">
-                Torne-se PRO para continuar usando esta calculadora e todas as outras sem limites.
-              </p>
-              <Button asChild className="mt-2">
-                <Link to="/assinar-pro">Assinar PRO</Link>
-              </Button>
-            </div>
-          )}
+          {/* Sem gate aqui: a calculadora faz o controle de uso internamente */}
+          <FGTSCalculator />
 
           <Notice variant="info">
-            Valores não incluem rendimentos (TR + 3% ao ano). Para saldo exato, consulte o
-            aplicativo oficial do FGTS.
+            Os rendimentos exibidos são <strong>estimativas</strong> (3% a.a. + TR a.a. com
+            capitalização mensal aproximada). Para valores oficiais, consulte o aplicativo do FGTS.
           </Notice>
 
           <FAQ items={faqItems} />

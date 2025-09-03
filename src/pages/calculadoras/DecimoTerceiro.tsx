@@ -3,100 +3,63 @@ import PageHeader from "@/components/ui/page-header";
 import DecimoTerceiroCalculator from "@/components/calculators/DecimoTerceiroCalculator";
 import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
 import ProUpsell from "@/components/ProUpsell";
-import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
-import { Link } from "react-router-dom";
-
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 
 const DecimoTerceiro = () => {
-  const { isPro, remaining, loading } = useProAndUsage();
-
   const faqItems = [
     {
-      question: "Como é calculado o 13º salário proporcional?",
-      answer:
-        "O 13º proporcional é calculado com base nos meses trabalhados no ano: (salário + média de variáveis) × (meses ÷ 12).",
+      question: "Como é calculado o 13º salário?",
+      answer: "Com base em 1/12 por mês válido (15+ dias). Fórmula: (salário + média de variáveis) × (meses/12).",
     },
     {
-      question: "O que são as variáveis salariais no cálculo do 13º?",
-      answer:
-        "Comissões, horas extras, adicionais e outras parcelas habituais. Para o 13º, usa-se a média anual.",
+      question: "O que entra como variáveis?",
+      answer: "Comissões, horas extras e adicionais habituais. Em geral, usa-se a média anual. Verifique sua CCT/ACT.",
     },
     {
-      question: "Como funciona a regra dos 15 dias?",
-      answer:
-        "Se trabalhou ao menos 15 dias no mês, conta como mês completo para o cálculo do 13º.",
+      question: "Quando acontece o pagamento?",
+      answer: "Usualmente em duas parcelas: 1ª até 30/11 e 2ª até 20/12. INSS/IRRF incidem na 2ª parcela quando houver.",
     },
     {
-      question: "Quando é pago o 13º salário?",
-      answer:
-        "Em duas parcelas: até 30/11 e até 20/12 (com descontos de INSS/IRRF na 2ª parcela, se aplicável).",
+      question: "Como considerar desligamento no ano?",
+      answer: "Use o modo “mês a mês” e marque apenas os meses com 15+ dias trabalhados até a rescisão.",
     },
     {
-      question: "Quem tem direito?",
-      answer:
-        "Todo trabalhador com carteira assinada que trabalhou ao menos 15 dias em um mês no ano.",
+      question: "Há descontos nesta calculadora?",
+      answer: "Mostramos o valor bruto. Descontos dependem de regras atuais de INSS/IRRF e podem variar.",
     },
   ];
 
   useSEO({
-    title: "13º Proporcional | CLT Fácil",
-    description:
-      "Calcule 13º salário proporcional aos meses trabalhados. Ferramenta com divisão automática em parcelas e explicações.",
-    keywords: "13º proporcional, décimo terceiro, CLT, calculadora",
-    canonical: "/clt/13o-proporcional",
+    title: "Décimo Terceiro | CLT Fácil",
+    description: "Calcule o 13º salário: meses/avos, base com variáveis, parcelas e explicações práticas.",
+    keywords: "13º salário, décimo terceiro, avos, CLT, proporcional",
+    canonical: "/clt/decimo-terceiro",
     jsonLd: {
       ...generateCalculatorSchema(
-        "Calculadora de 13º Proporcional",
-        "Calcule o 13º salário proporcional aos meses trabalhados no ano",
-        "/clt/13o-proporcional"
+        "Calculadora de Décimo Terceiro",
+        "Calcule o 13º salário com base em meses/avos e média de variáveis",
+        "/clt/decimo-terceiro"
       ),
       ...generateFAQSchema(faqItems),
     },
   });
 
-  const canUse = !!isPro || (typeof remaining === "number" && remaining > 0);
-
   return (
     <Container className="py-8 space-y-8">
       <PageHeader
-        title="Calculadora de 13º Proporcional"
-        description="Calcule o valor do 13º salário proporcional aos meses trabalhados no ano, considerando a regra dos 15 dias."
+        title="Calculadora de Décimo Terceiro"
+        description="Apure os avos (mês a mês ou por total de meses), base com variáveis e valor bruto das duas parcelas."
       />
 
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Card com contador global/CTA PRO (suma se já for PRO) */}
         <ProUpsell />
-
-        {loading ? (
-          <div className="rounded-2xl border p-6 bg-card shadow-sm">
-            <div className="h-5 w-40 bg-muted rounded mb-3" />
-            <div className="h-4 w-64 bg-muted rounded" />
-          </div>
-        ) : canUse ? (
-          <DecimoTerceiroCalculator />
-        ) : (
-          <div className="rounded-2xl border bg-card shadow-sm p-6 flex flex-col items-start gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-              <Lock className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold">Você já usou seus cálculos grátis</h3>
-            <p className="text-sm text-muted-foreground">
-              Torne-se PRO para continuar usando esta calculadora e todas as outras sem limites.
-            </p>
-            <Button asChild className="mt-2">
-              <Link to="/assinar-pro">Assinar PRO</Link>
-            </Button>
-          </div>
-        )}
+        <DecimoTerceiroCalculator />
 
         <Notice>
-          <strong>Aviso Legal:</strong> Esta calculadora é uma ferramenta auxiliar baseada na legislação
-          trabalhista brasileira. Para situações específicas, consulte um profissional.
+          <strong>Aviso:</strong> O resultado é uma estimativa bruta. Para descontos e situações específicas,
+          consulte a política do seu RH e sua CCT/ACT.
         </Notice>
 
         <FAQ items={faqItems} />

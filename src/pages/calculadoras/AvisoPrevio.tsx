@@ -6,52 +6,33 @@ import AvisoPrevioCalculator from "@/components/calculators/AvisoPrevioCalculato
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
 import ProUpsell from "@/components/ProUpsell";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const AvisoPrevio = () => {
-  const { isPro, remaining, loading } = useProAndUsage();
-
   const faqItems = [
     {
       question: "Como funciona a progressão do aviso prévio?",
-      answer:
-        "Inicia com 30 dias e acrescenta 3 dias por ano trabalhado a partir do segundo ano, limitado a 90 dias totais.",
+      answer: "Inicia com 30 dias e acrescenta 3 dias por ano trabalhado a partir do segundo, limitado a 90 dias (Lei 12.506/2011).",
     },
     {
       question: "Qual a diferença entre aviso trabalhado e indenizado?",
-      answer:
-        "No trabalhado, o empregado cumpre o período normalmente. No indenizado, recebe o valor correspondente sem trabalhar.",
+      answer: "Trabalhado: o período é cumprido, com redução de 2h por dia ou 7 dias corridos (art. 488). Indenizado: paga-se o valor correspondente sem trabalhar.",
     },
     {
-      question: "Quando o aviso prévio não se aplica?",
-      answer:
-        "Em casos de justa causa (empregado ou empregador), término de contrato determinado no prazo, ou acordo entre as partes.",
+      question: "Como funciona no acordo (art. 484-A) e na justa causa?",
+      answer: "No acordo, os dias e a indenização são reduzidos pela metade. Na justa causa, não há aviso prévio.",
     },
   ];
 
   useSEO({
     title: "Aviso Prévio | CLT Fácil",
-    description:
-      "Calcule dias e indenização de aviso prévio com progressão por tempo de serviço. Ferramenta gratuita e precisa.",
-    keywords: "aviso prévio, indenização, dias aviso, progressão, CLT",
+    description: "Calcule dias, data projetada e indenização do aviso prévio (dispensa, pedido, acordo 484-A, justa causa).",
+    keywords: "aviso prévio, indenização, dias aviso, 12.506/2011, CLT",
     canonical: "/clt/aviso-previo",
     jsonLd: {
-      ...generateCalculatorSchema(
-        "Calculadora de Aviso Prévio",
-        "Calcule dias e indenização de aviso prévio",
-        "/clt/aviso-previo"
-      ),
+      ...generateCalculatorSchema("Calculadora de Aviso Prévio", "Calcule dias, data projetada e indenização do aviso prévio", "/clt/aviso-previo"),
       ...generateFAQSchema(faqItems),
     },
   });
-
-  // Regra de acesso:
-  // - PRO: libera
-  // - Não PRO: libera se remaining > 0; bloqueia se remaining === 0.
-  const canUse = !!isPro || (typeof remaining === "number" && remaining > 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,45 +40,17 @@ const AvisoPrevio = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
             title="Calculadora de Aviso Prévio"
-            description="Calcule os dias de aviso prévio e o valor da indenização com base no tempo de serviço."
+            description="Calcule dias, data projetada e indenização conforme tempo de serviço e modalidade de desligamento."
           />
 
-          {/* Card reutilizável: mostra contador de grátis + CTA PRO (oculta se já for PRO) */}
           <div className="mb-6">
             <ProUpsell />
           </div>
 
-          {loading ? (
-            // Skeleton enquanto carrega status PRO/uso
-            <div className="rounded-2xl border p-6 bg-card shadow-sm">
-              <div className="h-5 w-40 bg-muted rounded mb-3" />
-              <div className="h-4 w-64 bg-muted rounded" />
-            </div>
-          ) : canUse ? (
-            <AvisoPrevioCalculator
-              // Recomendo manter estas flags se seu componente suportar:
-              // showShareButtons={false}
-              // showAds={true}
-              // suppressUsageUi={true}
-            />
-          ) : (
-            <div className="rounded-2xl border bg-card shadow-sm p-6 flex flex-col items-start gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">Você já usou seus cálculos grátis</h3>
-              <p className="text-sm text-muted-foreground">
-                Torne-se PRO para continuar usando esta calculadora e todas as outras sem limites.
-              </p>
-              <Button asChild className="mt-2">
-                <Link to="/assinar-pro">Assinar PRO</Link>
-              </Button>
-            </div>
-          )}
+          <AvisoPrevioCalculator />
 
           <Notice variant="info">
-            Cálculo baseado na progressão legal do aviso prévio. Situações específicas podem
-            alterar os valores. Consulte sempre o RH.
+            Cálculo baseado na Lei 12.506/2011 e regras da CLT (arts. 487–488 e 484-A). Situações específicas ou normas coletivas podem alterar o resultado.
           </Notice>
 
           <FAQ items={faqItems} />

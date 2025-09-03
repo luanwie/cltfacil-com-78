@@ -18,32 +18,32 @@ const IRRF = () => {
 
   const faqItems = [
     {
-      question: "Quando devo pagar IRRF?",
+      question: "Qual a diferença entre regime completo e simplificado mensal?",
       answer:
-        "O IRRF é retido automaticamente quando a base de cálculo (salário - INSS - dependentes - pensão) excede R$ 2.259,20.",
+        "No completo, você deduz dependentes (R$ 189,59 cada), pensão judicial e outras deduções legais. No simplificado mensal, aplica-se um abatimento fixo de R$ 528 sem considerar deduções, e tributa-se a base restante.",
     },
     {
-      question: "Quantos dependentes posso declarar?",
+      question: "Posso informar salário bruto e deixar o sistema calcular o INSS?",
       answer:
-        "Não há limite legal, mas cada dependente deduz R$ 189,59 da base de cálculo do IRRF. Devem estar declarados no IR anual.",
+        "Sim. Basta escolher o modo 'salário bruto'. Calculamos o INSS automaticamente e apuramos a base após INSS para o IRRF.",
     },
     {
-      question: "Pensão alimentícia reduz o IRRF?",
+      question: "Quais são exemplos de outras deduções legais?",
       answer:
-        "Sim, pensão alimentícia judicial é dedutível integralmente da base de cálculo do Imposto de Renda.",
+        "Previdência complementar (PGBL), contribuição à previdência oficial em outro vínculo, entre outras despesas dedutíveis previstas na legislação.",
     },
   ];
 
   useSEO({
-    title: "IRRF Mensal | CLT Fácil",
+    title: "IRRF Mensal (Comparativo Completo × Simplificado) | CLT Fácil",
     description:
-      "Calcule o Imposto de Renda Retido na Fonte com dependentes e deduções. Tabela progressiva atualizada para 2025.",
-    keywords: "IRRF, imposto de renda, tabela progressiva, dependentes, dedução",
+      "Calcule o IRRF mensal comparando automaticamente os regimes completo e simplificado (abatimento fixo R$ 528). Inclua dependentes, pensão e outras deduções.",
+    keywords: "IRRF, imposto de renda, tabela progressiva, dependentes, simplificado mensal, abatimento 528",
     canonical: "/clt/irrf",
     jsonLd: {
       ...generateCalculatorSchema(
-        "Calculadora de IRRF Mensal",
-        "Calcule o Imposto de Renda Retido na Fonte com deduções",
+        "Calculadora de IRRF Mensal (Comparativo)",
+        "Compare automaticamente o regime completo e o simplificado no IRRF mensal",
         "/clt/irrf"
       ),
       ...generateFAQSchema(faqItems),
@@ -56,10 +56,10 @@ const IRRF = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
             title="Calculadora de IRRF Mensal"
-            description="Calcule o Imposto de Renda Retido na Fonte considerando dependentes e deduções legais."
+            description="Compare automaticamente o regime completo e o simplificado (abatimento R$ 528) e escolha o mais vantajoso."
           />
 
-          {/* Banner no topo da página (opcional, segue padrão atual) */}
+          {/* Banner no topo da página (padrão) */}
           <div id="usage-banner">
             <UsageBanner
               remaining={ctx.remaining}
@@ -72,8 +72,8 @@ const IRRF = () => {
           <IRRFCalculator />
 
           <Notice variant="info">
-            Cálculo baseado na tabela progressiva oficial. Considere outras deduções específicas que
-            podem afetar o valor final.
+            A ferramenta usa a tabela progressiva vigente. Para situações específicas (múltiplos vínculos,
+            pensão parcial, rendas não salariais), consulte seu contador.
           </Notice>
 
           <FAQ items={faqItems} />

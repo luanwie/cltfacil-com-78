@@ -171,7 +171,7 @@ const Calculadoras = () => {
         <Container>
           <PageHeader
             title="Calculadoras Trabalhistas"
-            description="Ferramentas gratuitas para cálculos de direitos trabalhistas CLT. Simples, rápido e confiável."
+            description="Ferramentas para cálculos trabalhistas com limite gratuito de 4 cálculos por mês. Para acesso ilimitado, torne-se PRO."
           />
         </Container>
       </section>
@@ -211,13 +211,12 @@ const Calculadoras = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <CardDescription>{calc.description}</CardDescription>
-                      <Button asChild className="w-full">
-                        <Link to={calc.href}>
-                          Calcular Agora
-                          <Calculator className="w-4 h-4" />
-                        </Link>
-                      </Button>
+<Button asChild className="w-full" aria-label={`Calcular ${calc.title}`}>
+  <Link to={calc.href}>
+    Calcular Agora
+    <Calculator className="w-4 h-4" />
+  </Link>
+</Button>
                     </CardContent>
                   </Card>
                 );

@@ -3,24 +3,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
-import { Calculator, RotateCcw, DollarSign, Percent } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Calculator, RotateCcw, DollarSign, Percent, Gift } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync } from "@/lib/tabelas";
-
+import UsageBanner from "@/components/UsageBanner";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
-import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { ensureCanCalculate } from "@/utils/usageGuard";
 import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
-type Resultado = {
-  salario: string;
-  valorINSS: string;
-  aliquotaEfetiva: string;
-  faixaMarginal: string;
-  salarioLiquido: string;
+type ResultadoMes = {
+  baseMes: string;
+  valorINSSMes: string;
+  aliquotaEfetivaMes: string;
+  faixaMarginalMes: string;
+  liquidoAposINSSMes: string;
 };
+
+type Resultado13 = {
+  base13: string;
+  valorINSS13: string;
+  aliquotaEfetiva13: string;
+  faixaMarginal13: string;
+  liquidoAposINSS13: string;
+};
+
+type ResultadoGeral = {
+  totalINSS: string;
+  baseTotalConsiderada: string;
+  observacaoTeto: string | null;
+};
+
+const TETO_INSS_2025 = 7786.02; // exibição informativa
 
 const INSSCalculator = () => {
   const navigate = useNavigate();
@@ -28,8 +44,18 @@ const INSSCalculator = () => {
   const ctx = useProAndUsage();
   const { isPro, isLogged, remaining, canUse } = ctx;
 
+  // Entradas
   const [salario, setSalario] = useState<number | undefined>();
-  const [resultado, setResultado] = useState<Resultado | null>(null);
+  const [outrasRemuneracoes, setOutrasRemuneracoes] = useState<number | undefined>(0);
+  const [incluirDecimo, setIncluirDecimo] = useState<boolean>(false);
+  const [valorDecimo, setValorDecimo] = useState<number | undefined>(undefined); // se não informado, usa salário
+
+  // Resultados
+  const [resMes, setResMes] = useState<ResultadoMes | null>(null);
+  const [res13, setRes13] = useState<Resultado13 | null>(null);
+  const [resGeral, setResGeral] = useState<ResultadoGeral | null>(null);
+
+  const canSubmit = !!salario && salario > 0 && canUse;
 
   const calcular = async () => {
     if (!salario || salario <= 0) return;
@@ -43,14 +69,49 @@ const INSSCalculator = () => {
     });
     if (!ok) return;
 
-    const r = calcularINSSSync(salario);
+    // Base do mês = salário + outras remunerações (comissões/variáveis do mês)
+    const baseMesNum = (salario ?? 0) + Math.max(0, outrasRemuneracoes ?? 0);
+    const rMes = calcularINSSSync(baseMesNum);
 
-    setResultado({
-      salario: formatBRL(salario),
-      valorINSS: formatBRL(r.valor),
-      aliquotaEfetiva: formatPercent(r.aliquotaEfetiva),
-      faixaMarginal: formatPercent(r.faixaMarginal),
-      salarioLiquido: formatBRL(salario - r.valor),
+    const saidaMes: ResultadoMes = {
+      baseMes: formatBRL(baseMesNum),
+      valorINSSMes: formatBRL(rMes.valor),
+      aliquotaEfetivaMes: formatPercent(rMes.aliquotaEfetiva),
+      faixaMarginalMes: formatPercent(rMes.faixaMarginal),
+      liquidoAposINSSMes: formatBRL(baseMesNum - rMes.valor),
+    };
+    setResMes(saidaMes);
+
+    // 13º (se marcado): calculado separadamente (não soma com a base mensal)
+    let saida13: Resultado13 | null = null;
+    if (incluirDecimo) {
+      const base13Num = Math.max(0, (valorDecimo ?? salario));
+      const r13 = calcularINSSSync(base13Num);
+      saida13 = {
+        base13: formatBRL(base13Num),
+        valorINSS13: formatBRL(r13.valor),
+        aliquotaEfetiva13: formatPercent(r13.aliquotaEfetiva),
+        faixaMarginal13: formatPercent(r13.faixaMarginal),
+        liquidoAposINSS13: formatBRL(base13Num - r13.valor),
+      };
+      setRes13(saida13);
+    } else {
+      setRes13(null);
+    }
+
+    // Consolidado
+    const totalINSSNum = rMes.valor + (saida13 ? +(saida13.valorINSS13.replace(/[^\d,.-]/g, "").replace(".", "").replace(",", ".")) : 0);
+    const baseTotalConsideradaNum = baseMesNum + (incluirDecimo ? (valorDecimo ?? salario) : 0);
+
+    const observacaoTeto =
+      baseMesNum >= TETO_INSS_2025
+        ? `Atenção: a base mensal atingiu o teto de contribuição (R$ ${TETO_INSS_2025.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}).`
+        : null;
+
+    setResGeral({
+      totalINSS: formatBRL(totalINSSNum),
+      baseTotalConsiderada: formatBRL(baseTotalConsideradaNum),
+      observacaoTeto,
     });
 
     await incrementCalcIfNeeded(isPro);
@@ -58,7 +119,12 @@ const INSSCalculator = () => {
 
   const limpar = () => {
     setSalario(undefined);
-    setResultado(null);
+    setOutrasRemuneracoes(0);
+    setIncluirDecimo(false);
+    setValorDecimo(undefined);
+    setResMes(null);
+    setRes13(null);
+    setResGeral(null);
   };
 
   return (
@@ -67,22 +133,73 @@ const INSSCalculator = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="w-5 h-5" />
-            Cálculo do INSS
+            Cálculo do INSS (Mês e 13º opcional)
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="salario">Salário mensal (R$)</Label>
-            <NumberInput
-              id="salario"
-              value={salario}
-              onChange={setSalario}
-              prefix="R$"
-              decimal
-              min={0}
-              placeholder="0,00"
-            />
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="salario">Salário base do mês (R$)</Label>
+              <NumberInput
+                id="salario"
+                value={salario}
+                onChange={setSalario}
+                prefix="R$"
+                decimal
+                min={0}
+                placeholder="0,00"
+              />
+              <p className="text-xs text-muted-foreground">
+                Teto previdenciário (2025): R$ {TETO_INSS_2025.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="variaveis">Outras remunerações do mês (R$)</Label>
+              <NumberInput
+                id="variaveis"
+                value={outrasRemuneracoes}
+                onChange={setOutrasRemuneracoes}
+                prefix="R$"
+                decimal
+                min={0}
+                placeholder="0,00"
+              />
+              <p className="text-xs text-muted-foreground">Comissões, adicionais e variáveis do próprio mês</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Gift className="w-4 h-4" />
+                Incluir cálculo do 13º salário?
+              </Label>
+              <div className="flex items-center gap-3">
+                <Switch checked={incluirDecimo} onCheckedChange={setIncluirDecimo} />
+                <span className="text-sm">{incluirDecimo ? "Sim" : "Não"}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                O INSS do 13º é calculado separadamente da base mensal.
+              </p>
+            </div>
+
+            {incluirDecimo && (
+              <div className="space-y-2">
+                <Label htmlFor="decimo">Valor do 13º (R$)</Label>
+                <NumberInput
+                  id="decimo"
+                  value={valorDecimo}
+                  onChange={setValorDecimo}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Se vazio, usamos o salário"
+                />
+                <p className="text-xs text-muted-foreground">Se não informar, usamos o salário como base do 13º.</p>
+              </div>
+            )}
           </div>
 
           {/* Banner padronizado */}
@@ -96,11 +213,7 @@ const INSSCalculator = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={calcular}
-              disabled={!salario || salario <= 0 || !canUse}
-              className="flex-1"
-            >
+            <Button onClick={calcular} disabled={!canSubmit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
               {!canUse ? "Limite atingido" : "Calcular INSS"}
             </Button>
@@ -111,73 +224,112 @@ const INSSCalculator = () => {
         </CardContent>
       </Card>
 
-      {resultado && (
+      {(resMes || res13) && (
         <div className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="border-destructive/20 bg-destructive/5">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Contribuição INSS
+          {/* MÊS */}
+          {resMes && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="border-destructive/20 bg-destructive/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    Contribuição do Mês
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Base do mês:</span>
+                      <span className="font-medium">{resMes.baseMes}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">INSS do mês:</span>
+                      <span className="text-lg font-bold text-destructive">{resMes.valorINSSMes}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <div className="p-2 rounded bg-background border">
+                        <div className="text-xs text-muted-foreground">Alíquota efetiva</div>
+                        <div className="font-medium">{resMes.aliquotaEfetivaMes}</div>
+                      </div>
+                      <div className="p-2 rounded bg-background border">
+                        <div className="text-xs text-muted-foreground">Alíquota marginal</div>
+                        <div className="font-medium">{resMes.faixaMarginalMes}</div>
+                      </div>
+                    </div>
+                    <div className="pt-2 flex justify-between">
+                      <span className="text-sm">Após INSS:</span>
+                      <span className="font-medium">{resMes.liquidoAposINSSMes}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 13º */}
+              {res13 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <Percent className="w-4 h-4" />
+                      Contribuição do 13º
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Base 13º:</span>
+                        <span className="font-medium">{res13.base13}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">INSS 13º:</span>
+                        <span className="text-lg font-bold">{res13.valorINSS13}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <div className="p-2 rounded bg-background border">
+                          <div className="text-xs text-muted-foreground">Alíquota efetiva</div>
+                          <div className="font-medium">{res13.aliquotaEfetiva13}</div>
+                        </div>
+                        <div className="p-2 rounded bg-background border">
+                          <div className="text-xs text-muted-foreground">Alíquota marginal</div>
+                          <div className="font-medium">{res13.faixaMarginal13}</div>
+                        </div>
+                      </div>
+                      <div className="pt-2 flex justify-between">
+                        <span className="text-sm">Após INSS (13º):</span>
+                        <span className="font-medium">{res13.liquidoAposINSS13}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* CONSOLIDADO */}
+          {resGeral && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  Resumo Consolidado
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">
-                  {resultado.valorINSS}
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="p-3 rounded bg-background border">
+                    <div className="text-sm text-muted-foreground">Base total considerada</div>
+                    <div className="text-xl font-semibold">{resGeral.baseTotalConsiderada}</div>
+                  </div>
+                  <div className="p-3 rounded bg-background border">
+                    <div className="text-sm text-muted-foreground">INSS total (mês + 13º)</div>
+                    <div className="text-xl font-bold text-primary">{resGeral.totalINSS}</div>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">Desconto mensal</p>
+                {resGeral.observacaoTeto && (
+                  <p className="text-xs text-muted-foreground mt-2">{resGeral.observacaoTeto}</p>
+                )}
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Percent className="w-4 h-4" />
-                  Alíquotas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Efetiva:</span>
-                    <span className="font-medium">{resultado.aliquotaEfetiva}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Marginal:</span>
-                    <span className="font-medium">{resultado.faixaMarginal}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                Resumo Final
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Salário bruto:</span>
-                    <span className="font-medium">{resultado.salario}</span>
-                  </div>
-                  <div className="flex justify-between text-destructive">
-                    <span className="text-sm">INSS:</span>
-                    <span className="font-medium">-{resultado.valorINSS}</span>
-                  </div>
-                  <hr />
-                  <div className="flex justify-between font-medium">
-                    <span>Após INSS:</span>
-                    <span className="text-primary">{resultado.salarioLiquido}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -190,9 +342,9 @@ const INSSCalculator = () => {
                     1
                   </div>
                   <div>
-                    <p className="font-medium">Faixas Progressivas</p>
+                    <p className="font-medium">Base mensal</p>
                     <p className="text-sm text-muted-foreground">
-                      INSS é calculado por faixas com alíquotas diferentes
+                      Base do mês = salário + outras remunerações (do próprio mês).
                     </p>
                   </div>
                 </div>
@@ -201,9 +353,9 @@ const INSSCalculator = () => {
                     2
                   </div>
                   <div>
-                    <p className="font-medium">Teto da Contribuição</p>
+                    <p className="font-medium">Faixas progressivas</p>
                     <p className="text-sm text-muted-foreground">
-                      Salários acima de R$ 7.786,02 não têm desconto adicional
+                      Aplicamos as faixas oficiais do INSS (cálculo progressivo) via biblioteca interna.
                     </p>
                   </div>
                 </div>
@@ -212,9 +364,9 @@ const INSSCalculator = () => {
                     3
                   </div>
                   <div>
-                    <p className="font-medium">Alíquota Efetiva</p>
+                    <p className="font-medium">13º salário</p>
                     <p className="text-sm text-muted-foreground">
-                      Percentual real do desconto sobre o salário total
+                      O INSS do 13º é calculado **separadamente** da base mensal (sem somar bases).
                     </p>
                   </div>
                 </div>

@@ -3,10 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
-import { Calculator, RotateCcw, DollarSign, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import Notice from "@/components/ui/notice";
+import { Separator } from "@/components/ui/separator";
+import { Calculator, RotateCcw, DollarSign, Calendar as CalendarIcon, Settings2, CheckCircle } from "lucide-react";
 import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+
+type ModoDias = "manual" | "automatico";
 
 type Resultado = {
   comissoes: string;
@@ -16,83 +21,154 @@ type Resultado = {
   valorDSR: string;
   totalComDSR: string;
   percentualDSR: string;
+  detalhesDias?: string;
 };
+
+function countDaysInMonth(year: number, month1to12: number) {
+  return new Date(year, month1to12, 0).getDate();
+}
+function countDayOfWeekInMonth(year: number, month1to12: number, weekday: number) {
+  // weekday: 0=Domingo ... 6=Sábado
+  let count = 0;
+  const days = countDaysInMonth(year, month1to12);
+  for (let d = 1; d <= days; d++) {
+    if (new Date(year, month1to12 - 1, d).getDay() === weekday) count++;
+  }
+  return count;
+}
 
 const DSRComissoesCalculator = () => {
   const { toast } = useToast();
-  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
 
+  // Gate global (4 grátis; PRO ilimitado)
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
+
+  const [modoDias, setModoDias] = useState<ModoDias>("manual");
+
+  // Entradas básicas
   const [comissoes, setComissoes] = useState<number | undefined>();
+  // Manual
   const [diasTrabalhados, setDiasTrabalhados] = useState<number | undefined>(22);
   const [diasDescanso, setDiasDescanso] = useState<number | undefined>(8);
+  // Automático
+  const [ano, setAno] = useState<number | undefined>();
+  const [mes, setMes] = useState<number | undefined>(); // 1..12
+  const [feriadosNoMes, setFeriadosNoMes] = useState<number | undefined>(0);
+  const [trabalhaSabado, setTrabalhaSabado] = useState<boolean>(true);
+  const [faltasInjustificadas, setFaltasInjustificadas] = useState<number | undefined>(0);
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const countingRef = useRef(false); // evita descontar 2x no mesmo clique
 
-  function calcularInterno(): Resultado | null {
-    if (!comissoes || comissoes <= 0 || !diasTrabalhados || diasTrabalhados <= 0) return null;
+  const calcularDiasAutomatico = () => {
+    const y = ano ?? 0;
+    const m = mes ?? 0;
+    if (y < 1900 || m < 1 || m > 12) return null;
 
-    const diasTrabalhadosValidados = Math.max(1, diasTrabalhados);
-    const diasDescansoValidados = Math.max(0, diasDescanso || 0);
+    const totalDias = countDaysInMonth(y, m);
+    const domingos = countDayOfWeekInMonth(y, m, 0);
+    const sabados = countDayOfWeekInMonth(y, m, 6);
 
-    const mediaDiariaNum = comissoes / diasTrabalhadosValidados;
-    const valorDSRNum = mediaDiariaNum * diasDescansoValidados;
-    const totalComDSRNum = comissoes + valorDSRNum;
+    const fer = Math.max(0, Math.trunc(feriadosNoMes ?? 0));
+    const faltas = Math.max(0, Math.trunc(faltasInjustificadas ?? 0));
+    const sabadoComoDescanso = trabalhaSabado ? 0 : sabados;
+
+    const descanso = Math.max(0, domingos + sabadoComoDescanso + fer);
+    const trabalhados = Math.max(0, totalDias - descanso - faltas);
 
     return {
-      comissoes: formatBRL(comissoes),
-      diasTrabalhados: diasTrabalhadosValidados,
-      diasDescanso: diasDescansoValidados,
+      diasTrabalhados: trabalhados,
+      diasDescanso: descanso,
+      detalhes: `Mês ${String(m).padStart(2, "0")}/${y}: ${totalDias} dias, ${domingos} domingos, ${sabados} sábados, ${fer} feriados, ${faltas} faltas. ${trabalhaSabado ? "Trabalha" : "Não trabalha"} aos sábados.`,
+    };
+  };
+
+  function calcularInterno(): Resultado | null {
+    const com = Number(comissoes ?? 0);
+    if (com <= 0) return null;
+
+    let dt = Number(diasTrabalhados ?? 0);
+    let dd = Number(diasDescanso ?? 0);
+    let detalhesDias: string | undefined;
+
+    if (modoDias === "automatico") {
+      const auto = calcularDiasAutomatico();
+      if (!auto) return null;
+      dt = auto.diasTrabalhados;
+      dd = auto.diasDescanso;
+      detalhesDias = auto.detalhes;
+    }
+
+    if (dt <= 0) return null;
+    dd = Math.max(0, dd);
+
+    const mediaDiariaNum = com / dt;
+    const valorDSRNum = mediaDiariaNum * dd;
+    const totalComDSRNum = com + valorDSRNum;
+
+    return {
+      comissoes: formatBRL(com),
+      diasTrabalhados: dt,
+      diasDescanso: dd,
       mediaDiaria: formatBRL(mediaDiariaNum),
       valorDSR: formatBRL(valorDSRNum),
       totalComDSR: formatBRL(totalComDSRNum),
-      percentualDSR: ((valorDSRNum / comissoes) * 100).toFixed(1),
+      percentualDSR: ((valorDSRNum / com) * 100).toFixed(1),
+      detalhesDias,
     };
   }
 
   async function handleCalcular() {
-    if (loading) return;
-
-    const freeLeft = typeof remaining === "number" ? remaining : 0;
-    if (!isPro && freeLeft <= 0) {
-      toast({
-        title: "Limite atingido",
-        description: "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Gate (redireciona para PRO conforme regra global)
+    const ok = await allowOrRedirect();
+    if (!ok) return;
 
     const res = calcularInterno();
     if (!res) {
       toast({
-        title: "Preencha os campos corretamente",
-        description: "Informe comissões e dias trabalhados válidos.",
+        title: "Preencha corretamente",
+        description:
+          modoDias === "manual"
+            ? "Informe comissões (>0), dias trabalhados (>0) e dias de descanso."
+            : "Informe comissões (>0), ano, mês e demais campos para apuração automática.",
       });
       return;
     }
 
     setResultado(res);
 
-    // desconta 1 do global (somente não-PRO) após cálculo bem-sucedido
-    if (!isPro && !countingRef.current) {
+    // incrementa uso após cálculo OK
+    if (!countingRef.current) {
       countingRef.current = true;
       try {
-        await (incrementCount?.() ?? Promise.resolve());
+        await incrementCount();
       } finally {
-        setTimeout(() => (countingRef.current = false), 300);
+        setTimeout(() => (countingRef.current = false), 200);
       }
     }
   }
 
   function limpar() {
+    setModoDias("manual");
     setComissoes(undefined);
     setDiasTrabalhados(22);
     setDiasDescanso(8);
+    setAno(undefined);
+    setMes(undefined);
+    setFeriadosNoMes(0);
+    setTrabalhaSabado(true);
+    setFaltasInjustificadas(0);
     setResultado(null);
   }
 
-  const botaoDisabled = loading || !comissoes || comissoes <= 0 || !diasTrabalhados || diasTrabalhados <= 0;
+  const canCalcManual = !!comissoes && (comissoes as number) > 0 && !!diasTrabalhados && (diasTrabalhados as number) > 0;
+  const canCalcAuto =
+    !!comissoes && (comissoes as number) > 0 &&
+    !!ano && !!mes &&
+    (mes as number) >= 1 && (mes as number) <= 12;
+
+  const botaoDisabled = overLimit || (modoDias === "manual" ? !canCalcManual : !canCalcAuto);
 
   return (
     <div className="w-full space-y-6">
@@ -100,11 +176,42 @@ const DSRComissoesCalculator = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="w-5 h-5" />
-            Cálculo DSR sobre Comissões
+            Cálculo de DSR sobre Comissões
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+        <CardContent className="space-y-6">
+          <Notice variant="info">
+            O DSR sobre comissões é calculado por: <strong>(Comissões ÷ dias trabalhados) × dias de descanso</strong>.
+            Dias de descanso incluem <em>domingos</em> e <em>feriados</em>; se você <em>não</em> trabalha aos sábados,
+            eles também podem ser considerados descanso (conforme prática da empresa/CCT).
+          </Notice>
+
+          {/* Modo de apuração dos dias */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Settings2 className="w-4 h-4" />
+              Modo de apuração dos dias
+            </Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={modoDias === "manual" ? "default" : "outline"}
+                onClick={() => setModoDias("manual")}
+              >
+                Manual
+              </Button>
+              <Button
+                type="button"
+                variant={modoDias === "automatico" ? "default" : "outline"}
+                onClick={() => setModoDias("automatico")}
+              >
+                Automático (mês/ano)
+              </Button>
+            </div>
+          </div>
+
+          {/* Entradas */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="comissoes">Comissões no período (R$)</Label>
               <NumberInput
@@ -118,58 +225,107 @@ const DSRComissoesCalculator = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dias-trabalhados">Dias trabalhados</Label>
-              <NumberInput
-                id="dias-trabalhados"
-                value={diasTrabalhados}
-                onChange={setDiasTrabalhados}
-                min={1}
-                max={31}
-                placeholder="22"
-              />
-              <p className="text-xs text-muted-foreground">Padrão: 22 dias úteis</p>
-            </div>
+            {modoDias === "manual" ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="dias-trabalhados">Dias trabalhados</Label>
+                  <NumberInput
+                    id="dias-trabalhados"
+                    value={diasTrabalhados}
+                    onChange={setDiasTrabalhados}
+                    min={1}
+                    max={31}
+                    placeholder="22"
+                  />
+                  <p className="text-xs text-muted-foreground">Dias úteis realmente trabalhados (descontando faltas injustificadas).</p>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dias-descanso">Dias de descanso</Label>
-              <NumberInput
-                id="dias-descanso"
-                value={diasDescanso}
-                onChange={setDiasDescanso}
-                min={0}
-                max={31}
-                placeholder="8"
-              />
-              <p className="text-xs text-muted-foreground">Domingos + feriados</p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dias-descanso">Dias de descanso</Label>
+                  <NumberInput
+                    id="dias-descanso"
+                    value={diasDescanso}
+                    onChange={setDiasDescanso}
+                    min={0}
+                    max={31}
+                    placeholder="8"
+                  />
+                  <p className="text-xs text-muted-foreground">Domingos + feriados (e sábados, se não trabalha).</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="ano">Ano</Label>
+                  <NumberInput id="ano" value={ano} onChange={setAno} placeholder="2025" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mes">Mês</Label>
+                  <NumberInput id="mes" value={mes} onChange={setMes} min={1} max={12} placeholder="1..12" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="feriados">Feriados no mês</Label>
+                  <NumberInput id="feriados" value={feriadosNoMes} onChange={setFeriadosNoMes} min={0} max={10} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="trabalhaSabado">Trabalha aos sábados?</Label>
+                  <select
+                    id="trabalhaSabado"
+                    className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                    value={trabalhaSabado ? "sim" : "nao"}
+                    onChange={(e) => setTrabalhaSabado(e.target.value === "sim")}
+                  >
+                    <option value="sim">Sim</option>
+                    <option value="nao">Não</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="faltas">Faltas injustificadas no mês</Label>
+                  <NumberInput id="faltas" value={faltasInjustificadas} onChange={setFaltasInjustificadas} min={0} max={31} placeholder="0" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4" />
+                    Observação
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    O modo automático estima <em>domingos</em>, <em>sábados</em> (se não trabalha) e usa os <em>feriados</em> que você informar.
+                    Reduz os <em>dias trabalhados</em> por <em>faltas injustificadas</em>.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
+
+          <Separator />
 
           <div className="flex gap-2">
             <Button onClick={handleCalcular} disabled={botaoDisabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              Calcular DSR
+              {overLimit ? "Limite atingido" : "Calcular DSR"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />
+              Limpar
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Resultado */}
       {resultado && (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                  <CalendarIcon className="w-4 h-4" />
                   Média Diária
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{resultado.mediaDiaria}</div>
-                <p className="text-sm text-muted-foreground">Por dia trabalhado</p>
+                <p className="text-sm text-muted-foreground">Comissões ÷ {resultado.diasTrabalhados} dias trabalhados</p>
               </CardContent>
             </Card>
 
@@ -183,6 +339,11 @@ const DSRComissoesCalculator = () => {
               <CardContent>
                 <div className="text-2xl font-bold text-primary">{resultado.valorDSR}</div>
                 <p className="text-sm text-muted-foreground">+{resultado.percentualDSR}% das comissões</p>
+                {resultado.detalhesDias && (
+                  <div className="mt-3 p-2 border rounded bg-background text-xs">
+                    {resultado.detalhesDias}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -190,7 +351,7 @@ const DSRComissoesCalculator = () => {
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
+                <CheckCircle className="w-5 h-5 text-primary" />
                 Total a Receber
               </CardTitle>
             </CardHeader>

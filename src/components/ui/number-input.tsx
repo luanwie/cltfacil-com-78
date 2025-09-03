@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface NumberInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   value?: number;
   onChange?: (value: number | undefined) => void;
   prefix?: string;
@@ -24,23 +24,23 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
-      
-      // Allow empty string
+
+      // permite string vazia
       if (newValue === "") {
         setDisplayValue("");
         onChange?.(undefined);
         return;
       }
 
-      // Validate numeric input
+      // valida numérico
       const regex = decimal ? /^\d*\.?\d*$/ : /^\d*$/;
       if (!regex.test(newValue)) return;
 
-      const numericValue = decimal ? parseFloat(newValue) : parseInt(newValue);
-      
-      // Check min/max bounds
-      if (min !== undefined && numericValue < min) return;
-      if (max !== undefined && numericValue > max) return;
+      const numericValue = decimal ? parseFloat(newValue) : parseInt(newValue, 10);
+
+      // limites
+      if (min !== undefined && !isNaN(numericValue) && numericValue < min) return;
+      if (max !== undefined && !isNaN(numericValue) && numericValue > max) return;
 
       setDisplayValue(newValue);
       onChange?.(isNaN(numericValue) ? undefined : numericValue);

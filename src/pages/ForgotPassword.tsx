@@ -33,10 +33,9 @@ export default function ForgotPasswordPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    // Garante que o Supabase inicialize a sessão de recovery (quando chegou via e-mail)
+    // Inicializa a sessão de recovery (quando chegou via e-mail)
     if (hasToken) {
-      // Apenas tocar a sessão para o helper capturar o hash
-      supabase.auth.getSession().catch(() => {});
+      (supabase.auth as any).getSession().catch(() => {});
     }
   }, [hasToken]);
 

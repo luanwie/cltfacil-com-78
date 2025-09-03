@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Calculator, Info, DollarSign, RotateCcw } from "lucide-react";
 
+import { NumberInput } from "@/components/ui/number-input";
 import { formatBRL } from "@/lib/currency";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ensureCanCalculate } from "@/utils/usageGuard";
 import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
-// ---- utils (datas) ---------------------------------------------------------
+// ---------------- utils de datas/contas ----------------
 const diaMs = 24 * 60 * 60 * 1000;
 
 function diffDiasIncl(a: Date, b: Date) {
@@ -37,7 +37,9 @@ function mesesEntreCom15Dias(adm: Date, fim: Date, anoRef: number) {
 
 function mesesAquisitivo(adm: Date, deslig: Date) {
   const thisYear = new Date(deslig.getFullYear(), adm.getMonth(), adm.getDate());
-  const inicio = thisYear > deslig ? new Date(deslig.getFullYear() - 1, adm.getMonth(), adm.getDate()) : thisYear;
+  const inicio = thisYear > deslig
+    ? new Date(deslig.getFullYear() - 1, adm.getMonth(), adm.getDate())
+    : thisYear;
   let m = 0;
   let cursor = new Date(inicio);
   while (true) {
@@ -59,11 +61,9 @@ function avisoDiasAuto(adm: Date, deslig: Date) {
   return Math.min(90, 30 + extra);
 }
 
-function salarioDia(salario: number) {
-  return salario / 30;
-}
+const salarioDia = (salario: number) => salario / 30;
 
-// ---- componente ------------------------------------------------------------
+// ---------------- cálculo puro ----------------
 type Resultado = ReturnType<typeof computeRescisao> | null;
 
 function computeRescisao(params: {
@@ -76,6 +76,7 @@ function computeRescisao(params: {
   feriasVencidasDiasNum: number;
   saldoFgtsInformado: number;
   descontarAvisoNaoCumprido: boolean;
+  outrosDescontos: number;
 }) {
   const {
     tipoRescisao: tipo,
@@ -87,52 +88,75 @@ function computeRescisao(params: {
     feriasVencidasDiasNum,
     saldoFgtsInformado,
     descontarAvisoNaoCumprido,
+    outrosDescontos,
   } = params;
 
-  // 1) Saldo de salário
+  // 1) Saldo de salário (dias do mês até a data de desligamento)
   const inicioMes = new Date(deslig.getFullYear(), deslig.getMonth(), 1);
   const diasTrabalhadosMes = diffDiasIncl(inicioMes, deslig);
   const saldoSalario = salarioDia(salario) * diasTrabalhadosMes;
 
-  // 2) 13º proporcional
+  // 2) 13º proporcional (exceto justa causa)
   const avos13 = mesesEntreCom15Dias(adm, deslig, deslig.getFullYear());
   const decimoTerceiro = tipo === "justa_causa" ? 0 : salario * (avos13 / 12);
 
-  // 3) Férias vencidas + 1/3
-  const valorFeriasVencidas = salarioDia(salario) * feriasVencidasDiasNum;
+  // 3) Férias vencidas + 1/3 (se houver dias informados)
+  const diasFV = Math.max(0, Math.min(30, feriasVencidasDiasNum));
+  const valorFeriasVencidas = salarioDia(salario) * diasFV;
   const umTercoFV = valorFeriasVencidas / 3;
   const feriasVencidasComTerco = valorFeriasVencidas + umTercoFV;
 
-  // 4) Férias proporcionais + 1/3
+  // 4) Férias proporcionais + 1/3 (exceto justa causa)
   const mesesAq = tipo === "justa_causa" ? 0 : mesesAquisitivo(adm, deslig);
   const diasFeriasProp = Math.floor(mesesAq * 2.5);
   const valorFeriasProp = salarioDia(salario) * diasFeriasProp;
   const umTercoFP = valorFeriasProp / 3;
   const feriasProporcionaisComTerco = tipo === "justa_causa" ? 0 : valorFeriasProp + umTercoFP;
 
-  // 5) Aviso prévio
+  // 5) Aviso prévio (regras por tipo)
   let avisoValor = 0;
   if (tipo === "sem_justa_causa") {
     avisoValor = modoAviso === "indenizado" ? salarioDia(salario) * diasAviso : 0;
   } else if (tipo === "acordo") {
     avisoValor = modoAviso === "indenizado" ? (salarioDia(salario) * diasAviso) * 0.5 : 0;
   } else if (tipo === "pedido_demissao") {
-    avisoValor = modoAviso === "trabalhado" && descontarAvisoNaoCumprido ? -(salarioDia(salario) * Math.min(30, diasAviso)) : 0;
+    // desconto se não cumpriu aviso trabalhado (até 30 dias)
+    avisoValor =
+      modoAviso === "trabalhado" && descontarAvisoNaoCumprido
+        ? -(salarioDia(salario) * Math.min(30, diasAviso || 30))
+        : 0;
+  } else {
+    // término de contrato / justa causa: sem aviso por padrão
+    avisoValor = 0;
   }
 
-  // 6) Multa do FGTS
+  // 6) Multa do FGTS (sobre saldo informado)
   let multaFgts = 0;
   if (saldoFgtsInformado > 0) {
     if (tipo === "sem_justa_causa") multaFgts = saldoFgtsInformado * 0.40;
     else if (tipo === "acordo") multaFgts = saldoFgtsInformado * 0.20;
   }
 
-  // 7) Total estimado
-  const totalEstimado = saldoSalario + decimoTerceiro + feriasVencidasComTerco + feriasProporcionaisComTerco + avisoValor + multaFgts;
+  // 7) Total estimado (bruto) e total após “outros descontos”
+  const totalBruto =
+    saldoSalario +
+    decimoTerceiro +
+    feriasVencidasComTerco +
+    feriasProporcionaisComTerco +
+    avisoValor +
+    multaFgts;
 
-  // 8) Informativos
-  const saqueFgts = tipo === "sem_justa_causa" ? "Sim (100%)" : tipo === "acordo" ? "Parcial (até 80%)" : "Não";
-  const seguroDesemprego = tipo === "sem_justa_causa" ? "Elegível (regras do programa)" : "Não elegível";
+  const totalEstimado = totalBruto - Math.max(0, outrosDescontos || 0);
+
+  // 8) Informativos (saque FGTS / seguro-desemprego)
+  const saqueFgts =
+    tipo === "sem_justa_causa" ? "Sim (100%)"
+    : tipo === "acordo" ? "Parcial (até 80%)"
+    : "Não";
+
+  const seguroDesemprego =
+    tipo === "sem_justa_causa" ? "Elegível (regras do programa)"
+    : "Não elegível";
 
   return {
     saldoSalario,
@@ -141,30 +165,34 @@ function computeRescisao(params: {
     feriasProporcionaisComTerco,
     avisoValor,
     multaFgts,
+    totalBruto,
     totalEstimado,
     saqueFgts,
     seguroDesemprego,
     detalhes: {
       diasTrabalhadosMes,
       avos13,
-      feriasVencidasDiasNum,
+      feriasVencidasDiasNum: diasFV,
       mesesAq,
       diasFeriasProp,
       diasAviso,
+      outrosDescontos: Math.max(0, outrosDescontos || 0),
     },
   };
 }
 
+// ---------------- componente ----------------
 const RescisaoCalculator = () => {
   const [tipoRescisao, setTipoRescisao] = useState("");
-  const [salarioBase, setSalarioBase] = useState("");
+  const [salarioBase, setSalarioBase] = useState<number | undefined>();
   const [dataAdmissao, setDataAdmissao] = useState("");
   const [dataDesligamento, setDataDesligamento] = useState("");
   const [modoAvisoPrevio, setModoAvisoPrevio] = useState("indenizado");
-  const [overrideDiasAviso, setOverrideDiasAviso] = useState("");
+  const [overrideDiasAviso, setOverrideDiasAviso] = useState<number | undefined>(undefined);
   const [descontarAviso, setDescontarAviso] = useState(false);
-  const [feriasVencidasDias, setFeriasVencidasDias] = useState("");
-  const [saldoFgts, setSaldoFgts] = useState("");
+  const [feriasVencidasDias, setFeriasVencidasDias] = useState<number | undefined>(0);
+  const [saldoFgts, setSaldoFgts] = useState<number | undefined>(0);
+  const [outrosDescontos, setOutrosDescontos] = useState<number | undefined>(0);
   const [mostrarDetalhe, setMostrarDetalhe] = useState(false);
 
   const [resultado, setResultado] = useState<Resultado>(null);
@@ -172,9 +200,10 @@ const RescisaoCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ctx = useProAndUsage();
-  const { canUse, isPro } = ctx;
+  const { canUse, isPro, remaining, isLogged } = ctx;
 
-  const isValid = tipoRescisao && salarioBase && dataAdmissao && dataDesligamento;
+  const isValid =
+    !!tipoRescisao && !!salarioBase && salarioBase > 0 && !!dataAdmissao && !!dataDesligamento;
 
   // dias de aviso sugerido
   let diasAvisoAuto = 30;
@@ -186,7 +215,8 @@ const RescisaoCalculator = () => {
     } catch {}
   }
 
-  const showDescontarAviso = tipoRescisao === "pedido_demissao" && modoAvisoPrevio === "trabalhado";
+  const showDescontarAviso =
+    tipoRescisao === "pedido_demissao" && modoAvisoPrevio === "trabalhado";
 
   const handleCalculate = async () => {
     if (!isValid) return;
@@ -201,12 +231,13 @@ const RescisaoCalculator = () => {
     if (!ok) return;
 
     try {
-      const salario = Number(salarioBase);
+      const salario = salarioBase ?? 0;
       const adm = new Date(dataAdmissao);
       const deslig = new Date(dataDesligamento);
-      const diasAviso = overrideDiasAviso ? Number(overrideDiasAviso) : diasAvisoAuto;
-      const feriasVencidasDiasNum = Math.max(0, Math.min(30, Number(feriasVencidasDias) || 0));
-      const saldoFgtsInformado = Math.max(0, Number(saldoFgts) || 0);
+      const diasAviso =
+        typeof overrideDiasAviso === "number" && overrideDiasAviso >= 0
+          ? overrideDiasAviso
+          : diasAvisoAuto;
 
       const res = computeRescisao({
         tipoRescisao,
@@ -215,9 +246,10 @@ const RescisaoCalculator = () => {
         deslig,
         modoAvisoPrevio,
         diasAviso,
-        feriasVencidasDiasNum,
-        saldoFgtsInformado,
+        feriasVencidasDiasNum: Math.max(0, Math.min(30, feriasVencidasDias ?? 0)),
+        saldoFgtsInformado: Math.max(0, saldoFgts ?? 0),
         descontarAvisoNaoCumprido: !!descontarAviso,
+        outrosDescontos: Math.max(0, outrosDescontos ?? 0),
       });
 
       await incrementCalcIfNeeded(isPro);
@@ -229,14 +261,15 @@ const RescisaoCalculator = () => {
 
   const limpar = () => {
     setTipoRescisao("");
-    setSalarioBase("");
+    setSalarioBase(undefined);
     setDataAdmissao("");
     setDataDesligamento("");
     setModoAvisoPrevio("indenizado");
-    setOverrideDiasAviso("");
+    setOverrideDiasAviso(undefined);
     setDescontarAviso(false);
-    setFeriasVencidasDias("");
-    setSaldoFgts("");
+    setFeriasVencidasDias(0);
+    setSaldoFgts(0);
+    setOutrosDescontos(0);
     setMostrarDetalhe(false);
     setResultado(null);
   };
@@ -262,7 +295,7 @@ const RescisaoCalculator = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo de rescisão *</Label>
+              <Label>Tipo de rescisão *</Label>
               <Select value={tipoRescisao} onValueChange={setTipoRescisao}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
@@ -278,26 +311,31 @@ const RescisaoCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="salario">Salário base mensal (R$) *</Label>
-              <Input
-                id="salario"
-                type="number"
-                step="0.01"
-                placeholder="Ex: 2000.00"
+              <Label>Salário base mensal (R$) *</Label>
+              <NumberInput
                 value={salarioBase}
-                onChange={(e) => setSalarioBase(e.target.value)}
+                onChange={setSalarioBase}
+                prefix="R$"
+                decimal
+                min={0}
+                placeholder="0,00"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="admissao">Data de admissão *</Label>
-              <Input id="admissao" type="date" value={dataAdmissao} onChange={(e) => setDataAdmissao(e.target.value)} />
+              <Label>Data de admissão *</Label>
+              <input
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                type="date"
+                value={dataAdmissao}
+                onChange={(e) => setDataAdmissao(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="desligamento">Data de desligamento *</Label>
-              <Input
-                id="desligamento"
+              <Label>Data de desligamento *</Label>
+              <input
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                 type="date"
                 value={dataDesligamento}
                 onChange={(e) => setDataDesligamento(e.target.value)}
@@ -325,13 +363,13 @@ const RescisaoCalculator = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="diasAviso">Dias de aviso (auto: {diasAvisoAuto})</Label>
-                <Input
-                  id="diasAviso"
-                  type="number"
-                  placeholder={diasAvisoAuto.toString()}
+                <Label>Dias de aviso (auto: {diasAvisoAuto})</Label>
+                <NumberInput
                   value={overrideDiasAviso}
-                  onChange={(e) => setOverrideDiasAviso(e.target.value)}
+                  onChange={setOverrideDiasAviso}
+                  min={0}
+                  max={90}
+                  placeholder={String(diasAvisoAuto)}
                 />
               </div>
 
@@ -350,30 +388,43 @@ const RescisaoCalculator = () => {
 
           <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="ferias">Férias vencidas (dias)</Label>
-              <Input
-                id="ferias"
-                type="number"
+              <Label>Férias vencidas (dias)</Label>
+              <NumberInput
+                value={feriasVencidasDias}
+                onChange={setFeriasVencidasDias}
                 min={0}
                 max={30}
                 placeholder="0"
-                value={feriasVencidasDias}
-                onChange={(e) => setFeriasVencidasDias(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fgts">Saldo FGTS informado (R$) - opcional</Label>
-              <Input
-                id="fgts"
-                type="number"
-                step="0.01"
-                placeholder="Ex: 5000.00"
+              <Label>Saldo FGTS informado (R$) — opcional</Label>
+              <NumberInput
                 value={saldoFgts}
-                onChange={(e) => setSaldoFgts(e.target.value)}
+                onChange={setSaldoFgts}
+                prefix="R$"
+                decimal
+                min={0}
+                placeholder="0,00"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Outros descontos (R$)</Label>
+              <NumberInput
+                value={outrosDescontos}
+                onChange={setOutrosDescontos}
+                prefix="R$"
+                decimal
+                min={0}
+                placeholder="0,00"
+              />
+              <p className="text-xs text-muted-foreground">
+                Adiantamentos, faltas ou descontos diversos aplicáveis na rescisão.
+              </p>
             </div>
           </div>
 
@@ -384,7 +435,12 @@ const RescisaoCalculator = () => {
             <Label htmlFor="detalhe">Mostrar detalhe de contas</Label>
           </div>
 
-          {/* Botões de ação - gating padronizado */}
+          {/* Banner global/CTA PRO (padrão do projeto) */}
+          <div id="usage-banner" className="mt-2">
+            {/* Use o mesmo componente de banner da página se quiser exibir aqui também */}
+          </div>
+
+          {/* Ações */}
           <div className="flex gap-2 pt-2">
             <Button onClick={handleCalculate} disabled={!isValid || !canUse} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
@@ -405,9 +461,13 @@ const RescisaoCalculator = () => {
                 <CardTitle className="text-lg">Saldo de Salário</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">{formatBRL(resultado.saldoSalario)}</p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatBRL(resultado.saldoSalario)}
+                </p>
                 {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">{resultado.detalhes.diasTrabalhadosMes} dias trabalhados no mês</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {resultado.detalhes.diasTrabalhadosMes} dias trabalhados no mês
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -417,9 +477,13 @@ const RescisaoCalculator = () => {
                 <CardTitle className="text-lg">13º Proporcional</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">{formatBRL(resultado.decimoTerceiro)}</p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatBRL(resultado.decimoTerceiro)}
+                </p>
                 {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">{resultado.detalhes.avos13}/12 avos</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {resultado.detalhes.avos13}/12 avos
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -429,9 +493,13 @@ const RescisaoCalculator = () => {
                 <CardTitle className="text-lg">Férias Vencidas + 1/3</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">{formatBRL(resultado.feriasVencidasComTerco)}</p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatBRL(resultado.feriasVencidasComTerco)}
+                </p>
                 {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">{resultado.detalhes.feriasVencidasDiasNum} dias informados</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {resultado.detalhes.feriasVencidasDiasNum} dias informados
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -441,7 +509,9 @@ const RescisaoCalculator = () => {
                 <CardTitle className="text-lg">Férias Proporcionais + 1/3</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">{formatBRL(resultado.feriasProporcionaisComTerco)}</p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatBRL(resultado.feriasProporcionaisComTerco)}
+                </p>
                 {mostrarDetalhe && (
                   <p className="text-sm text-muted-foreground mt-1">
                     {resultado.detalhes.mesesAq} meses = {resultado.detalhes.diasFeriasProp} dias
@@ -452,13 +522,23 @@ const RescisaoCalculator = () => {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Aviso Prévio {resultado.avisoValor < 0 ? "(Desconto)" : "(Indenizado)"}</CardTitle>
+                <CardTitle className="text-lg">
+                  Aviso Prévio {resultado.avisoValor < 0 ? "(Desconto)" : "(Indenizado)"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className={`text-2xl font-bold ${resultado.avisoValor >= 0 ? "text-primary" : "text-destructive"}`}>
+                <p
+                  className={`text-2xl font-bold ${
+                    resultado.avisoValor >= 0 ? "text-primary" : "text-destructive"
+                  }`}
+                >
                   {formatBRL(resultado.avisoValor)}
                 </p>
-                {mostrarDetalhe && <p className="text-sm text-muted-foreground mt-1">{resultado.detalhes.diasAviso} dias</p>}
+                {mostrarDetalhe && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {resultado.detalhes.diasAviso} dias
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -467,12 +547,9 @@ const RescisaoCalculator = () => {
                 <CardTitle className="text-lg">Multa FGTS</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">{formatBRL(resultado.multaFgts)}</p>
-                {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {/* texto informativo simples; percentual varia conforme tipo */}
-                  </p>
-                )}
+                <p className="text-2xl font-bold text-primary">
+                  {formatBRL(resultado.multaFgts)}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -485,10 +562,18 @@ const RescisaoCalculator = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={`text-3xl font-bold ${resultado.totalEstimado >= 0 ? "text-primary" : "text-destructive"}`}>
-                {formatBRL(resultado.totalEstimado)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">Valor bruto, antes de descontos de INSS e IRRF</p>
+              <div className="space-y-2">
+                <p
+                  className={`text-3xl font-bold ${
+                    resultado.totalEstimado >= 0 ? "text-primary" : "text-destructive"
+                  }`}
+                >
+                  {formatBRL(resultado.totalEstimado)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Valor bruto consolidado − “Outros descontos”
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -521,16 +606,20 @@ const RescisaoCalculator = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <p>
-                <strong>1. Saldo de Salário:</strong> Dias trabalhados no mês do desligamento ÷ 30 × salário
+                <strong>1. Saldo de Salário:</strong> dias trabalhados no mês ÷ 30 × salário.
               </p>
               <p>
-                <strong>2. 13º Proporcional:</strong> Meses com 15+ dias trabalhados no ano ÷ 12 × salário
+                <strong>2. 13º Proporcional:</strong> avos com 15+ dias no ano ÷ 12 × salário.
               </p>
               <p>
-                <strong>3. Férias:</strong> Dias proporcionais (meses × 2,5) + 1/3 constitucional
+                <strong>3. Férias:</strong> vencidas (dias informados) + proporcionais (meses×2,5) com 1/3.
               </p>
               <p>
-                <strong>4. Aviso Prévio:</strong> 30 dias + 3 dias por ano adicional (máx. 90 dias)
+                <strong>4. Aviso Prévio:</strong> 30 dias + 3 dias por ano após o 1º (máx. 90). No 484-A metade do aviso indenizado.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Os valores exibidos são estimativas brutas. Descontos legais (INSS/IRRF) variam conforme
+                o caso. Informe “Outros descontos” para aproximar o líquido ou ative o modo avançado futuramente.
               </p>
             </CardContent>
           </Card>

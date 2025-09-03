@@ -3,77 +3,149 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
-import { Calculator, RotateCcw, DollarSign, Bus, Building } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calculator, RotateCcw, DollarSign, Bus, Building, Percent, Settings } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import { ensureCanCalculate } from "@/utils/usageGuard";
 import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
 
+type Resultado = {
+  salario: string;
+  modo: "simples" | "avancado";
+  precoConducao?: string;
+  precoIda?: string;
+  precoVolta?: string;
+  viagensValidadas: number;
+  diasUteis: number;
+  diasSemUso: number;
+  diasConsiderados: number;
+
+  custoDiario: string;
+  custoVT: string;
+
+  limitePercentual: string;
+  limiteValor: string;
+
+  descontoEmpregado: string;
+  percentualDescontoSobreSalario: string;
+
+  custoEmpresa: string;
+  percentualCustoEmpresaSobreCusto: string;
+};
+
 const ValeTransporteCalculator = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const ctx = useProAndUsage();
-  const { isPro, canUse } = ctx;
+  const { isPro, isLogged, canUse } = ctx; // <- usamos isLogged
 
+  // ---- Entradas principais
   const [salario, setSalario] = useState<number | undefined>();
-  const [precoConducao, setPrecoConducao] = useState<number | undefined>();
-  const [viagensPorDia, setViagensPorDia] = useState<number | undefined>(2);
-  const [diasUteis, setDiasUteis] = useState<number | undefined>(22);
+  const [modo, setModo] = useState<"simples" | "avancado">("simples");
 
-  const [resultado, setResultado] = useState<null | {
-    salario: string;
-    precoConducao: string;
-    viagensValidadas: number;
-    diasValidados: number;
-    custoVT: string;
-    descontoEmpregado: string;
-    custoEmpresa: string;
-    percentualDesconto: string;
-    limiteDesconto: string;
-  }>(null);
+  // Preços
+  const [precoConducao, setPrecoConducao] = useState<number | undefined>();     // modo simples
+  const [precoIda, setPrecoIda] = useState<number | undefined>(undefined);      // modo avançado
+  const [precoVolta, setPrecoVolta] = useState<number | undefined>(undefined);  // modo avançado
+
+  // Jornada de uso
+  const [viagensPorDia, setViagensPorDia] = useState<number | undefined>(2); // padrão ida + volta
+  const [diasUteis, setDiasUteis] = useState<number | undefined>(22);
+  const [diasSemUso, setDiasSemUso] = useState<number | undefined>(0);       // home office/férias/ausências
+
+  // Política de desconto empregado
+  const [limitePercentualEmpregado, setLimitePercentualEmpregado] = useState<number | undefined>(6); // % do salário (máx. legal 6; empresa pode aplicar menor)
+
+  const [resultado, setResultado] = useState<Resultado | null>(null);
 
   const calcular = async () => {
-    if (!salario || salario <= 0 || !precoConducao || precoConducao <= 0) return;
+    // validações mínimas
+    if (!salario || salario <= 0) return;
+    if (modo === "simples" && (!precoConducao || precoConducao <= 0)) return;
+    if (modo === "avancado" && ((!precoIda || precoIda <= 0) || (!precoVolta || precoVolta <= 0))) return;
 
     const ok = await ensureCanCalculate({
       ...ctx,
       navigate,
       currentPath: location.pathname,
-      focusUsage: () =>
-        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
+      focusUsage: () => document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
     });
     if (!ok) return;
 
-    const viagensValidadas = Math.max(1, Math.round(viagensPorDia || 2));
-    const diasValidados = Math.max(1, Math.round(diasUteis || 22));
+    const viagens = Math.max(1, Math.round(viagensPorDia || 2));
+    const diasTotal = Math.max(1, Math.round(diasUteis || 22));
+    const semUso = Math.max(0, Math.round(diasSemUso || 0));
+    const diasConsiderados = Math.max(0, diasTotal - semUso);
 
-    const custoVT = (precoConducao as number) * viagensValidadas * diasValidados;
-    const descontoEmpregado = Math.min(0.06 * (salario as number), custoVT);
-    const custoEmpresa = Math.max(0, custoVT - descontoEmpregado);
+    // custo diário
+    let custoDiarioNum = 0;
+    if (modo === "simples") {
+      custoDiarioNum = (precoConducao as number) * viagens;
+    } else {
+      // por padrão 2 viagens (ida + volta). Se usuário informar mais viagens por dia (integrações),
+      // escalonamos proporcionalmente ao par ida+volta.
+      const baseIdaVolta = (precoIda as number) + (precoVolta as number); // 2 viagens
+      custoDiarioNum = baseIdaVolta * (viagens / 2);
+    }
 
-    await incrementCalcIfNeeded(isPro);
+    const custoVTNum = custoDiarioNum * diasConsiderados;
+
+    // limite de desconto do empregado
+    const limitePerc = Math.min(6, Math.max(0, limitePercentualEmpregado || 6)); // nunca > 6% por regra
+    const limiteValor = (salario as number) * (limitePerc / 100);
+
+    // desconto empregado é o menor entre o limite e o custo total
+    const descontoEmpregadoNum = Math.min(limiteValor, custoVTNum);
+    const custoEmpresaNum = Math.max(0, custoVTNum - descontoEmpregadoNum);
+
+    // <<< ajuste: agora passamos (isPro, isLogged)
+    await incrementCalcIfNeeded(isPro, isLogged);
 
     setResultado({
       salario: formatBRL(salario as number),
-      precoConducao: formatBRL(precoConducao as number),
-      viagensValidadas,
-      diasValidados,
-      custoVT: formatBRL(custoVT),
-      descontoEmpregado: formatBRL(descontoEmpregado),
-      custoEmpresa: formatBRL(custoEmpresa),
-      percentualDesconto: formatPercent(descontoEmpregado / (salario as number)),
-      limiteDesconto: formatBRL((salario as number) * 0.06),
+      modo,
+      precoConducao: modo === "simples" ? formatBRL(precoConducao as number) : undefined,
+      precoIda: modo === "avancado" ? formatBRL(precoIda as number) : undefined,
+      precoVolta: modo === "avancado" ? formatBRL(precoVolta as number) : undefined,
+      viagensValidadas: viagens,
+      diasUteis: diasTotal,
+      diasSemUso: semUso,
+      diasConsiderados,
+
+      custoDiario: formatBRL(custoDiarioNum),
+      custoVT: formatBRL(custoVTNum),
+
+      limitePercentual: formatPercent(limitePerc / 100),
+      limiteValor: formatBRL(limiteValor),
+
+      descontoEmpregado: formatBRL(descontoEmpregadoNum),
+      percentualDescontoSobreSalario: formatPercent(descontoEmpregadoNum / (salario as number)),
+
+      custoEmpresa: formatBRL(custoEmpresaNum),
+      percentualCustoEmpresaSobreCusto: custoVTNum > 0 ? formatPercent(custoEmpresaNum / custoVTNum) : formatPercent(0),
     });
   };
 
   const limpar = () => {
     setSalario(undefined);
+    setModo("simples");
     setPrecoConducao(undefined);
+    setPrecoIda(undefined);
+    setPrecoVolta(undefined);
     setViagensPorDia(2);
     setDiasUteis(22);
+    setDiasSemUso(0);
+    setLimitePercentualEmpregado(6);
     setResultado(null);
   };
+
+  const disabled =
+    !canUse ||
+    !salario ||
+    salario <= 0 ||
+    (modo === "simples" ? !precoConducao || precoConducao <= 0 : !precoIda || !precoVolta || precoIda <= 0 || precoVolta <= 0);
 
   return (
     <div className="w-full space-y-6">
@@ -84,10 +156,25 @@ const ValeTransporteCalculator = () => {
             Cálculo de Vale-Transporte
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+
+        <CardContent className="space-y-6">
+          {/* Modo de cálculo */}
+          <div className="space-y-2">
+            <Label>Modo de cálculo</Label>
+            <Select value={modo} onValueChange={(v) => setModo(v as "simples" | "avancado")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="simples">Simples (preço único por viagem)</SelectItem>
+                <SelectItem value="avancado">Avançado (ida e volta com preços próprios)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="salario">Salário mensal (R$)</Label>
+              <Label htmlFor="salario">Salário (base para limite de %)</Label>
               <NumberInput
                 id="salario"
                 value={salario}
@@ -97,52 +184,141 @@ const ValeTransporteCalculator = () => {
                 min={0}
                 placeholder="0,00"
               />
+              <p className="text-xs text-muted-foreground">O desconto do empregado respeita no máximo {formatPercent(0.06)} do salário.</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="preco-conducao">Preço da condução (R$)</Label>
+              <Label htmlFor="limite">Limite de desconto do empregado</Label>
               <NumberInput
-                id="preco-conducao"
-                value={precoConducao}
-                onChange={setPrecoConducao}
-                prefix="R$"
-                decimal
+                id="limite"
+                value={limitePercentualEmpregado}
+                onChange={setLimitePercentualEmpregado}
+                decimal={false}
                 min={0}
-                placeholder="0,00"
+                max={6}
+                suffix="%"
+                placeholder="6"
               />
+              <p className="text-xs text-muted-foreground">Empresas podem adotar limite menor que 6% por política interna.</p>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="viagens-dia">Viagens por dia</Label>
-              <NumberInput
-                id="viagens-dia"
-                value={viagensPorDia}
-                onChange={setViagensPorDia}
-                min={1}
-                placeholder="2"
-              />
-              <p className="text-xs text-muted-foreground">Ida + volta = 2 viagens</p>
+          {/* Bloco de preços */}
+          {modo === "simples" ? (
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2 md:col-span-1">
+                <Label htmlFor="preco-conducao">Preço por viagem (tarifa única)</Label>
+                <NumberInput
+                  id="preco-conducao"
+                  value={precoConducao}
+                  onChange={setPrecoConducao}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="0,00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="viagens-dia">Viagens por dia</Label>
+                <NumberInput
+                  id="viagens-dia"
+                  value={viagensPorDia}
+                  onChange={setViagensPorDia}
+                  min={1}
+                  placeholder="2"
+                />
+                <p className="text-xs text-muted-foreground">Ida + volta = 2. Ajuste se houver integrações.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dias-uteis">Dias úteis no mês</Label>
+                <NumberInput
+                  id="dias-uteis"
+                  value={diasUteis}
+                  onChange={setDiasUteis}
+                  min={1}
+                  max={31}
+                  placeholder="22"
+                />
+              </div>
             </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="preco-ida">Tarifa – Ida</Label>
+                <NumberInput
+                  id="preco-ida"
+                  value={precoIda}
+                  onChange={setPrecoIda}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="0,00"
+                />
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="preco-volta">Tarifa – Volta</Label>
+                <NumberInput
+                  id="preco-volta"
+                  value={precoVolta}
+                  onChange={setPrecoVolta}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="0,00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="viagens-dia-adv">Viagens por dia</Label>
+                <NumberInput
+                  id="viagens-dia-adv"
+                  value={viagensPorDia}
+                  onChange={setViagensPorDia}
+                  min={1}
+                  placeholder="2"
+                />
+                <p className="text-xs text-muted-foreground">Se &gt; 2, ajustamos proporcionalmente ao par ida/volta.</p>
+              </div>
+
+              <div className="space-y-2 md:col-span-3">
+                <Label htmlFor="dias-uteis-adv">Dias úteis no mês</Label>
+                <NumberInput
+                  id="dias-uteis-adv"
+                  value={diasUteis}
+                  onChange={setDiasUteis}
+                  min={1}
+                  max={31}
+                  placeholder="22"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Ajustes de dias */}
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="dias-uteis">Dias úteis no mês</Label>
+              <Label htmlFor="dias-sem-uso">Dias sem uso (home office/ausências)</Label>
               <NumberInput
-                id="dias-uteis"
-                value={diasUteis}
-                onChange={setDiasUteis}
-                min={1}
+                id="dias-sem-uso"
+                value={diasSemUso}
+                onChange={setDiasSemUso}
+                min={0}
                 max={31}
-                placeholder="22"
+                placeholder="0"
               />
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Settings className="w-4 h-4" />
+              Informe dias sem uso para reduzir o custo total daquele mês.
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={calcular}
-              disabled={!salario || salario <= 0 || !precoConducao || precoConducao <= 0 || !canUse}
-              className="flex-1"
-            >
+            <Button onClick={calcular} disabled={disabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
               {!canUse ? "Limite atingido" : "Calcular Vale-Transporte"}
             </Button>
@@ -155,32 +331,37 @@ const ValeTransporteCalculator = () => {
 
       {resultado && (
         <div className="space-y-4">
+          {/* Cards principais */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Bus className="w-4 h-4" />
-                  Custo Total VT
+                  Custo Total do VT
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{resultado.custoVT}</div>
-                <p className="text-sm text-muted-foreground">
-                  {resultado.viagensValidadas} viagens × {resultado.diasValidados} dias
+                <p className="text-xs text-muted-foreground">
+                  {resultado.viagensValidadas} viagens/dia • {resultado.diasConsiderados} dias
                 </p>
+                <p className="text-xs text-muted-foreground">Custo diário: {resultado.custoDiario}</p>
               </CardContent>
             </Card>
 
             <Card className="border-destructive/20 bg-destructive/5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Desconto Empregado
+                  <Percent className="w-4 h-4" />
+                  Desconto do Empregado
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-destructive">{resultado.descontoEmpregado}</div>
-                <p className="text-sm text-muted-foreground">{resultado.percentualDesconto} (máx. 6%)</p>
+                <p className="text-xs text-muted-foreground">
+                  Efetivo: {resultado.percentualDescontoSobreSalario} sobre o salário (limite {resultado.limitePercentual})
+                </p>
+                <p className="text-xs text-muted-foreground">Limite em R$: {resultado.limiteValor}</p>
               </CardContent>
             </Card>
 
@@ -188,16 +369,19 @@ const ValeTransporteCalculator = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Building className="w-4 h-4" />
-                  Custo Empresa
+                  Custo da Empresa
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-primary">{resultado.custoEmpresa}</div>
-                <p className="text-sm text-muted-foreground">Diferença do total</p>
+                <p className="text-xs text-muted-foreground">
+                  {resultado.percentualCustoEmpresaSobreCusto} do custo total
+                </p>
               </CardContent>
             </Card>
           </div>
 
+          {/* Resumo final */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -222,60 +406,44 @@ const ValeTransporteCalculator = () => {
                     <span className="text-primary">{resultado.custoEmpresa}</span>
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <div className="p-3 rounded-lg bg-background border">
-                    <div className="text-sm text-muted-foreground">Limite 6% do salário</div>
-                    <div className="font-medium">{resultado.limiteDesconto}</div>
+                    <div className="text-sm text-muted-foreground">Salário informado</div>
+                    <div className="font-medium">{resultado.salario}</div>
                   </div>
                   <div className="p-3 rounded-lg bg-background border">
-                    <div className="text-sm text-muted-foreground">Desconto efetivo</div>
-                    <div className="font-medium">{resultado.percentualDesconto}</div>
+                    <div className="text-sm text-muted-foreground">Limite do empregado</div>
+                    <div className="font-medium">
+                      {resultado.limitePercentual} ({resultado.limiteValor})
+                    </div>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Como calculamos */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Como Calculamos</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    1
-                  </div>
-                  <div>
-                    <p className="font-medium">Custo Total</p>
-                    <p className="text-sm text-muted-foreground">
-                      {resultado.precoConducao} × {resultado.viagensValidadas} viagens × {resultado.diasValidados} dias = {resultado.custoVT}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    2
-                  </div>
-                  <div>
-                    <p className="font-medium">Desconto do Empregado</p>
-                    <p className="text-sm text-muted-foreground">
-                      Menor valor entre 6% do salário ({resultado.limiteDesconto}) e custo total ({resultado.custoVT})
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-medium">Custo da Empresa</p>
-                    <p className="text-sm text-muted-foreground">
-                      Custo total ({resultado.custoVT}) - desconto empregado ({resultado.descontoEmpregado}) = {resultado.custoEmpresa}
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <CardContent className="space-y-3 text-sm">
+              <p>
+                <strong>1) Custo diário:</strong>{" "}
+                {resultado.modo === "simples"
+                  ? `tarifa única × viagens/dia = ${resultado.custoDiario}`
+                  : `ida + volta (ajustado pelas viagens/dia) = ${resultado.custoDiario}`}
+              </p>
+              <p>
+                <strong>2) Custo mensal:</strong> custo diário × dias considerados ({resultado.diasUteis} úteis − {resultado.diasSemUso} sem uso).
+              </p>
+              <p>
+                <strong>3) Desconto empregado:</strong> menor entre {formatPercent(0.06)} do salário (ou limite escolhido) e o custo mensal.
+              </p>
+              <p>
+                <strong>4) Custo empresa:</strong> custo mensal − desconto do empregado.
+              </p>
             </CardContent>
           </Card>
         </div>

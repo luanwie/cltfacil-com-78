@@ -1,7 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import Layout from "./components/layout/layout";
@@ -41,91 +40,87 @@ import Privacidade from "./pages/Privacidade";
 import NotFound from "./pages/NotFound";
 import MeuPerfil from "./pages/MeuPerfil";
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          {/* Widget sem layout */}
-          <Route path="/widget/adicional-noturno" element={<Widget />} />
+  <TooltipProvider>
+    <Toaster />
+    <Sonner />
+    <BrowserRouter>
+      <ScrollToTop />
+      <Routes>
+        {/* Widget sem layout */}
+        <Route path="/widget/adicional-noturno" element={<Widget />} />
 
-          {/* Auth sem layout */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/auth-redirect" element={<AuthRedirect />} />
+        {/* Auth sem layout */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth-redirect" element={<AuthRedirect />} />
 
-          {/* Rotas com layout */}
-          <Route
-            path="/*"
-            element={
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Index />} />
+        {/* Rotas com layout */}
+        <Route
+          path="/*"
+          element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Index />} />
 
-                  <Route
-                    path="/calculadoras"
-                    element={
-                      <ProtectedRoute>
-                        <Calculadoras />
-                      </ProtectedRoute>
-                    }
-                  />
+                <Route
+                  path="/calculadoras"
+                  element={
+                    <ProtectedRoute>
+                      <Calculadoras />
+                    </ProtectedRoute>
+                  }
+                />
 
-                  {/* Calculadoras */}
-                  <Route path="/clt/adicional-noturno" element={<ProtectedRoute><AdicionalNoturno /></ProtectedRoute>} />
-                  <Route path="/clt/ferias-proporcionais" element={<ProtectedRoute><FeriasProporcionais /></ProtectedRoute>} />
-                  <Route path="/clt/dsr" element={<ProtectedRoute><DSR /></ProtectedRoute>} />
-                  <Route path="/clt/13o-proporcional" element={<ProtectedRoute><DecimoTerceiro /></ProtectedRoute>} />
-                  <Route path="/clt/banco-de-horas" element={<ProtectedRoute><BancoDeHoras /></ProtectedRoute>} />
-                  <Route path="/clt/rescisao" element={<ProtectedRoute><Rescisao /></ProtectedRoute>} />
-                  <Route path="/clt/salario-liquido" element={<ProtectedRoute><SalarioLiquido /></ProtectedRoute>} />
-                  <Route path="/clt/inss" element={<ProtectedRoute><INSS /></ProtectedRoute>} />
-                  <Route path="/clt/irrf" element={<ProtectedRoute><IRRF /></ProtectedRoute>} />
-                  <Route path="/clt/fgts" element={<ProtectedRoute><FGTS /></ProtectedRoute>} />
-                  <Route path="/clt/horas-extras" element={<ProtectedRoute><HorasExtras /></ProtectedRoute>} />
-                  <Route path="/clt/dsr-comissoes" element={<ProtectedRoute><DSRComissoes /></ProtectedRoute>} />
-                  <Route path="/clt/periculosidade" element={<ProtectedRoute><Periculosidade /></ProtectedRoute>} />
-                  <Route path="/clt/insalubridade" element={<ProtectedRoute><Insalubridade /></ProtectedRoute>} />
-                  <Route path="/clt/ferias-abono" element={<ProtectedRoute><FeriasAbono /></ProtectedRoute>} />
-                  <Route path="/clt/ferias-dobro" element={<ProtectedRoute><FeriasDobro /></ProtectedRoute>} />
-                  <Route path="/clt/aviso-previo" element={<ProtectedRoute><AvisoPrevio /></ProtectedRoute>} />
-                  <Route path="/clt/vale-transporte" element={<ProtectedRoute><ValeTransporte /></ProtectedRoute>} />
+                {/* Calculadoras */}
+                <Route path="/clt/adicional-noturno" element={<ProtectedRoute><AdicionalNoturno /></ProtectedRoute>} />
+                <Route path="/clt/ferias-proporcionais" element={<ProtectedRoute><FeriasProporcionais /></ProtectedRoute>} />
+                <Route path="/clt/dsr" element={<ProtectedRoute><DSR /></ProtectedRoute>} />
+                <Route path="/clt/13o-proporcional" element={<ProtectedRoute><DecimoTerceiro /></ProtectedRoute>} />
+                <Route path="/clt/banco-de-horas" element={<ProtectedRoute><BancoDeHoras /></ProtectedRoute>} />
+                <Route path="/clt/rescisao" element={<ProtectedRoute><Rescisao /></ProtectedRoute>} />
+                <Route path="/clt/salario-liquido" element={<ProtectedRoute><SalarioLiquido /></ProtectedRoute>} />
+                <Route path="/clt/inss" element={<ProtectedRoute><INSS /></ProtectedRoute>} />
+                <Route path="/clt/irrf" element={<ProtectedRoute><IRRF /></ProtectedRoute>} />
+                <Route path="/clt/fgts" element={<ProtectedRoute><FGTS /></ProtectedRoute>} />
+                <Route path="/clt/horas-extras" element={<ProtectedRoute><HorasExtras /></ProtectedRoute>} />
+                <Route path="/clt/dsr-comissoes" element={<ProtectedRoute><DSRComissoes /></ProtectedRoute>} />
+                <Route path="/clt/periculosidade" element={<ProtectedRoute><Periculosidade /></ProtectedRoute>} />
+                <Route path="/clt/insalubridade" element={<ProtectedRoute><Insalubridade /></ProtectedRoute>} />
+                <Route path="/clt/ferias-abono" element={<ProtectedRoute><FeriasAbono /></ProtectedRoute>} />
+                <Route path="/clt/ferias-dobro" element={<ProtectedRoute><FeriasDobro /></ProtectedRoute>} />
+                <Route path="/clt/aviso-previo" element={<ProtectedRoute><AvisoPrevio /></ProtectedRoute>} />
+                <Route path="/clt/vale-transporte" element={<ProtectedRoute><ValeTransporte /></ProtectedRoute>} />
 
-                  {/* SEO-friendly aliases */}
-                  <Route path="/calculadora-rescisao" element={<ProtectedRoute><Rescisao /></ProtectedRoute>} />
-                  <Route path="/calculadora-horas-extras" element={<ProtectedRoute><HorasExtras /></ProtectedRoute>} />
-                  <Route path="/calculadora-dsr" element={<ProtectedRoute><DSR /></ProtectedRoute>} />
-                  <Route path="/calculadora-adicional-noturno" element={<ProtectedRoute><AdicionalNoturno /></ProtectedRoute>} />
+                {/* SEO-friendly aliases */}
+                <Route path="/calculadora-rescisao" element={<ProtectedRoute><Rescisao /></ProtectedRoute>} />
+                <Route path="/calculadora-horas-extras" element={<ProtectedRoute><HorasExtras /></ProtectedRoute>} />
+                <Route path="/calculadora-dsr" element={<ProtectedRoute><DSR /></ProtectedRoute>} />
+                <Route path="/calculadora-adicional-noturno" element={<ProtectedRoute><AdicionalNoturno /></ProtectedRoute>} />
 
-                  {/* 🔓 Assinar PRO – sem ProtectedRoute */}
-                  <Route path="/assinar-pro" element={<AssinarPro />} />
+                {/* 🔓 Assinar PRO – sem ProtectedRoute */}
+                <Route path="/assinar-pro" element={<AssinarPro />} />
 
-                  {/* 🔐 Meu Perfil – com ProtectedRoute */}
-                  <Route path="/meu-perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
+                {/* 🔐 Meu Perfil – com ProtectedRoute */}
+                <Route path="/meu-perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
 
-                  <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />
-                  <Route path="/sobre" element={<Sobre />} />
-                  <Route path="/contato" element={<Contato />} />
-                  <Route path="/termos" element={<Termos />} />
-                  <Route path="/privacidade" element={<Privacidade />} />
+                <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />
+                <Route path="/sobre" element={<Sobre />} />
+                <Route path="/contato" element={<Contato />} />
+                <Route path="/termos" element={<Termos />} />
+                <Route path="/privacidade" element={<Privacidade />} />
 
-                  {/* 404 */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;

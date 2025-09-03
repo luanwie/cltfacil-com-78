@@ -51,7 +51,7 @@ export default function UsageBanner({ remaining, isPro, isLogged, onGoPro }: Pro
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Button onClick={onGoPro} className="shadow-sm">
-                {hasFree ? "Assinar PRO" : <>Assinar PRO</>}
+                {hasFree ? "Torne-se PRO" : <>Torne-se PRO</>}
               </Button>
 
               {!isLogged && (

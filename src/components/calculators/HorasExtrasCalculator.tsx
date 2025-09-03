@@ -1,82 +1,123 @@
 import { useRef, useState } from "react";
+import { Calculator, RotateCcw, Clock, DollarSign, Percent, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NumberInput } from "@/components/ui/number-input";
-import { Calculator, RotateCcw, Clock, DollarSign } from "lucide-react";
-import { formatBRL } from "@/lib/currency";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
+import Notice from "@/components/ui/notice";
+import { formatBRL, formatPercent } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
 
 type Resultado = {
-  salario: string;
-  valorHora: string;
-  horas50Validadas: number;
-  horas100Validadas: number;
-  valorHE50: string;
-  valorHE100: string;
-  totalHorasExtras: string;
-  totalGeral: string;
-  percentualExtra: string;
+  valorHora: number;
+  valorHoraHE50: number;
+  valorHoraHE100: number;
+  totalHE50: number;
+  totalHE100: number;
+  totalHE: number;
+  dsr?: number;
+  totalComDSR?: number;
+  salario: number;
+  percentualExtra: number;
 };
 
-const HorasExtrasCalculator = () => {
-  const { isPro, remaining, loading, incrementCount } = useProAndUsage();
+type Props = {
+  /** Dados de contexto para telemetria/embeds */
+  cargo?: string;
+  uf?: string;
+  showShareButtons?: boolean;
+  showAds?: boolean;
+  suppressUsageUi?: boolean; // mantido para compat
+};
+
+export default function HorasExtrasCalculator({
+  cargo,
+  uf,
+  showShareButtons = false,
+  showAds = true,
+  suppressUsageUi = true,
+}: Props) {
   const { toast } = useToast();
 
+  // Gate global unificado
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
+
+  // Inputs
   const [salario, setSalario] = useState<number | undefined>();
-  const [jornada, setJornada] = useState<number | undefined>(220);
+  const [jornadaMensal, setJornadaMensal] = useState<number | undefined>(220);
+
   const [horas50, setHoras50] = useState<number | undefined>(0);
   const [horas100, setHoras100] = useState<number | undefined>(0);
+
+  // Adicionais personalizáveis (permite 60%, 70%, etc.)
+  const [adicional50, setAdicional50] = useState<number | undefined>(50);
+  const [adicional100, setAdicional100] = useState<number | undefined>(100);
+
+  // Parâmetros para DSR (opcional)
+  const [diasTrabalhados, setDiasTrabalhados] = useState<number | undefined>();
+  const [diasDescanso, setDiasDescanso] = useState<number | undefined>();
+
   const [resultado, setResultado] = useState<Resultado | null>(null);
 
-  const countingRef = useRef(false);
-  const freeLeft = typeof remaining === "number" ? remaining : 0;
-  const canUseNow = isPro || freeLeft > 0;
-
-  const canCalcInputs =
-    !!salario && salario > 0 && !!jornada && jornada > 0 &&
-    (horas50 ?? 0) >= 0 && (horas100 ?? 0) >= 0;
+  const canCalc =
+    !!salario && salario > 0 &&
+    !!jornadaMensal && jornadaMensal > 0 &&
+    (horas50 ?? 0) >= 0 &&
+    (horas100 ?? 0) >= 0 &&
+    (adicional50 ?? 50) >= 0 &&
+    (adicional100 ?? 100) >= 0;
 
   function calcularInterno(): Resultado | null {
-    if (!canCalcInputs) return null;
+    if (!canCalc) return null;
 
-    const jornadaValidada = Math.max(1, jornada ?? 220);
+    const j = Math.max(1, jornadaMensal ?? 220);
+    const baseHora = (salario ?? 0) / j;
+
+    const add50 = Math.max(0, adicional50 ?? 50);
+    const add100 = Math.max(0, adicional100 ?? 100);
+
     const h50 = Math.max(0, horas50 ?? 0);
     const h100 = Math.max(0, horas100 ?? 0);
 
-    const valorHora = (salario ?? 0) / jornadaValidada;
-    const valorHE50Num = valorHora * 1.5 * h50;
-    const valorHE100Num = valorHora * 2 * h100;
-    const totalHorasExtrasNum = valorHE50Num + valorHE100Num;
-    const totalGeralNum = (salario ?? 0) + totalHorasExtrasNum;
+    const valorHoraHE50 = baseHora * (1 + add50 / 100);
+    const valorHoraHE100 = baseHora * (1 + add100 / 100);
+
+    const totalHE50 = valorHoraHE50 * h50;
+    const totalHE100 = valorHoraHE100 * h100;
+    const totalHE = totalHE50 + totalHE100;
+
+    const sal = salario ?? 0;
+    const percentualExtra = sal > 0 ? (totalHE / sal) * 100 : 0;
+
+    let dsr: number | undefined;
+    let totalComDSR: number | undefined;
+
+    const temDSRParams = (diasTrabalhados ?? 0) > 0 && (diasDescanso ?? 0) >= 0;
+    if (temDSRParams) {
+      // DSR sobre horas extras (critério prático usual)
+      // DSR = (Valor HE ÷ dias trabalhados) × dias de descanso
+      dsr = (totalHE / (diasTrabalhados as number)) * (diasDescanso as number);
+      totalComDSR = totalHE + dsr;
+    }
 
     return {
-      salario: formatBRL(salario ?? 0),
-      valorHora: formatBRL(valorHora),
-      horas50Validadas: h50,
-      horas100Validadas: h100,
-      valorHE50: formatBRL(valorHE50Num),
-      valorHE100: formatBRL(valorHE100Num),
-      totalHorasExtras: formatBRL(totalHorasExtrasNum),
-      totalGeral: formatBRL(totalGeralNum),
-      percentualExtra: ((totalHorasExtrasNum / (salario ?? 1)) * 100).toFixed(1),
+      valorHora: baseHora,
+      valorHoraHE50,
+      valorHoraHE100,
+      totalHE50,
+      totalHE100,
+      totalHE,
+      dsr,
+      totalComDSR,
+      salario: sal,
+      percentualExtra,
     };
   }
 
-  async function handleCalcular() {
-    if (loading) return;
-    if (!canUseNow) {
-      toast({
-        title: "Limite atingido",
-        description: "Você já usou seus cálculos grátis. Torne-se PRO para continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const r = calcularInterno();
-    if (!r) {
+  const handleCalcular = async () => {
+    if (!canCalc) {
       toast({
         title: "Campos inválidos",
         description: "Preencha salário, jornada e quantidades corretamente.",
@@ -84,27 +125,38 @@ const HorasExtrasCalculator = () => {
       return;
     }
 
+    // Gate de uso: redireciona para PRO se necessário
+    const ok = await allowOrRedirect();
+    if (!ok) return;
+
+    const r = calcularInterno();
+    if (!r) return;
+
     setResultado(r);
 
-    if (!isPro && !countingRef.current) {
-      countingRef.current = true;
-      try {
-        await (incrementCount?.() ?? Promise.resolve());
-      } finally {
-        setTimeout(() => (countingRef.current = false), 300);
-      }
-    }
-  }
+    // Incrementa contagem de uso (somente não-PRO)
+    await incrementCount();
 
-  function limpar() {
+    // Telemetria opcional
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "calculate_horas_extras", {
+        cargo: cargo || "unknown",
+        uf: uf || "unknown",
+      });
+    }
+  };
+
+  const handleClear = () => {
     setSalario(undefined);
-    setJornada(220);
+    setJornadaMensal(220);
     setHoras50(0);
     setHoras100(0);
+    setAdicional50(50);
+    setAdicional100(100);
+    setDiasTrabalhados(undefined);
+    setDiasDescanso(undefined);
     setResultado(null);
-  }
-
-  const botaoDisabled = loading || !canCalcInputs || (!isPro && freeLeft === 0);
+  };
 
   return (
     <div className="w-full space-y-6">
@@ -115,7 +167,12 @@ const HorasExtrasCalculator = () => {
             Cálculo de Horas Extras
           </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-6">
+          <Notice variant="info">
+            Personalize os adicionais (ex.: 60%, 70%) e calcule opcionalmente o DSR sobre as horas extras.
+          </Notice>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="salario">Salário mensal (R$)</Label>
@@ -131,19 +188,19 @@ const HorasExtrasCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="jornada">Jornada mensal (horas)</Label>
+              <Label htmlFor="jornada">Jornada mensal (h)</Label>
               <NumberInput
                 id="jornada"
-                value={jornada}
-                onChange={setJornada}
+                value={jornadaMensal}
+                onChange={setJornadaMensal}
                 min={1}
                 placeholder="220"
               />
-              <p className="text-xs text-muted-foreground">Padrão: 220h (8h × 22 dias úteis)</p>
+              <p className="text-xs text-muted-foreground">Padrão: 220h (44h/semana)</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="horas-50">Horas extras 50%</Label>
+              <Label htmlFor="horas-50">Horas extras — adicional “50%”</Label>
               <NumberInput
                 id="horas-50"
                 value={horas50}
@@ -154,7 +211,20 @@ const HorasExtrasCalculator = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="horas-100">Horas extras 100%</Label>
+              <Label htmlFor="adicional-50">Adicional p/ grupo acima (%)</Label>
+              <NumberInput
+                id="adicional-50"
+                value={adicional50}
+                onChange={setAdicional50}
+                min={0}
+                max={300}
+                suffix="%"
+                placeholder="50"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="horas-100">Horas extras — adicional “100%”</Label>
               <NumberInput
                 id="horas-100"
                 value={horas100}
@@ -162,21 +232,54 @@ const HorasExtrasCalculator = () => {
                 min={0}
                 placeholder="0"
               />
-              <p className="text-xs text-muted-foreground">Domingos e feriados</p>
+              <p className="text-xs text-muted-foreground">Domingos/feriados, salvo regra coletiva</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="adicional-100">Adicional p/ grupo acima (%)</Label>
+              <NumberInput
+                id="adicional-100"
+                value={adicional100}
+                onChange={setAdicional100}
+                min={0}
+                max={400}
+                suffix="%"
+                placeholder="100"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="dias-trab">Dias trabalhados no período (opcional p/ DSR)</Label>
+              <NumberInput
+                id="dias-trab"
+                value={diasTrabalhados}
+                onChange={setDiasTrabalhados}
+                min={1}
+                placeholder="22"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dias-desc">Dias de descanso (domingos + feriados)</Label>
+              <NumberInput
+                id="dias-desc"
+                value={diasDescanso}
+                onChange={setDiasDescanso}
+                min={0}
+                placeholder="8"
+              />
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={handleCalcular} disabled={botaoDisabled} className="flex-1">
+            <Button onClick={handleCalcular} disabled={!canCalc || overLimit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {isPro
-                ? "Calcular Horas Extras"
-                : canUseNow
-                ? `Calcular Horas Extras (${freeLeft} restantes)`
-                : "Assine PRO para calcular"}
+              {overLimit ? "Limite atingido" : "Calcular"}
             </Button>
-            <Button variant="outline" onClick={limpar}>
+            <Button variant="outline" onClick={handleClear}>
               <RotateCcw className="w-4 h-4" />
+              Limpar
             </Button>
           </div>
         </CardContent>
@@ -193,7 +296,7 @@ const HorasExtrasCalculator = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{resultado.valorHora}</div>
+                <div className="text-2xl font-bold">{formatBRL(resultado.valorHora)}</div>
                 <p className="text-sm text-muted-foreground">Hora normal</p>
               </CardContent>
             </Card>
@@ -207,10 +310,10 @@ const HorasExtrasCalculator = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-primary">
-                  {resultado.totalHorasExtras}
+                  {formatBRL(resultado.totalHE)}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  +{resultado.percentualExtra}% do salário
+                  +{resultado.percentualExtra.toFixed(1)}% do salário
                 </p>
               </CardContent>
             </Card>
@@ -219,17 +322,21 @@ const HorasExtrasCalculator = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Horas Extras 50%</CardTitle>
+                <CardTitle className="text-sm font-medium">Grupo 1 — adicional {formatPercent((adicional50 ?? 50) / 100)}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Quantidade:</span>
-                    <span className="font-medium">{resultado.horas50Validadas}h</span>
+                    <span className="text-sm text-muted-foreground">Valor hora:</span>
+                    <span className="font-medium">{formatBRL(resultado.valorHoraHE50)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Valor total:</span>
-                    <span className="font-bold text-primary">{resultado.valorHE50}</span>
+                    <span className="text-sm text-muted-foreground">Quantidade:</span>
+                    <span className="font-medium">{(horas50 ?? 0)}h</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Total:</span>
+                    <span className="font-bold text-primary">{formatBRL(resultado.totalHE50)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -237,48 +344,50 @@ const HorasExtrasCalculator = () => {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Horas Extras 100%</CardTitle>
+                <CardTitle className="text-sm font-medium">Grupo 2 — adicional {formatPercent((adicional100 ?? 100) / 100)}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Quantidade:</span>
-                    <span className="font-medium">{resultado.horas100Validadas}h</span>
+                    <span className="text-sm text-muted-foreground">Valor hora:</span>
+                    <span className="font-medium">{formatBRL(resultado.valorHoraHE100)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Valor total:</span>
-                    <span className="font-bold text-primary">{resultado.valorHE100}</span>
+                    <span className="text-sm text-muted-foreground">Quantidade:</span>
+                    <span className="font-medium">{(horas100 ?? 0)}h</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Total:</span>
+                    <span className="font-bold text-primary">{formatBRL(resultado.totalHE100)}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                Total Geral
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Salário base:</span>
-                  <span className="font-medium">{resultado.salario}</span>
+          {/* DSR (se informado) */}
+          {typeof resultado.dsr === "number" && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  DSR sobre Horas Extras
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">DSR calculado:</span>
+                    <span className="font-semibold text-primary">{formatBRL(resultado.dsr)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Total horas extras + DSR:</span>
+                    <span className="font-bold text-primary">{formatBRL(resultado.totalComDSR ?? (resultado.totalHE))}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-primary">
-                  <span className="text-sm">Horas extras:</span>
-                  <span className="font-medium">+{resultado.totalHorasExtras}</span>
-                </div>
-                <hr />
-                <div className="flex justify-between font-medium text-lg">
-                  <span>Total:</span>
-                  <span className="text-primary">{resultado.totalGeral}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -287,45 +396,49 @@ const HorasExtrasCalculator = () => {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    1
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">1</div>
                   <div>
-                    <p className="font-medium">Valor da Hora Normal</p>
+                    <p className="font-medium">Valor da hora normal</p>
                     <p className="text-sm text-muted-foreground">
-                      Salário ÷ jornada mensal = {resultado.valorHora}
+                      Salário ÷ jornada mensal = {formatBRL(resultado.valorHora)}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    2
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
                   <div>
-                    <p className="font-medium">Horas Extras 50%</p>
+                    <p className="font-medium">Valor da hora extra</p>
                     <p className="text-sm text-muted-foreground">
-                      Valor hora × 1,5 × quantidade = {resultado.valorHE50}
+                      Hora extra = Hora normal × (1 + adicional%) — calculamos separadamente para cada grupo.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    3
-                  </div>
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">3</div>
                   <div>
-                    <p className="font-medium">Horas Extras 100%</p>
+                    <p className="font-medium">Total de horas extras</p>
                     <p className="text-sm text-muted-foreground">
-                      Valor hora × 2 × quantidade = {resultado.valorHE100}
+                      Soma de (valor hora extra × quantidade) de cada grupo.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">4</div>
+                  <div>
+                    <p className="font-medium">DSR (opcional)</p>
+                    <p className="text-sm text-muted-foreground">
+                      DSR = (Total HE ÷ dias trabalhados) × dias de descanso (se informados).
                     </p>
                   </div>
                 </div>
               </div>
+              <Notice variant="warning">
+                <strong>Atenção:</strong> Convenções/ACPs podem definir percentuais diferentes (ex.: 60%, 70%). Ajuste os campos de adicional conforme a sua regra.
+              </Notice>
             </CardContent>
           </Card>
         </div>
       )}
     </div>
   );
-};
-
-export default HorasExtrasCalculator;
+}

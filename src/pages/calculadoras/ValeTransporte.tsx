@@ -19,7 +19,7 @@ const ValeTransporte = () => {
     {
       question: "O que é o limite de 6% do vale-transporte?",
       answer:
-        "O empregado contribui com no máximo 6% do seu salário para o vale-transporte. Se o custo for maior, a empresa arca com a diferença.",
+        "O empregado contribui com no máximo 6% do seu salário para o vale-transporte. Se o custo mensal for maior, a empresa arca com a diferença. Empresas podem adotar limite menor por política interna.",
     },
     {
       question: "O vale-transporte é obrigatório?",
@@ -29,20 +29,20 @@ const ValeTransporte = () => {
     {
       question: "Como calcular o custo mensal do VT?",
       answer:
-        "Multiplique o preço da condução pelo número de viagens diárias e pelos dias úteis do mês (ida + volta = 2 viagens).",
+        "Multiplique o preço das viagens diárias pelo número de dias efetivamente utilizados no mês. A ferramenta permite ajustar viagens por dia, dias úteis e dias sem uso.",
     },
   ];
 
   useSEO({
-    title: "Vale-Transporte (6%) | CLT Fácil",
+    title: "Vale-Transporte (até 6%) | CLT Fácil",
     description:
-      "Calcule desconto e custo do vale-transporte. Ferramenta para cálculo do limite de 6% e divisão empresa/empregado.",
+      "Calcule desconto e custo do vale-transporte com limite de até 6%. Suporte a ida/volta com tarifas diferentes, dias sem uso e políticas internas.",
     keywords: "vale-transporte, desconto 6%, custo VT, transporte público, CLT",
     canonical: "/clt/vale-transporte",
     jsonLd: {
       ...generateCalculatorSchema(
         "Calculadora de Vale-Transporte",
-        "Calcule desconto e custo do vale-transporte com limite de 6%",
+        "Calcule desconto do empregado (até 6%) e custo da empresa com modos simples e avançado",
         "/clt/vale-transporte"
       ),
       ...generateFAQSchema(faqItems),
@@ -54,8 +54,8 @@ const ValeTransporte = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Vale-Transporte (6%)"
-            description="Calcule o desconto do empregado e o custo da empresa para o vale-transporte conforme o limite de 6%."
+            title="Calculadora de Vale-Transporte"
+            description="Simule o vale-transporte com tarifa única ou ida/volta, dias úteis, dias sem uso e limite do empregado (até 6%)."
           />
 
           {/* Banner GLOBAL com contador + CTA PRO */}
@@ -71,7 +71,7 @@ const ValeTransporte = () => {
           <ValeTransporteCalculator />
 
           <Notice variant="info">
-            Desconto limitado a 6% do salário bruto. Valores acima são custeados integralmente pela empresa.
+            O desconto do empregado é limitado a 6% do salário pela legislação. Empresas podem aplicar limite menor por política interna.
           </Notice>
 
           <FAQ items={faqItems} />

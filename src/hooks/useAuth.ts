@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface AuthState {
-  user: User | null;
-  session: Session | null;
+type AuthState = {
+  user: any | null;
+  session: any | null;
   loading: boolean;
   userProfile: { nome: string } | null;
-}
+};
 
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
@@ -18,24 +17,26 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setAuthState(prev => ({
-          ...prev,
-          session,
-          user: session?.user ?? null,
-          loading: false,
-        }));
+    // 1) listener de auth
+    const { data } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      setAuthState(prev => ({
+        ...prev,
+        session,
+        user: session?.user ?? null,
+        loading: false,
+      }));
 
-        if (session?.user) {
-          setTimeout(() => { fetchUserProfile(session.user.id); }, 0);
-        } else {
-          setAuthState(prev => ({ ...prev, userProfile: null }));
-        }
+      if (session?.user) {
+        // carrega perfil no próximo tick
+        setTimeout(() => { fetchUserProfile(session.user.id); }, 0);
+      } else {
+        setAuthState(prev => ({ ...prev, userProfile: null }));
       }
-    );
+    });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // 2) sessão inicial
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data?.session ?? null;
       setAuthState(prev => ({
         ...prev,
         session,
@@ -48,7 +49,10 @@ export const useAuth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      // v2: data.subscription?.unsubscribe()
+      data?.subscription?.unsubscribe?.();
+    };
   }, []);
 
   const fetchUserProfile = async (userId: string) => {
@@ -72,23 +76,20 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, nome: string) => {
     const redirectUrl = `${window.location.origin}/auth-redirect`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { nome }
-      }
+        data: { nome },
+      },
     });
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   };
 
@@ -97,7 +98,7 @@ export const useAuth = () => {
     return { error };
   };
 
-  // ⬇️ ALTERADO: manda o usuário para /forgot-password após clicar no e-mail
+  // Envia e-mail de reset redirecionando para /forgot-password
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/forgot-password`,

@@ -4,6 +4,22 @@ import { supabase } from '@/integrations/supabase/client';
 
 const FREE_LIMIT = 4;
 
+// Limite para visitantes não logados (1 cálculo grátis)
+const ANON_LIMIT = 1;
+
+// Recupera quantos cálculos o visitante anônimo já fez a partir do localStorage
+function getAnonCount() {
+  const raw = localStorage.getItem('anonCalcCount');
+  return raw ? parseInt(raw, 10) : 0;
+}
+
+// Incrementa o contador anônimo no localStorage
+function incrementAnonCount() {
+  const current = getAnonCount();
+  localStorage.setItem('anonCalcCount', (current + 1).toString());
+}
+
+
 export const useProAndUsage = () => {
   const { user, session, userProfile } = useAuth();
   const [calcCount, setCalcCount] = useState<number>(0);
@@ -48,10 +64,20 @@ export const useProAndUsage = () => {
     }
   };
 
-  const isLogged = !!session;
-  const remaining = Math.max(0, FREE_LIMIT - calcCount);
-  const canUse = isPro || calcCount < FREE_LIMIT;
-  const requireLogin = !isLogged;
+const isLogged = !!session;
+
+// Número de cálculos restantes considerando usuário logado ou anônimo
+const anonCount = getAnonCount();
+const anonRemaining = Math.max(0, ANON_LIMIT - anonCount);
+const remaining = isLogged
+  ? Math.max(0, FREE_LIMIT - calcCount)
+  : anonRemaining;
+
+// Usuário pode usar se for PRO, ou se tiver cálculos restantes (logado ou anônimo)
+const canUse = isPro || (isLogged ? calcCount < FREE_LIMIT : anonCount < ANON_LIMIT);
+
+// Se não estiver logado e já excedeu o limite anônimo, exigir login
+const requireLogin = !isLogged && anonCount >= ANON_LIMIT;
 
   return {
     isLogged,

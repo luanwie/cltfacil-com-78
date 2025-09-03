@@ -22,15 +22,17 @@ export default function SaveCalcButton({ calculator, input, result, note, disabl
   const handleSave = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        // redireciona p/ login mantendo o retorno
-        navigate(`/login?next=${encodeURIComponent(location.pathname)}`);
+      // Cast para contornar ambientes que ainda carregam tipos da v1 do supabase-js
+      const { data: { session } } = await (supabase.auth as any).getSession();
+
+      if (!session?.user) {
+        setLoading(false);
+        navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`);
         return;
       }
 
-      const saved = await saveCalc();
-      // Note: saveCalc is currently a placeholder - this will be implemented when saved_calcs table is created
+      // Placeholder – implementar quando a tabela existir
+      await Promise.resolve(saveCalc());
       toast.info("Recurso de salvar cálculos será implementado em breve.");
     } catch (e) {
       console.error(e);

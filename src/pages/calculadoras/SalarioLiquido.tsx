@@ -19,30 +19,30 @@ const SalarioLiquido = () => {
     {
       question: "Como é calculado o salário líquido?",
       answer:
-        "O salário líquido é o salário bruto menos os descontos obrigatórios: INSS, IRRF, vale-transporte (se aplicável) e outras deduções legais.",
+        "O salário líquido considera: INSS progressivo, IRRF sobre a base após INSS com deduções (dependentes e pensão), e descontos facultativos como vale-transporte (até 6%), plano de saúde, VA/VR e outros.",
     },
     {
-      question: "Qual é a diferença entre salário bruto e líquido?",
+      question: "Outros proventos entram no cálculo?",
       answer:
-        "O salário bruto é o valor total antes dos descontos, enquanto o líquido é o que você efetivamente recebe após todos os descontos obrigatórios.",
+        "Sim, comissões/adicionais que integram o salário compõem o bruto total e impactam INSS e IRRF.",
     },
     {
-      question: "O vale-transporte é obrigatório?",
+      question: "O vale-transporte é sempre descontado?",
       answer:
-        "O vale-transporte é um benefício obrigatório oferecido pelo empregador, mas o desconto de até 6% do salário só ocorre se o funcionário utilizar o benefício.",
+        "Só quando o empregado utiliza o benefício. O desconto é limitado a 6% do bruto total ou ao custo real do transporte, o que for menor.",
     },
   ];
 
   useSEO({
     title: "Salário Líquido | CLT Fácil",
     description:
-      "Calcule seu salário líquido com descontos de INSS, IRRF e vale-transporte. Ferramenta gratuita e precisa para cálculos trabalhistas.",
-    keywords: "salário líquido, INSS, IRRF, vale transporte, calculadora trabalhista",
+      "Calcule seu salário líquido com INSS progressivo, IRRF com deduções e descontos facultativos (VT, VA/VR, plano de saúde).",
+    keywords: "salário líquido, INSS, IRRF, vale-transporte, VA, VR, plano de saúde",
     canonical: "/clt/salario-liquido",
     jsonLd: {
       ...generateCalculatorSchema(
         "Calculadora de Salário Líquido",
-        "Calcule o salário líquido com descontos de INSS, IRRF e deduções",
+        "Calcule o salário líquido com INSS, IRRF e descontos facultativos (VT, VA/VR, plano de saúde)",
         "/clt/salario-liquido"
       ),
       ...generateFAQSchema(faqItems),
@@ -55,7 +55,7 @@ const SalarioLiquido = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
             title="Calculadora de Salário Líquido"
-            description="Calcule seu salário líquido com todos os descontos obrigatórios: INSS, IRRF, vale-transporte e outras deduções."
+            description="Simule seu salário líquido com todos os descontos obrigatórios e facultativos: INSS, IRRF, VT, VA/VR, plano de saúde e outros."
           />
 
           {/* Banner GLOBAL com contador + CTA PRO */}

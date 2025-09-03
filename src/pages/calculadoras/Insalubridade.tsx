@@ -19,30 +19,35 @@ const Insalubridade = () => {
     {
       question: "Quais são os graus de insalubridade?",
       answer:
-        "Grau mínimo (10%), médio (20%) e máximo (40%) sobre o salário mínimo, conforme a NR-15. O grau depende do tipo e intensidade da exposição.",
+        "Mínimo (10%), médio (20%) e máximo (40%). A definição depende de laudo técnico conforme NR-15 e do agente nocivo.",
     },
     {
-      question: "Insalubridade pode ser calculada sobre o salário contratual?",
+      question: "Qual base de cálculo usar?",
       answer:
-        "Sim, algumas convenções coletivas preveem cálculo sobre o salário contratual. Consulte sempre seu acordo ou convenção coletiva.",
+        "Em regra, o salário mínimo. Porém, muitas CCT/ACT definem base sobre salário contratual. A calculadora permite escolher e editar o valor do mínimo.",
     },
     {
-      question: "Posso receber insalubridade e periculosidade juntos?",
+      question: "E se o EPI neutralizar o agente?",
       answer:
-        "Não, a lei veda o acúmulo. O trabalhador deve optar pelo adicional mais vantajoso, geralmente a periculosidade (30%).",
+        "Se houver laudo atestando neutralização, o adicional pode deixar de ser devido. Habilite a opção 'EPI neutraliza' para simular.",
+    },
+    {
+      question: "Há reflexos no FGTS?",
+      answer:
+        "Sim, mostramos a estimativa de FGTS (8%) incidente sobre o adicional. Outros reflexos podem depender de normas e habitualidade.",
     },
   ];
 
   useSEO({
-    title: "Insalubridade (10/20/40%) | CLT Fácil",
+    title: "Insalubridade (10/20/40% + personalizado) | CLT Fácil",
     description:
-      "Calcule o adicional de insalubridade por grau. Ferramenta para atividades insalubres conforme NR-15.",
-    keywords: "insalubridade, adicional insalubridade, NR-15, graus insalubridade, CLT",
+      "Calcule o adicional de insalubridade com base no salário mínimo ou contratual, incluindo proporcionalidade, valor-hora e FGTS.",
+    keywords: "insalubridade, adicional, NR-15, salário mínimo, CCT, CLT, grau 10 20 40",
     canonical: "/clt/insalubridade",
     jsonLd: {
       ...generateCalculatorSchema(
         "Calculadora de Insalubridade",
-        "Calcule o adicional de insalubridade por grau (10/20/40%)",
+        "Calcule o adicional de insalubridade por grau, com base e percentuais personalizáveis",
         "/clt/insalubridade"
       ),
       ...generateFAQSchema(faqItems),
@@ -54,8 +59,8 @@ const Insalubridade = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Insalubridade (10/20/40%)"
-            description="Calcule o adicional de insalubridade conforme o grau de exposição a agentes nocivos à saúde."
+            title="Calculadora de Insalubridade"
+            description="Base mínima ou contratual, grau personalizado, proporcionalidade, valor-hora e FGTS — tudo em um só lugar."
           />
 
           {/* Banner global de uso/CTA PRO */}
@@ -71,8 +76,8 @@ const Insalubridade = () => {
           <InsalubridadeCalculator />
 
           <Notice variant="warning">
-            Direito ao adicional deve ser comprovado por laudo técnico. Consulte a NR-15 e acordos
-            coletivos para definir a base de cálculo.
+            O direito ao adicional depende de <strong>laudo técnico</strong>. Regras específicas podem
+            adotar bases/percentuais diferentes via CCT/ACT. Os valores são estimativas didáticas.
           </Notice>
 
           <FAQ items={faqItems} />

@@ -22,7 +22,7 @@ const Index = () => {
   const heroFeatures = [
     { icon: Zap, title: "Simples e Rápido", description: "Calcule em segundos sem complicações" },
     { icon: Shield, title: "Confiável", description: "Baseado na legislação CLT atualizada" },
-    { icon: Calculator, title: "Gratuito", description: "Todas as calculadoras sem custo" }
+    { icon: Calculator, title: "Uso limitado", description: "4 cálculos grátis por mês" }
   ];
 
   const howItWorks = [
@@ -72,21 +72,25 @@ const Index = () => {
                 Calculadoras Trabalhistas CLT
               </h1>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Calcule rescisão, férias, 13º, INSS, FGTS, horas extras, DSR, adicionais e mais. Rápido, confiável e gratuito.
+                Calculadoras de rescisão, férias, 13º, INSS, FGTS e mais. Grátis com limite de 4 cálculos por mês. Desbloqueie uso ilimitado com o Plano PRO.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild variant="hero" size="lg">
-                <Link to="/calculadoras">
-                  Abrir Calculadoras
-                  <ChevronRight className="w-5 h-5" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/sobre">Saiba Mais</Link>
-              </Button>
-            </div>
+<div className="flex flex-col sm:flex-row gap-4 justify-center">
+<Button asChild variant="hero" size="lg" aria-label="Usar grátis 4 cálculos por mês">
+  <Link to="/calculadoras">
+    Usar grátis (4 cálculos/mês)
+    <ChevronRight className="w-5 h-5" />
+  </Link>
+</Button>
+<Button asChild variant="outline" size="lg" aria-label="Conhecer o plano PRO">
+  <Link to="/assinar-pro">Conhecer Plano PRO</Link>
+</Button>
+
+  <Button asChild variant="outline" size="lg">
+    <Link to="/assinar-pro">Conhecer Plano PRO</Link>
+  </Button>
+</div>
 
             {/* Hero Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto mt-16">
@@ -189,8 +193,20 @@ const Index = () => {
               Esclareça suas principais dúvidas sobre cálculos trabalhistas
             </p>
           </div>
-          <FAQ items={[] /* se usar, preencha com faqItems */} />
-          {/* JSON-LD opcional removido para simplificar */}
+          <FAQ items={[
+  {
+    question: "Quantos cálculos gratuitos tenho por mês?",
+    answer: "O plano gratuito permite até 4 cálculos por mês. Para uso ilimitado, assine o Plano PRO.",
+  },
+  {
+    question: "Preciso fazer cadastro para usar?",
+    answer: "Você pode realizar 1 cálculo sem login. Após isso, é necessário criar uma conta gratuita ou assinar o PRO.",
+  },
+  {
+    question: "Posso cancelar o plano PRO quando quiser?",
+    answer: "Sim. Você pode cancelar a assinatura a qualquer momento pelo portal da Stripe, sem taxas.",
+  },
+]} />
         </Container>
       </section>
 
