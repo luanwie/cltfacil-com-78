@@ -44,7 +44,8 @@ const App = () => (
   <TooltipProvider>
     <Toaster />
     <Sonner />
-    <BrowserRouter>
+    {/* 👇 basename usa a BASE_URL gerada pelo Vite (ex.: /cltfacil-com-78/) */}
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <ScrollToTop />
       <Routes>
         {/* Widget sem layout */}
