@@ -6,12 +6,8 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Switch } from "@/components/ui/switch";
 import { Calculator, RotateCcw, DollarSign, AlertTriangle, Percent, Factory } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import UsageBanner from "@/components/UsageBanner";
-import { goPro } from "@/utils/proRedirect";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useToast } from "@/hooks/use-toast";
 
 type Resultado = {
   salarioBase: string;
@@ -33,10 +29,9 @@ type Resultado = {
 };
 
 const PericulosidadeCalculator = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, isLogged, remaining, canUse } = ctx;
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const { toast } = useToast();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
 
   // Entradas
   const [salario, setSalario] = useState<number | undefined>();
@@ -50,15 +45,8 @@ const PericulosidadeCalculator = () => {
 
   const calcular = async () => {
     if (!salario || salario <= 0) return;
-
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () =>
-        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    
+    if (!(await allowOrRedirect())) return;
 
     const baseConsideradaNum = (salario || 0) + Math.max(0, adicionaisFixos || 0);
     const perc = Math.max(0, percentual || 0) / 100;
@@ -90,7 +78,7 @@ const PericulosidadeCalculator = () => {
       };
     }
 
-    await incrementCalcIfNeeded(isPro);
+    await incrementCount();
     setResultado(res);
   };
 
@@ -104,7 +92,7 @@ const PericulosidadeCalculator = () => {
     setResultado(null);
   };
 
-  const canSubmit = !!salario && salario > 0 && canUse;
+  const canSubmit = !!salario && salario > 0 && !overLimit;
 
   return (
     <div className="w-full space-y-6">
@@ -201,20 +189,12 @@ const PericulosidadeCalculator = () => {
             </div>
           </div>
 
-          {/* Banner padronizado: contador global / CTA PRO */}
-          <div id="usage-banner">
-            <UsageBanner
-              remaining={remaining}
-              isPro={isPro}
-              isLogged={isLogged}
-              onGoPro={() => goPro(navigate, isLogged, location.pathname)}
-            />
-          </div>
+          {/* Uso removido para simplificar */}
 
           <div className="flex gap-2">
             <Button onClick={calcular} disabled={!canSubmit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular Periculosidade"}
+              {overLimit ? "Limite atingido" : "Calcular Periculosidade"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

@@ -8,12 +8,8 @@ import { Calculator, RotateCcw, DollarSign, Percent, Scale, Sparkles } from "luc
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularIRRFSync, calcularINSSSync } from "@/lib/tabelas";
 
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import UsageBanner from "@/components/UsageBanner";
-import { goPro } from "@/utils/proRedirect";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useToast } from "@/hooks/use-toast";
 
 const DEDUCAO_SIMPLIFICADA_MENSAL = 528.0; // regra vigente (abatimento fixo mensal)
 
@@ -37,10 +33,9 @@ type ResultadoComparativo = {
 type EntradaModo = "posINSS" | "bruto";
 
 const IRRFCalculator = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, isLogged, remaining, canUse } = ctx;
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const { toast } = useToast();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
 
   // -------- Entradas --------
   const [modoEntrada, setModoEntrada] = useState<EntradaModo>("posINSS");
@@ -75,14 +70,7 @@ const IRRFCalculator = () => {
     const baseAposINSSNum = getBasePosINSS();
     if (baseAposINSSNum <= 0) return;
 
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () =>
-        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    if (!(await allowOrRedirect())) return;
 
     const dep = Math.max(0, dependentes || 0);
     const pens = Math.max(0, pensao || 0);
@@ -134,8 +122,7 @@ const IRRFCalculator = () => {
       )} (regra simplificada mensal).`,
     });
 
-    // >>> ajuste: função agora recebe (isPro, isLogged)
-    await incrementCalcIfNeeded(isPro, isLogged);
+    await incrementCount();
   };
 
   const limpar = () => {
@@ -150,7 +137,7 @@ const IRRFCalculator = () => {
   };
 
   const canSubmit =
-    canUse &&
+    !overLimit &&
     ((modoEntrada === "posINSS" && !!basePosINSS && basePosINSS > 0) ||
       (modoEntrada === "bruto" && !!salarioBruto && salarioBruto > 0));
 
@@ -268,20 +255,12 @@ const IRRFCalculator = () => {
             </div>
           </div>
 
-          {/* Banner padronizado com contador global/CTA */}
-          <div id="usage-banner">
-            <UsageBanner
-              remaining={remaining}
-              isPro={isPro}
-              isLogged={isLogged}
-              onGoPro={() => goPro(navigate, isLogged, location.pathname)}
-            />
-          </div>
+          {/* Banner de uso removido para simplificar */}
 
           <div className="flex gap-2">
             <Button onClick={calcular} disabled={!canSubmit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular IRRF"}
+              {overLimit ? "Limite atingido" : "Calcular IRRF"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

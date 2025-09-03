@@ -6,10 +6,8 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calculator, RotateCcw, DollarSign, Bus, Building, Percent, Settings } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useToast } from "@/hooks/use-toast";
 
 type Resultado = {
   salario: string;
@@ -101,7 +99,7 @@ const ValeTransporteCalculator = () => {
     const custoEmpresaNum = Math.max(0, custoVTNum - descontoEmpregadoNum);
 
     // <<< ajuste: agora passamos (isPro, isLogged)
-    await incrementCalcIfNeeded(isPro, isLogged);
+    await incrementCount();
 
     setResultado({
       salario: formatBRL(salario as number),

@@ -6,10 +6,8 @@ import { NumberInput } from "@/components/ui/number-input";
 import { Calculator, RotateCcw, DollarSign, Percent, Wallet } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync, calcularIRRFSync } from "@/lib/tabelas";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useToast } from "@/hooks/use-toast";
 
 type Resultado = {
   // bases
@@ -38,10 +36,9 @@ type Resultado = {
 };
 
 const SalarioLiquidoCalculator = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, canUse } = ctx;
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const { toast } = useToast();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
 
   // ---- Entradas principais
   const [salarioBruto, setSalarioBruto] = useState<number | undefined>();
@@ -62,13 +59,7 @@ const SalarioLiquidoCalculator = () => {
   const calcular = async () => {
     if (!salarioBruto || salarioBruto <= 0) return;
 
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () => document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    if (!(await allowOrRedirect())) return;
 
     // Normalizações
     const deps = Math.max(0, dependentes || 0);
@@ -102,7 +93,7 @@ const SalarioLiquidoCalculator = () => {
     const totalDescontosNum = inss.valor + irrf.valor + descontoVTnum + descontoVRVAnum + descontoPlAnonum + outros;
     const liquidoNum = brutoTotal - totalDescontosNum;
 
-    await incrementCalcIfNeeded(isPro);
+    await incrementCount();
 
     setResultado({
       salarioBruto: formatBRL(salarioBruto),
@@ -139,7 +130,7 @@ const SalarioLiquidoCalculator = () => {
     setResultado(null);
   };
 
-  const disabled = !salarioBruto || salarioBruto <= 0 || !canUse;
+  const disabled = !salarioBruto || salarioBruto <= 0 || overLimit;
 
   return (
     <div className="w-full space-y-6">
@@ -271,7 +262,7 @@ const SalarioLiquidoCalculator = () => {
           <div className="flex gap-2">
             <Button onClick={calcular} disabled={disabled} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular Salário Líquido"}
+              {overLimit ? "Limite atingido" : "Calcular Salário Líquido"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

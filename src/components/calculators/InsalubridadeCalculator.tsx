@@ -9,10 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calculator, RotateCcw, DollarSign, AlertTriangle, Clock } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useToast } from "@/hooks/use-toast";
 
 type Resultado = {
   baseUsadaNum: number;
@@ -30,11 +28,9 @@ type Resultado = {
 const DEFAULT_MINIMO_2025 = 1412.0;
 
 const InsalubridadeCalculator = () => {
-  // ---- USO/PRO (controle global) ----
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, canUse } = ctx;
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const { toast } = useToast();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
 
   // ---- Form state ----
   const [salario, setSalario] = useState<number | undefined>();
@@ -74,20 +70,12 @@ const InsalubridadeCalculator = () => {
   const canSubmit =
     (baseCalculo === "minimo" ? (salarioMinimo ?? 0) > 0 : (salario ?? 0) > 0) &&
     grauPercent >= 0 &&
-    canUse;
+    !overLimit;
 
   const calcular = async () => {
     if (!canSubmit) return;
-
-    // Gate de uso (banner/redirect PRO quando necessário)
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () =>
-        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    
+    if (!(await allowOrRedirect())) return;
 
     // Proporcionalidade
     const proporcao =
@@ -112,7 +100,7 @@ const InsalubridadeCalculator = () => {
     const fgtsSobreAdicional = considerarFGTS ? adicionalNum * 0.08 : undefined;
 
     // Desconta 1 uso global (se não for PRO)
-    await incrementCalcIfNeeded(isPro);
+    await incrementCount();
 
     setResultado({
       baseUsadaNum,
@@ -302,7 +290,7 @@ const InsalubridadeCalculator = () => {
           <div className="flex gap-2">
             <Button onClick={calcular} disabled={!canSubmit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular Insalubridade"}
+              {overLimit ? "Limite atingido" : "Calcular Insalubridade"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

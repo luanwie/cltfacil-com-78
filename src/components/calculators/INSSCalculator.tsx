@@ -8,11 +8,8 @@ import { Calculator, RotateCcw, DollarSign, Percent, Gift } from "lucide-react";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync } from "@/lib/tabelas";
 import UsageBanner from "@/components/UsageBanner";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import { goPro } from "@/utils/proRedirect";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { useToast } from "@/hooks/use-toast";
 
 type ResultadoMes = {
   baseMes: string;
@@ -39,10 +36,9 @@ type ResultadoGeral = {
 const TETO_INSS_2025 = 7786.02; // exibição informativa
 
 const INSSCalculator = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { isPro, isLogged, remaining, canUse } = ctx;
+  const { toast } = useToast();
+  const { isPro, remaining, allowOrRedirect, incrementCount } = useUsageLimit();
+  const overLimit = !isPro && (remaining ?? 0) <= 0;
 
   // Entradas
   const [salario, setSalario] = useState<number | undefined>();
@@ -55,19 +51,12 @@ const INSSCalculator = () => {
   const [res13, setRes13] = useState<Resultado13 | null>(null);
   const [resGeral, setResGeral] = useState<ResultadoGeral | null>(null);
 
-  const canSubmit = !!salario && salario > 0 && canUse;
+  const canSubmit = !!salario && salario > 0 && !overLimit;
 
   const calcular = async () => {
     if (!salario || salario <= 0) return;
-
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () =>
-        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    
+    if (!(await allowOrRedirect())) return;
 
     // Base do mês = salário + outras remunerações (comissões/variáveis do mês)
     const baseMesNum = (salario ?? 0) + Math.max(0, outrasRemuneracoes ?? 0);
@@ -114,7 +103,7 @@ const INSSCalculator = () => {
       observacaoTeto,
     });
 
-    await incrementCalcIfNeeded(isPro);
+    await incrementCount();
   };
 
   const limpar = () => {
@@ -207,15 +196,15 @@ const INSSCalculator = () => {
             <UsageBanner
               remaining={remaining}
               isPro={isPro}
-              isLogged={isLogged}
-              onGoPro={() => goPro(navigate, isLogged, location.pathname)}
+              isLogged={false}
+              onGoPro={() => {}}
             />
           </div>
 
           <div className="flex gap-2">
             <Button onClick={calcular} disabled={!canSubmit} className="flex-1">
               <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular INSS"}
+              {overLimit ? "Limite atingido" : "Calcular INSS"}
             </Button>
             <Button variant="outline" onClick={limpar}>
               <RotateCcw className="w-4 h-4" />

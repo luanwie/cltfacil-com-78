@@ -11,7 +11,7 @@ type ProfileRow = {
   calc_count: number | null;
 };
 
-const FREE_CAP = 4;
+const FREE_CAP = 2;
 
 export function useUsageLimit() {
   const { user } = useAuth();
