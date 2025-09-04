@@ -19,8 +19,8 @@ const AssinarPro = () => {
   const [yearlyEquivalent, setYearlyEquivalent] = useState("R$ 6,66/mês");
 
   // ⬇️ ATUALIZE com seus novos Payment Links do Stripe
-  const LINK_MENSAL = "https://buy.stripe.com/4gM6oIaMheqt24M5ve1kA04"; // Substitua pelo link com preço R$ 7,90
-  const LINK_ANUAL = "https://buy.stripe.com/9B66oI3jP2HLbFm1eY1kA07";   // Substitua pelo link do plano anual
+  const LINK_MENSAL = "https://buy.stripe.com/9B66oI3jP2HLbFm1eY1kA07"; // Substitua pelo link com preço R$ 7,90
+  const LINK_ANUAL = "https://buy.stripe.com/4gM6oIaMheqt24M5ve1kA04";   // Substitua pelo link do plano anual
 
   useEffect(() => {
     let mounted = true;
