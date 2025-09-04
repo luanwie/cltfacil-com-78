@@ -298,7 +298,7 @@ const AssinarPro = () => {
                 <div className="text-sm text-muted-foreground">
                   Equivale a {yearlyEquivalent}
                 </div>
-                <p className="text-sm text-green-600 font-semibold">
+                <p className="text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-md border border-green-200">
                   💰 Você economiza R$ 119,10 no ano!
                 </p>
               </div>
