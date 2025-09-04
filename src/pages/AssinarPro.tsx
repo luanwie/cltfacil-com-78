@@ -12,33 +12,58 @@ const AssinarPro = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [priceLabel, setPriceLabel] = useState("R$ 19,90/mês"); // fallback
+  
+  // ✅ NOVO: Estados separados para cada preço
+  const [monthlyPrice, setMonthlyPrice] = useState("R$ 7,90/mês");
+  const [yearlyPrice, setYearlyPrice] = useState("R$ 79,90/ano");
+  const [yearlyEquivalent, setYearlyEquivalent] = useState("R$ 6,66/mês");
 
-  // ⬇️ ADICIONE seus Payment Links do Stripe (LIVE)
-  const LINK_MENSAL = "https://buy.stripe.com/28E00k7A5behaBi1eY1kA00"; // ex: https://buy.stripe.com/...
-  const LINK_ANUAL = "https://buy.stripe.com/14A6oI2fLcil24M7Dm1kA01";   // ex: https://buy.stripe.com/...
+  // ⬇️ ATUALIZE com seus novos Payment Links do Stripe
+  const LINK_MENSAL = "SEU_NOVO_LINK_MENSAL_AQUI"; // Substitua pelo link com preço R$ 7,90
+  const LINK_ANUAL = "SEU_NOVO_LINK_ANUAL_AQUI";   // Substitua pelo link do plano anual
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    
+    // ✅ NOVO: Função para buscar preços
+    const fetchPrices = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("get-price");
-        if (!mounted) return;
-        if (error) {
-          console.warn("get-price error:", error);
-          return; // mantém fallback
+        // Buscar preço mensal
+        const { data: monthlyData, error: monthlyError } = await supabase.functions.invoke("get-price", {
+          body: { plan: "mensal" }
+        });
+        
+        if (!monthlyError && monthlyData?.label && mounted) {
+          setMonthlyPrice(monthlyData.label);
         }
-        if (data?.label) setPriceLabel(data.label);
-      } catch (e) {
-        console.warn("get-price failed:", e);
+
+        // Buscar preço anual
+        const { data: yearlyData, error: yearlyError } = await supabase.functions.invoke("get-price", {
+          body: { plan: "anual" }
+        });
+        
+        if (!yearlyError && yearlyData?.label && mounted) {
+          setYearlyPrice(yearlyData.label);
+          
+          // Calcular equivalente mensal do plano anual
+          if (yearlyData.amount) {
+            const monthlyEquivalent = (yearlyData.amount / 100) / 12;
+            setYearlyEquivalent(`R$ ${monthlyEquivalent.toFixed(2).replace('.', ',')}/mês`);
+          }
+        }
+
+      } catch (error) {
+        console.warn("Erro ao buscar preços:", error);
+        // Mantém os valores de fallback
       }
-    })();
+    };
+
+    fetchPrices();
     return () => { mounted = false; };
   }, []);
 
   const goLogin = () => navigate(`/login?next=${encodeURIComponent("/assinar-pro")}`);
 
-  // ⬇️ ALTERADO: redireciona direto para os Payment Links (sem Edge Function)
   const handleSubscribe = async (plan: 'mensal' | 'anual') => {
     if (!user) {
       goLogin();
@@ -47,11 +72,11 @@ const AssinarPro = () => {
     setLoading(true);
     try {
       const url = plan === 'mensal' ? LINK_MENSAL : LINK_ANUAL;
-      if (!url) {
-        toast.error("Link de pagamento não configurado.");
+      if (!url || url.includes("SEU_NOVO_LINK")) {
+        toast.error("Link de pagamento não configurado. Entre em contato com o suporte.");
         return;
       }
-      window.location.href = url; // abre o checkout do Stripe diretamente
+      window.location.href = url;
     } catch (err) {
       console.error("Erro ao abrir Payment Link:", err);
       toast.error("Erro ao processar assinatura");
@@ -129,7 +154,7 @@ const AssinarPro = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-3xl font-bold text-primary">
-                R$ 19,90/mês
+                {monthlyPrice} {/* ✅ DINÂMICO: preço mensal do Stripe */}
               </div>
 
               <ul className="space-y-3">
@@ -166,10 +191,10 @@ const AssinarPro = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-3xl font-bold text-primary">
-                R$ 149,90/ano
+                {yearlyPrice} {/* ✅ DINÂMICO: preço anual do Stripe */}
               </div>
               <div className="text-sm text-muted-foreground">
-                Equivale a R$ 12,49/mês
+                Equivale a {yearlyEquivalent} {/* ✅ DINÂMICO: calculado automaticamente */}
               </div>
 
               <ul className="space-y-3">
