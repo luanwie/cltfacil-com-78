@@ -125,15 +125,15 @@ const AssinarPro = () => {
       <div className="max-w-4xl mx-auto">
         
         {/* Banner de Promoção */}
-        <div className="bg-gradient-to-r from-red-500 via-orange-500 to-red-600 text-white p-6 rounded-xl mb-8 text-center shadow-2xl border-2 border-red-400">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-xl mb-8 text-center shadow-lg border-2 border-blue-500">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <AlertTriangle className="h-6 w-6 animate-pulse" />
-            <h2 className="text-2xl font-bold">🔥 PROMOÇÃO ESPECIAL 🔥</h2>
-            <AlertTriangle className="h-6 w-6 animate-pulse" />
+            <AlertTriangle className="h-6 w-6" />
+            <h2 className="text-2xl font-bold">PROMOÇÃO ESPECIAL</h2>
+            <AlertTriangle className="h-6 w-6" />
           </div>
           
           <p className="text-lg mb-4 font-semibold">
-            Desconto de até <span className="text-3xl font-black text-yellow-300">60% OFF</span> por tempo limitado!
+            Desconto de até <span className="text-3xl font-black text-yellow-300">60% OFF</span> por tempo limitado
           </p>
           
           {/* Contador Regressivo */}
@@ -152,19 +152,19 @@ const AssinarPro = () => {
               <div className="text-xs">MIN</div>
             </div>
             <div className="bg-black/20 backdrop-blur px-4 py-2 rounded-lg">
-              <div className="text-2xl font-bold animate-pulse">{formatTime(timeLeft.seconds)}</div>
+              <div className="text-2xl font-bold">{formatTime(timeLeft.seconds)}</div>
               <div className="text-xs">SEG</div>
             </div>
           </div>
           
           <p className="text-sm font-medium opacity-90">
-            ⚡ Aproveite agora antes que seja tarde demais!
+            Aproveite agora antes que seja tarde demais
           </p>
         </div>
 
         {/* Título Principal */}
         <div className="text-center mb-8">
-          <Badge variant="secondary" className="mb-4 bg-yellow-100 text-yellow-800 border-yellow-300">
+          <Badge variant="secondary" className="mb-4 bg-blue-100 text-blue-800 border-blue-300">
             <Star className="h-4 w-4 mr-1" />
             Plano PRO com Desconto
           </Badge>
@@ -177,7 +177,7 @@ const AssinarPro = () => {
         </div>
 
         {!user && (
-          <Card className="mb-8 border-amber-300">
+          <Card className="mb-8 border-blue-300">
             <CardHeader>
               <CardTitle>Faça login para aproveitar a promoção</CardTitle>
               <CardDescription>Você precisa entrar para concluir a assinatura PRO com desconto.</CardDescription>
@@ -211,16 +211,16 @@ const AssinarPro = () => {
           </Card>
 
           {/* Plano PRO Mensal - COM PROMOÇÃO */}
-          <Card className="border-orange-500 border-2 relative shadow-2xl transform scale-105">
+          <Card className="border-blue-500 border-2 relative shadow-lg transform scale-105">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <Badge className="bg-orange-500 text-white px-4 py-1 animate-pulse">
-                🔥 60% OFF
+              <Badge className="bg-blue-500 text-white px-4 py-1">
+                60% OFF
               </Badge>
             </div>
             
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-orange-500" />
+                <Zap className="h-5 w-5 text-blue-500" />
                 Plano PRO Mensal
               </CardTitle>
               <CardDescription>Para profissionais e empresas</CardDescription>
@@ -237,18 +237,18 @@ const AssinarPro = () => {
                     -60%
                   </Badge>
                 </div>
-                <div className="text-3xl font-bold text-orange-500">
+                <div className="text-3xl font-bold text-blue-500">
                   Por {monthlyPrice}
                 </div>
                 <p className="text-sm text-green-600 font-semibold">
-                  💰 Você economiza R$ 12,00/mês
+                  Você economiza R$ 12,00/mês
                 </p>
               </div>
 
               <ul className="space-y-3">
                 {benefits.map((benefit, i) => (
                   <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-orange-500" />
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
                     <span>{benefit}</span>
                   </li>
                 ))}
@@ -257,19 +257,19 @@ const AssinarPro = () => {
               <Button 
                 onClick={() => handleSubscribe('mensal')} 
                 disabled={loading} 
-                className="w-full bg-orange-500 hover:bg-orange-600" 
+                className="w-full bg-blue-500 hover:bg-blue-600" 
                 size="lg"
               >
-                {loading ? "Processando..." : "🔥 Aproveitar Oferta Mensal"}
+                {loading ? "Processando..." : "Aproveitar Oferta Mensal"}
               </Button>
             </CardContent>
           </Card>
 
           {/* Plano PRO Anual - COM PROMOÇÃO */}
-          <Card className="border-green-500 border-2 relative shadow-2xl transform scale-105">
+          <Card className="border-green-500 border-2 relative shadow-lg transform scale-105">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <Badge className="bg-green-500 text-white px-4 py-1 animate-pulse">
-                🚀 MELHOR OFERTA
+              <Badge className="bg-green-500 text-white px-4 py-1">
+                MELHOR OFERTA
               </Badge>
             </div>
             
@@ -299,7 +299,7 @@ const AssinarPro = () => {
                   Equivale a {yearlyEquivalent}
                 </div>
                 <p className="text-sm text-green-600 font-semibold bg-green-50 p-2 rounded-md border border-green-200">
-                  💰 Você economiza R$ 119,10 no ano!
+                  Você economiza R$ 119,10 no ano
                 </p>
               </div>
 
@@ -318,7 +318,7 @@ const AssinarPro = () => {
                 className="w-full bg-green-500 hover:bg-green-600" 
                 size="lg"
               >
-                {loading ? "Processando..." : "🚀 Aproveitar Melhor Oferta"}
+                {loading ? "Processando..." : "Aproveitar Melhor Oferta"}
               </Button>
             </CardContent>
           </Card>
@@ -341,8 +341,8 @@ const AssinarPro = () => {
             </div>
           </div>
           
-          <p className="text-xs text-red-500 font-semibold animate-pulse">
-            ⚠️ Esta oferta especial expira em menos de 24 horas!
+          <p className="text-xs text-red-500 font-semibold">
+            Esta oferta especial expira em menos de 24 horas
           </p>
         </div>
       </div>
