@@ -440,7 +440,7 @@ export default function HorasExtrasCalculator({
             </CardContent>
           </Card>
 
-          {/* Botão Exportar PDF */}
+          {/* Área dos botões: Logo, Salvar, Exportar PDF */}
           <div className="flex justify-center">
             <PDFExportButton
               calculatorName="Calculadora de Horas Extras"
@@ -458,6 +458,19 @@ export default function HorasExtrasCalculator({
                   { label: "Total com DSR", value: formatBRL(resultado.totalComDSR ?? 0) },
                 ] : [])
               ]}
+              calculator="horas_extras"
+              calculationType="horas_extras"
+              input={{
+                salario,
+                jornadaMensal,
+                horas50,
+                horas100,
+                adicional50,
+                adicional100,
+                diasTrabalhados,
+                diasDescanso
+              }}
+              resultData={resultado}
             />
           </div>
         </div>

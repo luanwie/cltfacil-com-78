@@ -457,7 +457,7 @@ const SalarioLiquidoCalculator = () => {
         </div>
       )}
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {resultado && (
         <div className="flex justify-center">
           <PDFExportButton
@@ -472,6 +472,19 @@ const SalarioLiquidoCalculator = () => {
               { label: "Total Descontos", value: resultado.totalDescontos },
               { label: "Salário Líquido", value: resultado.salarioLiquido },
             ]}
+            calculator="salario_liquido"
+            calculationType="salario_liquido"
+            input={{
+              salarioBruto,
+              outrosProventos,
+              dependentes,
+              pensaoAlimenticia,
+              custoValeTransporte,
+              coparticipacaoVRVA,
+              planoSaude,
+              outrosDescontos
+            }}
+            resultData={resultado}
           />
         </div>
       )}

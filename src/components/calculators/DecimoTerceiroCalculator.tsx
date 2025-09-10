@@ -378,22 +378,9 @@ const DecimoTerceiroCalculator = () => {
         </div>
       )}
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {resultado && (
         <div className="flex gap-2 justify-center flex-wrap">
-          <SaveCalcButton
-            calculator="decimo_terceiro"
-            calculationType="decimo_terceiro"
-            input={{
-              modo,
-              salarioBase,
-              mediaVariaveis,
-              mesesTrabalhados,
-              mesElegivel
-            }}
-            result={resultado}
-            disabled={!resultado}
-          />
           <PDFExportButton
             calculatorName="Calculadora de 13º Salário"
             results={[
@@ -404,6 +391,16 @@ const DecimoTerceiroCalculator = () => {
               { label: "Primeira Parcela", value: resultado.primeiraParcela },
               { label: "Segunda Parcela", value: resultado.segundaParcela },
             ]}
+            calculator="decimo_terceiro"
+            calculationType="decimo_terceiro"
+            input={{
+              modo,
+              salarioBase,
+              mediaVariaveis,
+              mesesTrabalhados,
+              mesElegivel
+            }}
+            resultData={resultado}
           />
         </div>
       )}

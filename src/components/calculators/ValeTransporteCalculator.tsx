@@ -442,7 +442,7 @@ const ValeTransporteCalculator = () => {
         </div>
       )}
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {resultado && (
         <div className="flex justify-center">
           <PDFExportButton
@@ -455,6 +455,20 @@ const ValeTransporteCalculator = () => {
               { label: "Custo Empresa", value: resultado.custoEmpresa },
               { label: "Limite Desconto", value: resultado.limiteValor },
             ]}
+            calculator="vale_transporte"
+            calculationType="vale_transporte"
+            input={{
+              salario,
+              modo,
+              precoConducao,
+              precoIda,
+              precoVolta,
+              viagensPorDia,
+              diasUteis,
+              diasSemUso,
+              limitePercentualEmpregado
+            }}
+            resultData={resultado}
           />
         </div>
       )}

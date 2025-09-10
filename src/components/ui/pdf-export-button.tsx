@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { LogoUpload } from "@/components/ui/logo-upload";
+import { SaveCalcButton } from "@/components/ui/save-calc-button";
 
 interface PDFExportButtonProps {
   calculatorName: string;
@@ -16,9 +17,22 @@ interface PDFExportButtonProps {
     value: string;
   }>;
   disabled?: boolean;
+  // Props para salvar cálculo
+  calculator?: string;
+  calculationType?: string;
+  input?: unknown;
+  resultData?: unknown;
 }
 
-export const PDFExportButton = ({ calculatorName, results, disabled }: PDFExportButtonProps) => {
+export const PDFExportButton = ({ 
+  calculatorName, 
+  results, 
+  disabled,
+  calculator,
+  calculationType, 
+  input,
+  resultData
+}: PDFExportButtonProps) => {
   const { exportToPDF } = usePDFExport();
   const { toast } = useToast();
   const { isPro } = useProAndUsage();
@@ -104,6 +118,16 @@ export const PDFExportButton = ({ calculatorName, results, disabled }: PDFExport
         <LogoUpload 
           onLogoUploaded={setLogoUrl}
           currentLogoUrl={logoUrl}
+        />
+      )}
+      
+      {calculator && calculationType && input && resultData && (
+        <SaveCalcButton
+          calculator={calculator}
+          calculationType={calculationType}
+          input={input}
+          result={resultData}
+          disabled={disabled}
         />
       )}
       

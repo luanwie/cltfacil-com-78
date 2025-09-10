@@ -482,27 +482,9 @@ const RescisaoCalculator = () => {
 
           <Separator />
 
-          {/* Botão Exportar PDF */}
+          {/* Área dos botões: Logo, Salvar, Exportar PDF */}
           {resultado && (
             <div className="flex gap-2 justify-center flex-wrap">
-              <SaveCalcButton
-                calculator="rescisao"
-                calculationType="rescisao"
-                input={{
-                  tipoRescisao,
-                  salarioBase,
-                  dataAdmissao,
-                  dataDesligamento,
-                  modoAvisoPrevio,
-                  overrideDiasAviso,
-                  descontarAviso,
-                  feriasVencidasDias,
-                  saldoFgts,
-                  outrosDescontos
-                }}
-                result={resultado}
-                disabled={!resultado}
-              />
               <PDFExportButton
                 calculatorName="Calculadora de Rescisão Trabalhista"
                 results={[
@@ -517,6 +499,21 @@ const RescisaoCalculator = () => {
                   { label: "Saque FGTS", value: resultado.saqueFgts },
                   { label: "Seguro-Desemprego", value: resultado.seguroDesemprego },
                 ]}
+                calculator="rescisao"
+                calculationType="rescisao"
+                input={{
+                  tipoRescisao,
+                  salarioBase,
+                  dataAdmissao,
+                  dataDesligamento,
+                  modoAvisoPrevio,
+                  overrideDiasAviso,
+                  descontarAviso,
+                  feriasVencidasDias,
+                  saldoFgts,
+                  outrosDescontos
+                }}
+                resultData={resultado}
               />
             </div>
           )}

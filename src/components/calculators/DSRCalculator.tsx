@@ -585,16 +585,9 @@ const DSRCalculator = () => {
         </CardContent>
       </Card>
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {result && (
         <div className="flex gap-2 justify-center flex-wrap">
-          <SaveCalcButton
-            calculator="dsr"
-            calculationType="dsr"
-            input={data}
-            result={result}
-            disabled={!result}
-          />
           <PDFExportButton
             calculatorName="Calculadora de DSR (Horas Extras)"
             results={[
@@ -604,6 +597,10 @@ const DSRCalculator = () => {
               { label: "Valor do DSR", value: formatCurrency(result.dsr) },
               { label: "Total (HE + DSR)", value: formatCurrency(result.total) },
             ]}
+            calculator="dsr"
+            calculationType="dsr"
+            input={data}
+            resultData={result}
           />
         </div>
       )}

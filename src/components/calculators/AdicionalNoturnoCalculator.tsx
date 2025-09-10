@@ -532,16 +532,9 @@ export default function AdicionalNoturnoCalculator({
         </Card>
       )}
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {result && (
         <div className="flex gap-2 justify-center flex-wrap">
-          <SaveCalcButton
-            calculator="adicional_noturno"
-            calculationType="adicional_noturno"
-            input={inputs}
-            result={result}
-            disabled={!result}
-          />
           <PDFExportButton
             calculatorName="Calculadora de Adicional Noturno"
             results={[
@@ -551,6 +544,10 @@ export default function AdicionalNoturnoCalculator({
               { label: "Adicional Total", value: `R$ ${result.adicionalTotal.toFixed(2)}` },
               { label: "Salário com Adicional", value: `R$ ${result.salarioComAdicional.toFixed(2)}` },
             ]}
+            calculator="adicional_noturno"
+            calculationType="adicional_noturno"
+            input={inputs}
+            resultData={result}
           />
         </div>
       )}

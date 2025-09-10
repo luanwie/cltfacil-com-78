@@ -411,10 +411,18 @@ const AvisoPrevioCalculator = () => {
         </div>
       )}
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {resultado && (
         <div className="flex gap-2 justify-center flex-wrap">
-          <SaveCalcButton
+          <PDFExportButton
+            calculatorName="Calculadora de Aviso Prévio"
+            results={[
+              { label: "Salário Base", value: resultado.salario },
+              { label: "Anos Completos", value: `${resultado.anosCompletos} anos` },
+              { label: "Dias de Aviso", value: `${resultado.diasAviso} dias` },
+              { label: "Valor da Indenização", value: resultado.valorIndenizacao },
+              { label: "Observações", value: resultado.observacoes },
+            ]}
             calculator="aviso_previo"
             calculationType="aviso_previo"
             input={{
@@ -425,18 +433,7 @@ const AvisoPrevioCalculator = () => {
               execucao,
               reducaoTrabalhado
             }}
-            result={resultado}
-            disabled={!resultado}
-          />
-          <PDFExportButton
-            calculatorName="Calculadora de Aviso Prévio"
-            results={[
-              { label: "Salário Base", value: resultado.salario },
-              { label: "Anos Completos", value: `${resultado.anosCompletos} anos` },
-              { label: "Dias de Aviso", value: `${resultado.diasAviso} dias` },
-              { label: "Valor da Indenização", value: resultado.valorIndenizacao },
-              { label: "Observações", value: resultado.observacoes },
-            ]}
+            resultData={resultado}
           />
         </div>
       )}

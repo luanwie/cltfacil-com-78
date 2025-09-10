@@ -585,10 +585,19 @@ export default function FGTSCalculator() {
         </div>
       )}
 
-      {/* Botão Exportar PDF */}
+      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
       {resultado && (
         <div className="flex gap-2 justify-center flex-wrap">
-          <SaveCalcButton
+          <PDFExportButton
+            calculatorName="Calculadora de FGTS"
+            results={[
+              { label: "Tipo de Contrato", value: resultado.tipoContrato },
+              { label: "Depósito Mensal FGTS", value: formatBRL(resultado.depositoMensalFgts) },
+              { label: "Total de Depósitos", value: formatBRL(resultado.totalDepositos) },
+              { label: "Saldo Projetado", value: formatBRL(resultado.saldoProjetado) },
+              { label: "Multa Rescisória", value: formatBRL(resultado.multaValor) },
+              { label: "Total com Multa", value: formatBRL(resultado.totalComMulta) },
+            ]}
             calculator="fgts"
             calculationType="fgts"
             input={{
@@ -603,19 +612,7 @@ export default function FGTSCalculator() {
               meses13,
               simularSaque
             }}
-            result={resultado}
-            disabled={!resultado}
-          />
-          <PDFExportButton
-            calculatorName="Calculadora de FGTS"
-            results={[
-              { label: "Tipo de Contrato", value: resultado.tipoContrato },
-              { label: "Depósito Mensal FGTS", value: formatBRL(resultado.depositoMensalFgts) },
-              { label: "Total de Depósitos", value: formatBRL(resultado.totalDepositos) },
-              { label: "Saldo Projetado", value: formatBRL(resultado.saldoProjetado) },
-              { label: "Multa Rescisória", value: formatBRL(resultado.multaValor) },
-              { label: "Total com Multa", value: formatBRL(resultado.totalComMulta) },
-            ]}
+            resultData={resultado}
           />
         </div>
       )}
