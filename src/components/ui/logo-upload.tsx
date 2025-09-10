@@ -156,11 +156,12 @@ export const LogoUpload = ({ onLogoUploaded, currentLogoUrl }: LogoUploadProps) 
           />
           <label htmlFor="logo-upload">
             <Button
+              type="button"
               variant="outline"
-              size="sm"
+              size="lg"
               disabled={uploading}
               asChild
-              className="cursor-pointer"
+              className="cursor-pointer w-full sm:w-auto"
             >
               <span>
                 {uploading ? (

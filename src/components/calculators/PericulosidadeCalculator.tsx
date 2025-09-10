@@ -329,9 +329,9 @@ const PericulosidadeCalculator = () => {
             </Card>
           )}
 
-          {/* Botão Exportar PDF */}
+          {/* Botões: Logo, Salvar, Exportar PDF */}
           {resultado && (
-            <div className="flex justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
               <PDFExportButton
                 calculatorName="Calculadora de Periculosidade"
                 results={[
@@ -349,6 +349,17 @@ const PericulosidadeCalculator = () => {
                     { label: "FGTS (8%)", value: resultado.reflexos.fgtsSobreAdicional },
                   ] : [])
                 ]}
+                calculator="periculosidade"
+                calculationType="periculosidade"
+                input={{
+                  salario,
+                  adicionaisFixos,
+                  percentual,
+                  exposicao,
+                  elegivel,
+                  calcularReflexos
+                }}
+                resultData={resultado}
               />
             </div>
           )}

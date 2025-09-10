@@ -322,9 +322,9 @@ const INSSCalculator = () => {
             </Card>
           )}
 
-          {/* Botão Exportar PDF */}
+          {/* Botões: Logo, Salvar, Exportar PDF */}
           {(resMes || res13 || resGeral) && (
-            <div className="flex justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
               <PDFExportButton
                 calculatorName="Calculadora de INSS"
                 results={[
@@ -345,6 +345,19 @@ const INSSCalculator = () => {
                     { label: "INSS Total", value: resGeral.totalINSS },
                   ] : [])
                 ]}
+                calculator="inss"
+                calculationType="inss"
+                input={{
+                  salario,
+                  outrasRemuneracoes,
+                  incluirDecimo,
+                  valorDecimo
+                }}
+                resultData={{
+                  resMes,
+                  res13,
+                  resGeral
+                }}
               />
             </div>
           )}

@@ -470,9 +470,9 @@ const SalarioLiquidoCalculator = () => {
         </div>
       )}
 
-      {/* Área dos botões: Logo, Salvar, Exportar PDF */}
+      {/* Botões: Logo, Salvar, Exportar PDF */}
       {resultado && (
-        <div className="flex justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
           <PDFExportButton
             calculatorName="Calculadora de Salário Líquido"
             results={[

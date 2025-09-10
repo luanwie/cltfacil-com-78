@@ -390,8 +390,8 @@ const IRRFCalculator = () => {
             </Card>
           )}
 
-          {/* Botão Exportar PDF */}
-          <div className="flex justify-center">
+          {/* Botões: Logo, Salvar, Exportar PDF */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <PDFExportButton
               calculatorName="Calculadora de IRRF"
               results={[
@@ -413,6 +413,18 @@ const IRRFCalculator = () => {
                 { label: "", value: "" },
                 { label: "MELHOR OPÇÃO", value: resultado.melhor === "completo" ? "Regime Completo" : "Regime Simplificado" },
               ]}
+              calculator="irrf"
+              calculationType="irrf"
+              input={{
+                modoEntrada,
+                basePosINSS,
+                salarioBruto,
+                outrasRemuneracoes,
+                dependentes,
+                pensao,
+                outrasDeducoes
+              }}
+              resultData={resultado}
             />
           </div>
         </div>

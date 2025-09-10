@@ -463,8 +463,8 @@ const InsalubridadeCalculator = () => {
             </CardContent>
           </Card>
 
-          {/* Botão Exportar PDF */}
-          <div className="flex justify-center">
+          {/* Botões: Logo, Salvar, Exportar PDF */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <PDFExportButton
               calculatorName="Calculadora de Insalubridade"
               results={[
@@ -485,6 +485,22 @@ const InsalubridadeCalculator = () => {
                   { label: "FGTS (8%) sobre Adicional", value: formatBRL(resultado.fgtsSobreAdicional) },
                 ] : [])
               ]}
+              calculator="insalubridade"
+              calculationType="insalubridade"
+              input={{
+                salario,
+                baseCalculo,
+                salarioMinimo,
+                grauPreset,
+                grauCustom,
+                considerarFGTS,
+                jornadaMensal,
+                exibirValorHoraDia,
+                usarProporcional,
+                diasConsiderados,
+                epiNeutraliza
+              }}
+              resultData={resultado}
             />
           </div>
         </div>

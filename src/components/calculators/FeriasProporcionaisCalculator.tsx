@@ -420,9 +420,9 @@ export default function FeriasProporcionaisCalculator() {
         </Card>
       )}
 
-      {/* Botão Exportar PDF */}
+          {/* Botões: Logo, Salvar, Exportar PDF */}
       {result && (
-        <div className="flex justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
           <PDFExportButton
             calculatorName="Calculadora de Férias Proporcionais"
             results={[
@@ -433,6 +433,10 @@ export default function FeriasProporcionaisCalculator() {
               { label: "1/3 Constitucional", value: inputs.incluirTerco ? formatBRL(result.valorTerco) : "Não incluído" },
               { label: "Total a Receber", value: formatBRL(result.totalReceber) },
             ]}
+            calculator="ferias_proporcionais"
+            calculationType="ferias_proporcionais"
+            input={inputs}
+            resultData={result}
           />
         </div>
       )}
