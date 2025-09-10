@@ -14,6 +14,7 @@ import { formatBRL } from "@/lib/currency";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 // Constantes CLT 2025
 const SALARIO_MINIMO_2025 = 1518.00;
@@ -201,6 +202,21 @@ const RescisaoCalculator = () => {
 
   const [resultado, setResultado] = useState<Resultado>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.tipoRescisao !== undefined) setTipoRescisao(inputs.tipoRescisao);
+    if (inputs.salarioBase !== undefined) setSalarioBase(inputs.salarioBase);
+    if (inputs.dataAdmissao !== undefined) setDataAdmissao(inputs.dataAdmissao);
+    if (inputs.dataDesligamento !== undefined) setDataDesligamento(inputs.dataDesligamento);
+    if (inputs.modoAvisoPrevio !== undefined) setModoAvisoPrevio(inputs.modoAvisoPrevio);
+    if (inputs.overrideDiasAviso !== undefined) setOverrideDiasAviso(inputs.overrideDiasAviso);
+    if (inputs.descontarAviso !== undefined) setDescontarAviso(inputs.descontarAviso);
+    if (inputs.feriasVencidasDias !== undefined) setFeriasVencidasDias(inputs.feriasVencidasDias);
+    if (inputs.saldoFgts !== undefined) setSaldoFgts(inputs.saldoFgts);
+    if (inputs.outrosDescontos !== undefined) setOutrosDescontos(inputs.outrosDescontos);
+    if (inputs.mostrarDetalhe !== undefined) setMostrarDetalhe(inputs.mostrarDetalhe);
+  }, setResultado);
 
   const { allowOrRedirect, incrementCount, remaining, isPro, loading } = useUsageLimit();
 

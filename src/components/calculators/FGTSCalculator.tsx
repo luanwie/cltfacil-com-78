@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 /** Tipos de contrato suportados */
 type Contrato = "clt" | "aprendiz" | "domestico";
@@ -141,6 +142,20 @@ export default function FGTSCalculator() {
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const countingRef = useRef(false);
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.salario !== undefined) setSalario(inputs.salario);
+    if (inputs.meses !== undefined) setMeses(inputs.meses);
+    if (inputs.saldoInicial !== undefined) setSaldoInicial(inputs.saldoInicial);
+    if (inputs.contrato !== undefined) setContrato(inputs.contrato);
+    if (inputs.multa !== undefined) setMulta(inputs.multa);
+    if (inputs.considerarRendimento !== undefined) setConsiderarRendimento(inputs.considerarRendimento);
+    if (inputs.trAA !== undefined) setTrAA(inputs.trAA);
+    if (inputs.incluir13 !== undefined) setIncluir13(inputs.incluir13);
+    if (inputs.meses13 !== undefined) setMeses13(inputs.meses13);
+    if (inputs.simularSaque !== undefined) setSimularSaque(inputs.simularSaque);
+  }, setResultado);
 
   const canCalcInputs =
     (salario ?? 0) > 0 && (meses ?? 0) > 0;

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type Modalidade = "dispensa" | "pedido" | "acordo" | "justa_causa";
 type ExecucaoAviso = "Trabalhado" | "Indenizado";
@@ -72,6 +73,16 @@ const AvisoPrevioCalculator = () => {
   const [reducaoTrabalhado, setReducaoTrabalhado] = useState<ReducaoTrabalhado>("2h_dia");
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const countingRef = useRef(false); // evita duplo clique contar 2x
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.salario !== undefined) setSalario(inputs.salario);
+    if (inputs.dataAdmissao !== undefined) setDataAdmissao(inputs.dataAdmissao);
+    if (inputs.dataComunicacao !== undefined) setDataComunicacao(inputs.dataComunicacao);
+    if (inputs.modalidade !== undefined) setModalidade(inputs.modalidade);
+    if (inputs.execucao !== undefined) setExecucao(inputs.execucao);
+    if (inputs.reducaoTrabalhado !== undefined) setReducaoTrabalhado(inputs.reducaoTrabalhado);
+  }, setResultado);
 
   function calcularInterno(): Resultado | null {
     if (!salario || salario <= 0 || !dataAdmissao || !dataComunicacao) return null;

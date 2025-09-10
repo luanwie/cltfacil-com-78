@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type Resultado = {
   valorHora: number;
@@ -62,6 +63,18 @@ export default function HorasExtrasCalculator({
   const [diasDescanso, setDiasDescanso] = useState<number | undefined>();
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.salario !== undefined) setSalario(inputs.salario);
+    if (inputs.jornadaMensal !== undefined) setJornadaMensal(inputs.jornadaMensal);
+    if (inputs.horas50 !== undefined) setHoras50(inputs.horas50);
+    if (inputs.horas100 !== undefined) setHoras100(inputs.horas100);
+    if (inputs.adicional50 !== undefined) setAdicional50(inputs.adicional50);
+    if (inputs.adicional100 !== undefined) setAdicional100(inputs.adicional100);
+    if (inputs.diasTrabalhados !== undefined) setDiasTrabalhados(inputs.diasTrabalhados);
+    if (inputs.diasDescanso !== undefined) setDiasDescanso(inputs.diasDescanso);
+  }, setResultado);
 
   const canCalc =
     !!salario && salario > 0 &&

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type Modo = "meses" | "mes_a_mes";
 
@@ -51,6 +52,15 @@ const DecimoTerceiroCalculator = () => {
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const countingRef = useRef(false); // evita 2 cliques contarem 2x
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.modo !== undefined) setModo(inputs.modo);
+    if (inputs.salarioBase !== undefined) setSalarioBase(inputs.salarioBase);
+    if (inputs.mediaVariaveis !== undefined) setMediaVariaveis(inputs.mediaVariaveis);
+    if (inputs.mesesTrabalhados !== undefined) setMesesTrabalhados(inputs.mesesTrabalhados);
+    if (inputs.mesElegivel !== undefined) setMesElegivel(inputs.mesElegivel);
+  }, setResultado);
 
   const handleMesesChange = (value: number | undefined) => {
     if (value !== undefined) {

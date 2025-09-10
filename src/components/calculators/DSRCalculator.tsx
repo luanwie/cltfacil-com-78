@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type ModoDias = "manual" | "automatico";
 
@@ -83,6 +84,11 @@ const DSRCalculator = () => {
 
   const [result, setResult] = useState<DSRResult | null>(null);
   const countingRef = useRef(false); // evita descontar 2x no mesmo clique
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.data !== undefined) setData(inputs.data);
+  }, setResult);
 
   const update = <K extends keyof DSRData>(field: K, value: DSRData[K]) =>
     setData((prev) => ({ ...prev, [field]: value }));

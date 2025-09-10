@@ -10,6 +10,7 @@ import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type Resultado = {
   // bases
@@ -57,6 +58,18 @@ const SalarioLiquidoCalculator = () => {
   const [outrosDescontos, setOutrosDescontos] = useState<number | undefined>(0);       // qualquer outro desconto em folha
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.salarioBruto !== undefined) setSalarioBruto(inputs.salarioBruto);
+    if (inputs.outrosProventos !== undefined) setOutrosProventos(inputs.outrosProventos);
+    if (inputs.dependentes !== undefined) setDependentes(inputs.dependentes);
+    if (inputs.pensaoAlimenticia !== undefined) setPensaoAlimenticia(inputs.pensaoAlimenticia);
+    if (inputs.custoValeTransporte !== undefined) setCustoValeTransporte(inputs.custoValeTransporte);
+    if (inputs.coparticipacaoVRVA !== undefined) setCoparticipacaoVRVA(inputs.coparticipacaoVRVA);
+    if (inputs.planoSaude !== undefined) setPlanoSaude(inputs.planoSaude);
+    if (inputs.outrosDescontos !== undefined) setOutrosDescontos(inputs.outrosDescontos);
+  }, setResultado);
 
   const calcular = async () => {
     if (!salarioBruto || salarioBruto <= 0) return;

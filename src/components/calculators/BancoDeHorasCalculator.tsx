@@ -11,6 +11,7 @@ import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { formatBRL } from "@/lib/currency";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type ModalidadePrazo = "mensal_30d" | "acordo_individual_6m" | "acordo_coletivo_12m" | "personalizado";
 
@@ -83,6 +84,18 @@ const BancoDeHorasCalculator = () => {
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const countingRef = useRef(false); // evita descontar 2x no mesmo clique
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.salarioMensal !== undefined) setSalarioMensal(inputs.salarioMensal);
+    if (inputs.jornadaMensal !== undefined) setJornadaMensal(inputs.jornadaMensal);
+    if (inputs.horasTrabalhadas !== undefined) setHorasTrabalhadas(inputs.horasTrabalhadas);
+    if (inputs.horasCompensadas !== undefined) setHorasCompensadas(inputs.horasCompensadas);
+    if (inputs.dataFechamento !== undefined) setDataFechamento(inputs.dataFechamento);
+    if (inputs.modalidadePrazo !== undefined) setModalidadePrazo(inputs.modalidadePrazo);
+    if (inputs.prazoMesesCustom !== undefined) setPrazoMesesCustom(inputs.prazoMesesCustom);
+    if (inputs.adicionalHoraExtra !== undefined) setAdicionalHoraExtra(inputs.adicionalHoraExtra);
+  }, setResultado);
 
   const calcularInterno = (): Resultado | null => {
     // validações mínimas

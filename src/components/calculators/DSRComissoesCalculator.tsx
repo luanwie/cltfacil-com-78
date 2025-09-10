@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 
 type ModoDias = "manual" | "automatico";
 
@@ -62,6 +63,19 @@ const DSRComissoesCalculator = () => {
 
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const countingRef = useRef(false); // evita descontar 2x no mesmo clique
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((inputs) => {
+    if (inputs.modoDias !== undefined) setModoDias(inputs.modoDias);
+    if (inputs.comissoes !== undefined) setComissoes(inputs.comissoes);
+    if (inputs.diasTrabalhados !== undefined) setDiasTrabalhados(inputs.diasTrabalhados);
+    if (inputs.diasDescanso !== undefined) setDiasDescanso(inputs.diasDescanso);
+    if (inputs.ano !== undefined) setAno(inputs.ano);
+    if (inputs.mes !== undefined) setMes(inputs.mes);
+    if (inputs.feriadosNoMes !== undefined) setFeriadosNoMes(inputs.feriadosNoMes);
+    if (inputs.trabalhaSabado !== undefined) setTrabalhaSabado(inputs.trabalhaSabado);
+    if (inputs.faltasInjustificadas !== undefined) setFaltasInjustificadas(inputs.faltasInjustificadas);
+  }, setResultado);
 
   const calcularDiasAutomatico = () => {
     const y = ano ?? 0;

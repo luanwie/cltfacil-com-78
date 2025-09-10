@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calculator, RotateCcw, Clock, DollarSign, Percent, Calendar, Share2, Copy } from "lucide-react";
+import { useCalculationReload } from "@/hooks/useCalculationReload";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NumberInput } from "@/components/ui/number-input";
@@ -73,6 +74,12 @@ export default function AdicionalNoturnoCalculator({
     salarioComAdicional: number;
     aplicouProrrogacao: boolean;
   } | null>(null);
+
+  // Hook para recarregar dados salvos
+  useCalculationReload((savedInputs) => {
+    if (savedInputs.modo !== undefined) setModo(savedInputs.modo);
+    if (savedInputs.inputs !== undefined) setInputs(savedInputs.inputs);
+  }, setResult);
 
   // ---------- helpers ----------
   const parseHHMM = (s: string): number | null => {
