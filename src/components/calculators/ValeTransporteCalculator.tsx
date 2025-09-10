@@ -8,6 +8,7 @@ import { Calculator, RotateCcw, DollarSign, Bus, Building, Percent, Settings } f
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   salario: string;
@@ -437,6 +438,23 @@ const ValeTransporteCalculator = () => {
               </p>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Vale Transporte"
+            results={[
+              { label: "Salário Base", value: resultado.salario },
+              { label: "Custo Diário", value: resultado.custoDiario },
+              { label: "Custo VT", value: resultado.custoVT },
+              { label: "Desconto Empregado", value: resultado.descontoEmpregado },
+              { label: "Custo Empresa", value: resultado.custoEmpresa },
+              { label: "Limite Desconto", value: resultado.limiteValor },
+            ]}
+          />
         </div>
       )}
     </div>

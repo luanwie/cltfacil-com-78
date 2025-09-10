@@ -8,6 +8,7 @@ import Notice from "@/components/ui/notice";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Modo = "meses" | "mes_a_mes";
 
@@ -373,6 +374,23 @@ const DecimoTerceiroCalculator = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de 13º Salário"
+            results={[
+              { label: "Meses Válidos", value: `${resultado.mesesValidos} meses` },
+              { label: "Avos", value: resultado.avosFracao },
+              { label: "Base de Cálculo", value: resultado.baseCalculo },
+              { label: "Valor Bruto Total", value: resultado.totalBruto },
+              { label: "Primeira Parcela", value: resultado.primeiraParcela },
+              { label: "Segunda Parcela", value: resultado.segundaParcela },
+            ]}
+          />
         </div>
       )}
     </div>

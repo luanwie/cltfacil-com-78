@@ -11,6 +11,7 @@ import { formatBRL, formatPercent } from "@/lib/currency";
 import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 /** Tipos de contrato suportados */
 type Contrato = "clt" | "aprendiz" | "domestico";
@@ -580,6 +581,23 @@ export default function FGTSCalculator() {
               </Notice>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de FGTS"
+            results={[
+              { label: "Tipo de Contrato", value: resultado.tipoContrato },
+              { label: "Depósito Mensal FGTS", value: formatBRL(resultado.depositoMensalFgts) },
+              { label: "Total de Depósitos", value: formatBRL(resultado.totalDepositos) },
+              { label: "Saldo Projetado", value: formatBRL(resultado.saldoProjetado) },
+              { label: "Multa Rescisória", value: formatBRL(resultado.multaValor) },
+              { label: "Total com Multa", value: formatBRL(resultado.totalComMulta) },
+            ]}
+          />
         </div>
       )}
     </div>

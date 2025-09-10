@@ -8,6 +8,7 @@ import { formatBRL, formatPercent } from "@/lib/currency";
 import { calcularINSSSync, calcularIRRFSync } from "@/lib/tabelas";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   // bases
@@ -452,6 +453,25 @@ const SalarioLiquidoCalculator = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Salário Líquido"
+            results={[
+              { label: "Salário Bruto", value: resultado.salarioBruto },
+              { label: "Outros Proventos", value: resultado.outrosProventos },
+              { label: "Bruto Total", value: resultado.brutoTotal },
+              { label: "INSS", value: resultado.inssValor },
+              { label: "IRRF", value: resultado.irrfValor },
+              { label: "Vale Transporte", value: resultado.descontoVT },
+              { label: "Total Descontos", value: resultado.totalDescontos },
+              { label: "Salário Líquido", value: resultado.salarioLiquido },
+            ]}
+          />
         </div>
       )}
     </div>

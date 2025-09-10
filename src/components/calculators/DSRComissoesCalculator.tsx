@@ -10,6 +10,7 @@ import { Calculator, RotateCcw, DollarSign, Calendar as CalendarIcon, Settings2,
 import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type ModoDias = "manual" | "automatico";
 
@@ -410,6 +411,23 @@ const DSRComissoesCalculator = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de DSR (Comissões)"
+            results={[
+              { label: "Comissões", value: resultado.comissoes },
+              { label: "Dias Trabalhados", value: `${resultado.diasTrabalhados} dias` },
+              { label: "Dias de Descanso", value: `${resultado.diasDescanso} dias` },
+              { label: "Média Diária", value: resultado.mediaDiaria },
+              { label: "Valor do DSR", value: resultado.valorDSR },
+              { label: "Total com DSR", value: resultado.totalComDSR },
+            ]}
+          />
         </div>
       )}
     </div>

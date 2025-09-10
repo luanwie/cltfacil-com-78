@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type TipoAtividade = "urbano" | "rural_lavoura" | "rural_pecuaria";
 
@@ -528,6 +529,22 @@ export default function AdicionalNoturnoCalculator({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {result && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Adicional Noturno"
+            results={[
+              { label: "Valor da Hora", value: `R$ ${result.valorHora.toFixed(2)}` },
+              { label: "Horas Noturnas Computadas", value: `${result.horasNoturnasComputadas.toFixed(2)} h` },
+              { label: "Percentual do Adicional", value: `${inputs.percentualAdicional}%` },
+              { label: "Adicional Total", value: `R$ ${result.adicionalTotal.toFixed(2)}` },
+              { label: "Salário com Adicional", value: `R$ ${result.salarioComAdicional.toFixed(2)}` },
+            ]}
+          />
+        </div>
       )}
 
       {/* Como é calculado / base legal */}

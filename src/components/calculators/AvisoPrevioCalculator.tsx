@@ -8,6 +8,7 @@ import { Calculator, RotateCcw, Calendar, DollarSign, Clock } from "lucide-react
 import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Modalidade = "dispensa" | "pedido" | "acordo" | "justa_causa";
 type ExecucaoAviso = "Trabalhado" | "Indenizado";
@@ -406,6 +407,22 @@ const AvisoPrevioCalculator = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Aviso Prévio"
+            results={[
+              { label: "Salário Base", value: resultado.salario },
+              { label: "Anos Completos", value: `${resultado.anosCompletos} anos` },
+              { label: "Dias de Aviso", value: `${resultado.diasAviso} dias` },
+              { label: "Valor da Indenização", value: resultado.valorIndenizacao },
+              { label: "Observações", value: resultado.observacoes },
+            ]}
+          />
         </div>
       )}
     </div>

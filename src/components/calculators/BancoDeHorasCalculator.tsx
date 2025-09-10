@@ -9,6 +9,7 @@ import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { formatBRL } from "@/lib/currency";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type ModalidadePrazo = "mensal_30d" | "acordo_individual_6m" | "acordo_coletivo_12m" | "personalizado";
 
@@ -441,6 +442,24 @@ const BancoDeHorasCalculator = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Banco de Horas"
+            results={[
+              { label: "Saldo em Horas", value: resultado.saldoFormatado },
+              { label: "Classificação", value: resultado.classificacao },
+              { label: "Dias Equivalentes", value: `${resultado.diasEquivalentes.toFixed(1)} dias` },
+              { label: "Data Limite para Compensação", value: resultado.dataLimite || "N/A" },
+              ...(resultado.valorAPagarSeExpirar ? [
+                { label: "Valor Estimado (Hora Extra)", value: resultado.valorAPagarSeExpirar }
+              ] : []),
+            ]}
+          />
         </div>
       )}
     </div>

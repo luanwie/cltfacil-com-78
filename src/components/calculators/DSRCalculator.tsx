@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calculator, DollarSign, Clock, Calendar as CalendarIcon, Settings2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type ModoDias = "manual" | "automatico";
 
@@ -582,6 +583,22 @@ const DSRCalculator = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Botão Exportar PDF */}
+      {result && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de DSR (Horas Extras)"
+            results={[
+              { label: "Valor da Hora", value: formatCurrency(result.valorHora) },
+              { label: "Valor da Hora Extra", value: formatCurrency(result.valorHoraExtra) },
+              { label: "Valor das Horas Extras", value: formatCurrency(result.valorHorasExtras) },
+              { label: "Valor do DSR", value: formatCurrency(result.dsr) },
+              { label: "Total (HE + DSR)", value: formatCurrency(result.total) },
+            ]}
+          />
+        </div>
+      )}
     </div>
   );
 };
