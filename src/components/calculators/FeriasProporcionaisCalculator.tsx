@@ -435,6 +435,8 @@ export default function FeriasProporcionaisCalculator() {
           />
         </div>
       )}
+
+      <Card>
         <CardHeader>
           <CardTitle>Como Calculamos as Férias Proporcionais?</CardTitle>
         </CardHeader>
