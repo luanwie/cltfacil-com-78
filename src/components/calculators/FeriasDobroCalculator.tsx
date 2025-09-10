@@ -10,6 +10,7 @@ import { Calculator, DollarSign, RotateCcw, Settings2, Info } from "lucide-react
 import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   baseRemuneracao: string;
@@ -284,7 +285,26 @@ export default function FeriasDobroCalculator() {
             </div>
           </CardContent>
         </Card>
-      )}
+
+        {/* Botão Exportar PDF */}
+        {resultado && (
+          <div className="flex justify-center">
+            <PDFExportButton
+              calculatorName="Calculadora de Férias em Dobro"
+              results={[
+                { label: "Base de Remuneração", value: resultado.baseRemuneracao },
+                { label: "Dias Vencidos", value: `${resultado.diasVencidos} dias` },
+                { label: "Períodos Vencidos", value: `${resultado.periodosVencidos} período(s)` },
+                { label: "Valor por Período (Simples)", value: resultado.valorSimplesPorPeriodo },
+                { label: "Valor por Período (Dobro)", value: resultado.valorDobroPorPeriodo },
+                { label: "Diferença por Período", value: resultado.diferencaPorPeriodo },
+                { label: "Total Simples", value: resultado.totalSimples },
+                { label: "Total em Dobro", value: resultado.totalDobro },
+                { label: "Diferença Total", value: resultado.diferencaTotal },
+              ]}
+            />
+          </div>
+        )}
 
       <Card>
         <CardHeader>

@@ -11,6 +11,7 @@ import { formatBRL, formatPercent } from "@/lib/currency";
 
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   baseUsadaNum: number;
@@ -460,6 +461,31 @@ const InsalubridadeCalculator = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Botão Exportar PDF */}
+          <div className="flex justify-center">
+            <PDFExportButton
+              calculatorName="Calculadora de Insalubridade"
+              results={[
+                { label: "Base de Cálculo", value: formatBRL(resultado.baseUsadaNum) },
+                { label: "Tipo de Base", value: resultado.baseCalculoTipo },
+                { label: "Grau Aplicado", value: formatPercent(resultado.grauPercentualNum) },
+                { label: "Adicional de Insalubridade", value: formatBRL(resultado.adicionalNum) },
+                { label: "Salário Base", value: formatBRL(resultado.salarioBaseNum) },
+                { label: "Salário Total com Adicional", value: formatBRL(resultado.salarioTotalNum) },
+                { label: "Aumento Percentual", value: formatPercent(resultado.aumentoPercentualNum) },
+                ...(resultado.valorHoraAdicional !== undefined ? [
+                  { label: "Adicional por Hora", value: formatBRL(resultado.valorHoraAdicional) },
+                ] : []),
+                ...(resultado.valorDiaAdicional !== undefined ? [
+                  { label: "Adicional por Dia", value: formatBRL(resultado.valorDiaAdicional) },
+                ] : []),
+                ...(resultado.fgtsSobreAdicional !== undefined ? [
+                  { label: "FGTS (8%) sobre Adicional", value: formatBRL(resultado.fgtsSobreAdicional) },
+                ] : [])
+              ]}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ import { Calculator, RotateCcw, DollarSign, AlertTriangle, Percent, Factory } fr
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   salarioBase: string;
@@ -325,6 +326,30 @@ const PericulosidadeCalculator = () => {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Botão Exportar PDF */}
+          {resultado && (
+            <div className="flex justify-center">
+              <PDFExportButton
+                calculatorName="Calculadora de Periculosidade"
+                results={[
+                  { label: "Salário Base", value: resultado.salarioBase },
+                  { label: "Adicionais Fixos", value: resultado.adicionaisFixos },
+                  { label: "Base Considerada", value: resultado.baseConsiderada },
+                  { label: "Percentual Aplicado", value: resultado.percentualAplicado },
+                  { label: "Exposição Aplicada", value: resultado.exposicaoAplicada },
+                  { label: "Adicional de Periculosidade", value: resultado.adicionalMensal },
+                  { label: "Salário Total", value: resultado.salarioTotal },
+                  { label: "Aumento Percentual", value: resultado.aumentoPercentual },
+                  ...(resultado.reflexos ? [
+                    { label: "Férias + 1/3", value: resultado.reflexos.feriasMaisTerco },
+                    { label: "13º Salário", value: resultado.reflexos.decimoTerceiro },
+                    { label: "FGTS (8%)", value: resultado.reflexos.fgtsSobreAdicional },
+                  ] : [])
+                ]}
+              />
+            </div>
           )}
 
           <Card>

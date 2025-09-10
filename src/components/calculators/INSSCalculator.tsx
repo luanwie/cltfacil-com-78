@@ -10,6 +10,7 @@ import { calcularINSSSync } from "@/lib/tabelas";
 import UsageBanner from "@/components/UsageBanner";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type ResultadoMes = {
   baseMes: string;
@@ -318,6 +319,33 @@ const INSSCalculator = () => {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Botão Exportar PDF */}
+          {(resMes || res13 || resGeral) && (
+            <div className="flex justify-center">
+              <PDFExportButton
+                calculatorName="Calculadora de INSS"
+                results={[
+                  ...(resMes ? [
+                    { label: "Base do Mês", value: resMes.baseMes },
+                    { label: "INSS do Mês", value: resMes.valorINSSMes },
+                    { label: "Alíquota Efetiva (Mês)", value: resMes.aliquotaEfetivaMes },
+                    { label: "Líquido após INSS (Mês)", value: resMes.liquidoAposINSSMes },
+                  ] : []),
+                  ...(res13 ? [
+                    { label: "Base 13º", value: res13.base13 },
+                    { label: "INSS 13º", value: res13.valorINSS13 },
+                    { label: "Alíquota Efetiva (13º)", value: res13.aliquotaEfetiva13 },
+                    { label: "Líquido após INSS (13º)", value: res13.liquidoAposINSS13 },
+                  ] : []),
+                  ...(resGeral ? [
+                    { label: "Base Total Considerada", value: resGeral.baseTotalConsiderada },
+                    { label: "INSS Total", value: resGeral.totalINSS },
+                  ] : [])
+                ]}
+              />
+            </div>
           )}
 
           <Card>

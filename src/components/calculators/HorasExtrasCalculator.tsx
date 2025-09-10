@@ -8,6 +8,7 @@ import Notice from "@/components/ui/notice";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   valorHora: number;
@@ -437,6 +438,27 @@ export default function HorasExtrasCalculator({
               </Notice>
             </CardContent>
           </Card>
+
+          {/* Botão Exportar PDF */}
+          <div className="flex justify-center">
+            <PDFExportButton
+              calculatorName="Calculadora de Horas Extras"
+              results={[
+                { label: "Salário Mensal", value: formatBRL(resultado.salario) },
+                { label: "Valor da Hora Normal", value: formatBRL(resultado.valorHora) },
+                { label: "Valor Hora Extra (Grupo 1)", value: formatBRL(resultado.valorHoraHE50) },
+                { label: "Total Grupo 1", value: formatBRL(resultado.totalHE50) },
+                { label: "Valor Hora Extra (Grupo 2)", value: formatBRL(resultado.valorHoraHE100) },
+                { label: "Total Grupo 2", value: formatBRL(resultado.totalHE100) },
+                { label: "Total Horas Extras", value: formatBRL(resultado.totalHE) },
+                { label: "Percentual sobre Salário", value: `${resultado.percentualExtra.toFixed(1)}%` },
+                ...(resultado.dsr !== undefined ? [
+                  { label: "DSR sobre HE", value: formatBRL(resultado.dsr) },
+                  { label: "Total com DSR", value: formatBRL(resultado.totalComDSR ?? 0) },
+                ] : [])
+              ]}
+            />
+          </div>
         </div>
       )}
     </div>

@@ -12,6 +12,7 @@ import { Calculator, Info, DollarSign, RotateCcw, AlertCircle } from "lucide-rea
 import { NumberInput } from "@/components/ui/number-input";
 import { formatBRL } from "@/lib/currency";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 // Constantes CLT 2025
 const SALARIO_MINIMO_2025 = 1518.00;
@@ -479,6 +480,27 @@ const RescisaoCalculator = () => {
           </div>
 
           <Separator />
+
+          {/* Botão Exportar PDF */}
+          {resultado && (
+            <div className="flex justify-center">
+              <PDFExportButton
+                calculatorName="Calculadora de Rescisão Trabalhista"
+                results={[
+                  { label: "Saldo de Salário", value: formatBRL(resultado.saldoSalario) },
+                  { label: "13º Proporcional", value: formatBRL(resultado.decimoTerceiro) },
+                  { label: "Férias Vencidas + 1/3", value: formatBRL(resultado.feriasVencidasComTerco) },
+                  { label: "Férias Proporcionais + 1/3", value: formatBRL(resultado.feriasProporcionaisComTerco) },
+                  { label: "Aviso Prévio", value: formatBRL(resultado.avisoValor) },
+                  { label: "Multa FGTS", value: formatBRL(resultado.multaFgts) },
+                  { label: "Total Bruto", value: formatBRL(resultado.totalBruto) },
+                  { label: "Total Estimado", value: formatBRL(resultado.totalEstimado) },
+                  { label: "Saque FGTS", value: resultado.saqueFgts },
+                  { label: "Seguro-Desemprego", value: resultado.seguroDesemprego },
+                ]}
+              />
+            </div>
+          )}
 
           <div className="space-y-4">
             <div>

@@ -10,6 +10,7 @@ import { calcularIRRFSync, calcularINSSSync } from "@/lib/tabelas";
 
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 const DEDUCAO_SIMPLIFICADA_MENSAL = 528.0; // regra vigente (abatimento fixo mensal)
 
@@ -387,6 +388,32 @@ const IRRFCalculator = () => {
               </CardHeader>
             </Card>
           )}
+
+          {/* Botão Exportar PDF */}
+          <div className="flex justify-center">
+            <PDFExportButton
+              calculatorName="Calculadora de IRRF"
+              results={[
+                { label: "REGIME COMPLETO", value: "" },
+                { label: "Base após INSS", value: resultado.completo.basePosINSS },
+                { label: "Total Deduções", value: resultado.completo.totalDeducoes },
+                { label: "Base Tributável", value: resultado.completo.baseCalculoFinal },
+                { label: "IRRF Devido", value: resultado.completo.valorIRRF },
+                { label: "Alíquota Efetiva", value: resultado.completo.aliquotaEfetiva },
+                { label: "Valor Líquido", value: resultado.completo.valorLiquido },
+                { label: "", value: "" },
+                { label: "REGIME SIMPLIFICADO", value: "" },
+                { label: "Base após INSS", value: resultado.simplificado.basePosINSS },
+                { label: "Total Deduções", value: resultado.simplificado.totalDeducoes },
+                { label: "Base Tributável", value: resultado.simplificado.baseCalculoFinal },
+                { label: "IRRF Devido", value: resultado.simplificado.valorIRRF },
+                { label: "Alíquota Efetiva", value: resultado.simplificado.aliquotaEfetiva },
+                { label: "Valor Líquido", value: resultado.simplificado.valorLiquido },
+                { label: "", value: "" },
+                { label: "MELHOR OPÇÃO", value: resultado.melhor === "completo" ? "Regime Completo" : "Regime Simplificado" },
+              ]}
+            />
+          </div>
         </div>
       )}
     </div>

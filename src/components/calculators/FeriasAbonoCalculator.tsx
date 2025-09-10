@@ -10,6 +10,7 @@ import { Calculator, RotateCcw, DollarSign, Settings2 } from "lucide-react";
 import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Resultado = {
   baseRemuneracao: string;
@@ -316,7 +317,24 @@ export default function FeriasAbonoCalculator() {
         </Card>
       )}
 
-      {/* Como calculamos */}
+      {/* Botão Exportar PDF */}
+      {resultado && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Férias com Abono"
+            results={[
+              { label: "Base de Remuneração", value: resultado.baseRemuneracao },
+              { label: "Dias de Gozo", value: `${resultado.diasGozo} dias` },
+              { label: "Dias Vendidos (Abono)", value: `${resultado.diasVendidos} dias` },
+              { label: "Valor das Férias", value: resultado.ferias },
+              { label: "1/3 sobre Férias", value: resultado.umTercoFerias },
+              { label: "Valor do Abono", value: resultado.abono },
+              { label: "1/3 sobre Abono", value: resultado.umTercoAbono },
+              { label: "Total Bruto", value: resultado.totalBruto },
+            ]}
+          />
+        </div>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Como Calculamos</CardTitle>

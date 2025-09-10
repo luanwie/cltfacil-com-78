@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatBRL, formatPercent } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
+import { PDFExportButton } from "@/components/ui/pdf-export-button";
 
 type Mode = "manual" | "datas";
 
@@ -418,7 +419,22 @@ export default function FeriasProporcionaisCalculator() {
         </Card>
       )}
 
-      <Card>
+      {/* Botão Exportar PDF */}
+      {result && (
+        <div className="flex justify-center">
+          <PDFExportButton
+            calculatorName="Calculadora de Férias Proporcionais"
+            results={[
+              { label: "Base de Remuneração", value: formatBRL(result.baseRemuneracao) },
+              { label: "Meses Válidos", value: `${result.mesesValidos}/12` },
+              { label: "Dias de Férias", value: `${result.diasFerias} dias` },
+              { label: "Valor das Férias", value: formatBRL(result.valorFerias) },
+              { label: "1/3 Constitucional", value: inputs.incluirTerco ? formatBRL(result.valorTerco) : "Não incluído" },
+              { label: "Total a Receber", value: formatBRL(result.totalReceber) },
+            ]}
+          />
+        </div>
+      )}
         <CardHeader>
           <CardTitle>Como Calculamos as Férias Proporcionais?</CardTitle>
         </CardHeader>
