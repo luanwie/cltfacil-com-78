@@ -16,167 +16,190 @@ export const usePDFExport = () => {
     try {
       const pdf = new jsPDF();
       
-      let yPosition = 20;
+      let yPosition = 25;
       
-      // === CABEÇALHO COM LOGO ===
+      // === CABEÇALHO CORPORATIVO COM LOGO ===
+      // Fundo azul no cabeçalho
+      pdf.setFillColor(15, 23, 42); // Azul escuro corporativo
+      pdf.rect(0, 0, 210, 45, 'F');
+      
       if (data.logoUrl) {
         try {
-          // Carregar e redimensionar logo
+          // Corrigir carregamento da logo do Supabase
           const logoImg = new Image();
           logoImg.crossOrigin = 'anonymous';
           
-          await new Promise((resolve, reject) => {
-            logoImg.onload = resolve;
-            logoImg.onerror = reject;
-            logoImg.src = data.logoUrl;
+          // Aguardar carregamento da imagem
+          await new Promise<void>((resolve, reject) => {
+            logoImg.onload = () => resolve();
+            logoImg.onerror = () => {
+              console.warn('Erro ao carregar logo do Supabase');
+              reject(new Error('Falha no carregamento da logo'));
+            };
+            // Garantir que a URL seja válida
+            logoImg.src = data.logoUrl!;
           });
           
-          const logoWidth = 30;
-          const logoHeight = 20;
-          pdf.addImage(logoImg, 'PNG', 20, yPosition, logoWidth, logoHeight);
+          // Logo posicionada elegantemente no cabeçalho
+          const logoWidth = 35;
+          const logoHeight = 25;
+          pdf.addImage(logoImg, 'PNG', 20, 10, logoWidth, logoHeight);
           
-          // Título da empresa ao lado da logo
+          // Nome da empresa ao lado da logo (texto branco)
           if (data.companyName) {
-            pdf.setFontSize(16);
+            pdf.setFontSize(18);
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(44, 62, 80); // Azul escuro profissional
-            pdf.text(data.companyName, 55, yPosition + 8);
+            pdf.setTextColor(255, 255, 255); // Branco
+            pdf.text(data.companyName, 65, 25);
           }
-          
-          yPosition += 35;
         } catch (error) {
-          console.warn('Erro ao carregar logo:', error);
-          yPosition += 10;
+          console.warn('Logo não pôde ser carregada:', error);
         }
       }
       
-      // === TÍTULO PRINCIPAL ===
+      // Título CLTFácil no cabeçalho (lado direito)
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255); // Branco
+      pdf.text('CLTFácil.com', 190, 25, { align: 'right' });
+      
+      yPosition = 60;
+      
+      // === TÍTULO PRINCIPAL DO DOCUMENTO ===
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(220, 38, 38); // Vermelho CLTFácil
-      pdf.text('CLTFácil.com', 20, yPosition);
+      pdf.setTextColor(30, 58, 138); // Azul escuro
+      pdf.text('Relatório de Cálculo Trabalhista', 20, yPosition);
       
-      // Subtítulo
+      yPosition += 20;
+      
+      // === CAIXA DESTACADA PARA CALCULADORA ===
+      pdf.setFillColor(239, 246, 255); // Azul muito claro
+      pdf.setDrawColor(59, 130, 246); // Borda azul média
+      pdf.setLineWidth(1);
+      pdf.rect(20, yPosition - 8, 170, 22, 'FD');
+      
       pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(44, 62, 80);
-      pdf.text('Relatório de Cálculo Trabalhista', 20, yPosition + 12);
-      
-      yPosition += 30;
-      
-      // === INFORMAÇÕES DO RELATÓRIO ===
-      // Caixa destacada para título da calculadora
-      pdf.setFillColor(248, 250, 252); // Cinza muito claro
-      pdf.setDrawColor(226, 232, 240); // Borda cinza
-      pdf.rect(20, yPosition - 5, 170, 20, 'FD');
-      
-      pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(15, 23, 42); // Quase preto
-      pdf.text(data.calculatorName, 25, yPosition + 8);
+      pdf.setTextColor(30, 58, 138); // Azul escuro
+      pdf.text(data.calculatorName, 25, yPosition + 5);
       
       yPosition += 25;
       
       // Data e hora de geração
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 116, 139); // Cinza médio
+      pdf.setTextColor(75, 85, 99); // Cinza escuro
       const currentDate = new Date();
       const dateStr = currentDate.toLocaleDateString('pt-BR');
       const timeStr = currentDate.toLocaleTimeString('pt-BR');
       pdf.text(`Gerado em: ${dateStr} às ${timeStr}`, 20, yPosition);
       
+      yPosition += 25;
+      
+      // === LINHA SEPARADORA AZUL ELEGANTE ===
+      pdf.setDrawColor(59, 130, 246); // Azul médio
+      pdf.setLineWidth(1.5);
+      pdf.line(20, yPosition, 190, yPosition);
+      
       yPosition += 20;
       
-      // === LINHA SEPARADORA ELEGANTE ===
-      pdf.setDrawColor(220, 38, 38);
-      pdf.setLineWidth(0.8);
-      pdf.line(20, yPosition, 190, yPosition);
+      // === SEÇÃO DE RESULTADOS ===
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(30, 58, 138); // Azul escuro
+      pdf.text('Resultados do Cálculo', 20, yPosition);
       
       yPosition += 15;
       
-      // === SEÇÃO DE RESULTADOS ===
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(15, 23, 42);
-      pdf.text('Resultados do Cálculo', 20, yPosition);
-      
-      yPosition += 10;
-      
-      // === TABELA DE RESULTADOS COM DESIGN PROFISSIONAL ===
+      // === TABELA DE RESULTADOS COM DESIGN CORPORATIVO ===
       data.results.forEach((result, index) => {
         if (yPosition > 250) {
           pdf.addPage();
           yPosition = 30;
         }
         
-        // Alternar cores das linhas para melhor legibilidade
-        const isEven = index % 2 === 0;
-        if (isEven) {
-          pdf.setFillColor(248, 250, 252);
-          pdf.rect(20, yPosition - 3, 170, 12, 'F');
-        }
-        
         // Verificar se é um valor importante (contém R$ ou %)
         const isImportantValue = result.value.includes('R$') || result.value.includes('%');
         
         if (isImportantValue) {
-          // Caixa destacada para valores importantes
-          pdf.setFillColor(254, 242, 242); // Vermelho muito claro
-          pdf.setDrawColor(252, 165, 165); // Borda vermelha clara
-          pdf.rect(20, yPosition - 3, 170, 12, 'FD');
+          // Caixa destacada azul para valores importantes
+          pdf.setFillColor(239, 246, 255); // Azul muito claro
+          pdf.setDrawColor(59, 130, 246); // Borda azul média
+          pdf.setLineWidth(0.8);
+          pdf.rect(20, yPosition - 4, 170, 16, 'FD');
+        } else {
+          // Alternância sutil para melhor legibilidade
+          const isEven = index % 2 === 0;
+          if (isEven) {
+            pdf.setFillColor(249, 250, 251); // Cinza muito claro
+            pdf.rect(20, yPosition - 4, 170, 16, 'F');
+          }
         }
         
-        // Label
-        pdf.setFontSize(11);
+        // Label do resultado
+        pdf.setFontSize(12);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(71, 85, 105);
-        pdf.text(result.label, 25, yPosition + 4);
+        pdf.setTextColor(55, 65, 81); // Cinza escuro
+        pdf.text(result.label, 25, yPosition + 6);
         
-        // Value
+        // Valor do resultado
+        pdf.setFontSize(12);
         pdf.setFont('helvetica', isImportantValue ? 'bold' : 'normal');
         if (isImportantValue) {
-          pdf.setTextColor(220, 38, 38);
+          pdf.setTextColor(30, 58, 138); // Azul escuro para valores importantes
         } else {
-          pdf.setTextColor(15, 23, 42);
+          pdf.setTextColor(17, 24, 39); // Preto para valores normais
         }
-        pdf.text(result.value, 185, yPosition + 4, { align: 'right' });
+        pdf.text(result.value, 185, yPosition + 6, { align: 'right' });
         
-        yPosition += 12;
+        yPosition += 16;
       });
       
-      // === RODAPÉ COM DISCLAIMER ===
-      yPosition += 20;
-      if (yPosition > 250) {
+      // === RODAPÉ COM DISCLAIMER PROFISSIONAL ===
+      yPosition += 25;
+      if (yPosition > 230) {
         pdf.addPage();
         yPosition = 30;
       }
       
-      // Caixa de disclaimer
-      pdf.setFillColor(255, 251, 235); // Amarelo muito claro
-      pdf.setDrawColor(245, 158, 11); // Borda amarela
-      pdf.rect(20, yPosition - 5, 170, 25, 'FD');
+      // Caixa de disclaimer elegante
+      pdf.setFillColor(254, 249, 195); // Amarelo muito claro
+      pdf.setDrawColor(217, 119, 6); // Borda laranja
+      pdf.setLineWidth(0.8);
+      pdf.rect(20, yPosition - 8, 170, 35, 'FD');
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(146, 64, 14); // Laranja escuro
+      pdf.text('⚠️ IMPORTANTE', 25, yPosition + 2);
       
       pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(146, 64, 14); // Marrom alaranjado
-      pdf.text('⚠️ AVISO IMPORTANTE', 25, yPosition + 3);
-      
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(92, 57, 19);
-      const disclaimer1 = 'Este cálculo é uma estimativa baseada nas informações fornecidas.';
-      const disclaimer2 = 'Para análises específicas, consulte um contador ou advogado trabalhista.';
-      pdf.text(disclaimer1, 25, yPosition + 10);
-      pdf.text(disclaimer2, 25, yPosition + 16);
+      pdf.setTextColor(92, 57, 19); // Marrom
+      const disclaimer1 = 'Este relatório apresenta uma estimativa baseada nas informações fornecidas.';
+      const disclaimer2 = 'Para análises jurídicas específicas, recomenda-se consultar um';
+      const disclaimer3 = 'profissional especializado em direito trabalhista.';
+      pdf.text(disclaimer1, 25, yPosition + 12);
+      pdf.text(disclaimer2, 25, yPosition + 20);
+      pdf.text(disclaimer3, 25, yPosition + 28);
       
-      // === RODAPÉ FINAL ===
-      yPosition += 35;
+      // === RODAPÉ CORPORATIVO FINAL ===
+      yPosition += 50;
+      
+      // Linha azul no rodapé
+      pdf.setDrawColor(59, 130, 246);
+      pdf.setLineWidth(1);
+      pdf.line(20, yPosition, 190, yPosition);
+      
+      yPosition += 8;
       pdf.setFontSize(9);
-      pdf.setTextColor(148, 163, 184);
-      pdf.text('Gerado por CLTFácil.com - Calculadoras Trabalhistas', 105, yPosition, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(107, 114, 128); // Cinza médio
+      pdf.text('Gerado por CLTFácil.com - Plataforma de Cálculos Trabalhistas', 105, yPosition, { align: 'center' });
       
-      // Nome do arquivo
-      const fileName = `${data.calculatorName.toLowerCase().replace(/\s+/g, '-')}-calculo-${new Date().toISOString().split('T')[0]}.pdf`;
+      // Nome do arquivo otimizado
+      const fileName = `cltfacil-${data.calculatorName.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
       
       // Download do PDF
       pdf.save(fileName);
