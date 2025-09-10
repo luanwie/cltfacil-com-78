@@ -27,7 +27,7 @@ export async function ensureProfile(): Promise<Profile | null> {
 
   const { data: prof, error } = await supabase
     .from("profiles")
-    .select("id,user_id,nome,is_pro,calc_count,pro_since,created_at,updated_at")
+    .select("id,user_id,nome,is_pro,calc_count,pro_since,created_at,updated_at,logo_url")
     .eq("user_id", userId)
     .single();
 
@@ -40,8 +40,9 @@ export async function ensureProfile(): Promise<Profile | null> {
       nome: null,
       is_pro: false,
       calc_count: 0,
+      logo_url: null,
     })
-    .select("id,user_id,nome,is_pro,calc_count,pro_since,created_at,updated_at")
+    .select("id,user_id,nome,is_pro,calc_count,pro_since,created_at,updated_at,logo_url")
     .single();
 
   if (upErr) {
@@ -57,7 +58,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,user_id,nome,is_pro,calc_count,pro_since,created_at,updated_at")
+    .select("id,user_id,nome,is_pro,calc_count,pro_since,created_at,updated_at,logo_url")
     .eq("user_id", userId)
     .single();
 

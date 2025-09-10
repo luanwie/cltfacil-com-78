@@ -1,9 +1,13 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { usePDFExport } from "@/hooks/usePDFExport";
 import { useToast } from "@/hooks/use-toast";
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { LogoUpload } from "@/components/ui/logo-upload";
 
 interface PDFExportButtonProps {
   calculatorName: string;
@@ -19,6 +23,34 @@ export const PDFExportButton = ({ calculatorName, results, disabled }: PDFExport
   const { toast } = useToast();
   const { isPro } = useProAndUsage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [companyName, setCompanyName] = useState<string>('');
+
+  // Carregar dados do usuário
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('logo_url, nome')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (data && !error) {
+          setLogoUrl(data.logo_url || '');
+          setCompanyName(data.nome || '');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+      }
+    };
+
+    loadUserData();
+  }, [user]);
 
   const handleExport = async () => {
     if (!isPro) {
@@ -48,6 +80,8 @@ export const PDFExportButton = ({ calculatorName, results, disabled }: PDFExport
     const success = await exportToPDF({
       calculatorName,
       results,
+      logoUrl: logoUrl || undefined,
+      companyName: companyName || undefined,
     });
 
     if (success) {
@@ -65,14 +99,23 @@ export const PDFExportButton = ({ calculatorName, results, disabled }: PDFExport
   };
 
   return (
-    <Button
-      onClick={handleExport}
-      disabled={disabled || results.length === 0}
-      className="bg-destructive hover:bg-destructive/90 text-destructive-foreground w-full sm:w-auto"
-      size="lg"
-    >
-      <Download className="w-4 h-4 mr-2" />
-      Exportar PDF
-    </Button>
+    <div className="flex flex-col sm:flex-row gap-3 items-start">
+      {isPro && (
+        <LogoUpload 
+          onLogoUploaded={setLogoUrl}
+          currentLogoUrl={logoUrl}
+        />
+      )}
+      
+      <Button
+        onClick={handleExport}
+        disabled={disabled || results.length === 0}
+        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground w-full sm:w-auto"
+        size="lg"
+      >
+        <Download className="w-4 h-4 mr-2" />
+        Exportar PDF
+      </Button>
+    </div>
   );
 };

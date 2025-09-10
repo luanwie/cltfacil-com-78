@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           is_pro: boolean | null
+          logo_url: string | null
           nome: string
           pro_since: string | null
           updated_at: string
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_pro?: boolean | null
+          logo_url?: string | null
           nome: string
           pro_since?: string | null
           updated_at?: string
@@ -40,10 +42,44 @@ export type Database = {
           created_at?: string
           id?: string
           is_pro?: boolean | null
+          logo_url?: string | null
           nome?: string
           pro_since?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      simulation_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          inputs: Json
+          results: Json
+          simulator_name: string
+          simulator_type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          inputs: Json
+          results: Json
+          simulator_name: string
+          simulator_type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          inputs?: Json
+          results?: Json
+          simulator_name?: string
+          simulator_type?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
