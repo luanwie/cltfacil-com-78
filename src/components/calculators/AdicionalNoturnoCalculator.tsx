@@ -8,6 +8,7 @@ import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type TipoAtividade = "urbano" | "rural_lavoura" | "rural_pecuaria";
 
@@ -533,7 +534,14 @@ export default function AdicionalNoturnoCalculator({
 
       {/* Botão Exportar PDF */}
       {result && (
-        <div className="flex justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
+          <SaveCalcButton
+            calculator="adicional_noturno"
+            calculationType="adicional_noturno"
+            input={inputs}
+            result={result}
+            disabled={!result}
+          />
           <PDFExportButton
             calculatorName="Calculadora de Adicional Noturno"
             results={[

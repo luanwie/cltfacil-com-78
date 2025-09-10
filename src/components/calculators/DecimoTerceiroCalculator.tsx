@@ -9,6 +9,7 @@ import { formatBRL, formatPercent } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type Modo = "meses" | "mes_a_mes";
 
@@ -379,7 +380,20 @@ const DecimoTerceiroCalculator = () => {
 
       {/* Botão Exportar PDF */}
       {resultado && (
-        <div className="flex justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
+          <SaveCalcButton
+            calculator="decimo_terceiro"
+            calculationType="decimo_terceiro"
+            input={{
+              modo,
+              salarioBase,
+              mediaVariaveis,
+              mesesTrabalhados,
+              mesElegivel
+            }}
+            result={resultado}
+            disabled={!resultado}
+          />
           <PDFExportButton
             calculatorName="Calculadora de 13º Salário"
             results={[

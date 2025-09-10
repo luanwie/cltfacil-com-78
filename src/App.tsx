@@ -39,6 +39,7 @@ import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import NotFound from "./pages/NotFound";
 import MeuPerfil from "./pages/MeuPerfil";
+import CalculosSalvos from "./pages/CalculosSalvos";
 
 const App = () => (
   <TooltipProvider>
@@ -106,6 +107,9 @@ const App = () => (
 
                 {/* 🔐 Meu Perfil – com ProtectedRoute */}
                 <Route path="/meu-perfil" element={<ProtectedRoute><MeuPerfil /></ProtectedRoute>} />
+                
+                {/* 🔐 Cálculos Salvos – com ProtectedRoute */}
+                <Route path="/calculos-salvos" element={<ProtectedRoute><CalculosSalvos /></ProtectedRoute>} />
 
                 <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />
                 <Route path="/sobre" element={<Sobre />} />

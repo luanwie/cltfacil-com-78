@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User as UserIcon, Settings, Crown } from "lucide-react";
+import { User as UserIcon, Settings, Crown, Bookmark } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +161,14 @@ export default function MeuPerfil() {
 
           <CardContent className="space-y-4">
             <ManageSubscriptionButton />
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate('/calculos-salvos')}
+            >
+              <Bookmark className="h-4 w-4 mr-2" />
+              Meus Cálculos Salvos
+            </Button>
             {isPro && profile?.pro_since && (
               <p className="text-xs text-muted-foreground">
                 PRO desde {new Date(profile.pro_since).toLocaleString()}

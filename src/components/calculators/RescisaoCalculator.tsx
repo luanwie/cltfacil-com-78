@@ -13,6 +13,7 @@ import { NumberInput } from "@/components/ui/number-input";
 import { formatBRL } from "@/lib/currency";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 // Constantes CLT 2025
 const SALARIO_MINIMO_2025 = 1518.00;
@@ -483,7 +484,25 @@ const RescisaoCalculator = () => {
 
           {/* Botão Exportar PDF */}
           {resultado && (
-            <div className="flex justify-center">
+            <div className="flex gap-2 justify-center flex-wrap">
+              <SaveCalcButton
+                calculator="rescisao"
+                calculationType="rescisao"
+                input={{
+                  tipoRescisao,
+                  salarioBase,
+                  dataAdmissao,
+                  dataDesligamento,
+                  modoAvisoPrevio,
+                  overrideDiasAviso,
+                  descontarAviso,
+                  feriasVencidasDias,
+                  saldoFgts,
+                  outrosDescontos
+                }}
+                result={resultado}
+                disabled={!resultado}
+              />
               <PDFExportButton
                 calculatorName="Calculadora de Rescisão Trabalhista"
                 results={[

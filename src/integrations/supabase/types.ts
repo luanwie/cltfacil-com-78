@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      calculation_history: {
+        Row: {
+          calculation_name: string
+          calculation_type: string
+          created_at: string
+          id: string
+          input_data: Json
+          result_data: Json
+          updated_at: string
+          user_email: string
+        }
+        Insert: {
+          calculation_name: string
+          calculation_type: string
+          created_at?: string
+          id?: string
+          input_data: Json
+          result_data: Json
+          updated_at?: string
+          user_email: string
+        }
+        Update: {
+          calculation_name?: string
+          calculation_type?: string
+          created_at?: string
+          id?: string
+          input_data?: Json
+          result_data?: Json
+          updated_at?: string
+          user_email?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           calc_count: number | null
@@ -47,39 +80,6 @@ export type Database = {
           pro_since?: string | null
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      simulation_history: {
-        Row: {
-          created_at: string | null
-          id: string
-          inputs: Json
-          results: Json
-          simulator_name: string
-          simulator_type: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          inputs: Json
-          results: Json
-          simulator_name: string
-          simulator_type: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          inputs?: Json
-          results?: Json
-          simulator_name?: string
-          simulator_type?: string
-          updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
