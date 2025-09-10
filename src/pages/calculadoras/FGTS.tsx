@@ -37,11 +37,11 @@ const FGTS = () => {
   ];
 
   useSEO({
-    title: "FGTS + Projeção Completa | CLT Fácil",
+    title: "Calculadora de FGTS CLT 2025 - Grátis | CLTFácil",
     description:
-      "Simule FGTS com CLT, aprendiz e doméstico; 13º proporcional; rendimento estimado (TR + 3% a.a.); multa rescisória e saque-aniversário.",
+      "Calcule FGTS conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Inclui projeções, multa rescisória e saque-aniversário.",
     keywords:
-      "FGTS, fundo de garantia, depósito mensal, multa 40%, saque aniversário, trabalhador doméstico, aprendiz, 13º",
+      "calculadora FGTS, CLT 2025, pequenas empresas, fundo de garantia, depósito mensal, multa 40%, saque aniversário, trabalhador doméstico, aprendiz, 13º",
     canonical: "/clt/fgts",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -58,9 +58,18 @@ const FGTS = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de FGTS (Projeção Completa)"
-            description="Depósitos mensais (CLT, aprendiz e doméstico), 13º proporcional, rendimento estimado, multa rescisória e simulação de saque-aniversário."
+            title="Calculadora de FGTS CLT 2025"
+            description="Calcule depósitos mensais, 13º proporcional, rendimento estimado, multa rescisória e simulação de saque-aniversário. Ferramenta completa para PMEs com todos os tipos de contrato."
           />
+
+          <div className="bg-card rounded-lg p-6 border">
+            <h2 className="text-xl font-semibold mb-4">Como Funciona a Calculadora de FGTS</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de FGTS CLT 2025 permite simular depósitos para diferentes tipos de contrato (CLT, aprendiz, doméstico), 
+              calcular o 13º proporcional, estimar rendimentos com TR + 3% ao ano, e simular a multa rescisória e saque-aniversário. 
+              Ideal para pequenas e médias empresas que precisam de cálculos precisos e confiáveis.
+            </p>
+          </div>
 
           {/* Card PRO padronizado (contador/benefícios/CTA). Some automaticamente se o usuário já for PRO */}
           <ProUpsell />

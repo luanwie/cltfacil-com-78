@@ -27,10 +27,10 @@ const HorasExtras = () => {
   ];
 
   useSEO({
-    title: "Horas Extras (personalizável) | CLT Fácil",
+    title: "Calculadora Horas Extras CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule horas extras com adicionais personalizáveis (50%, 60%, 70%, 100%), valor-hora, total por grupo e DSR opcional.",
-    keywords: "horas extras, 50%, 100%, adicional, DSR, cálculo trabalhista",
+      "Calcule horas extras conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Adicionais personalizáveis e DSR opcional.",
+    keywords: "calculadora horas extras, CLT 2025, pequenas empresas, 50%, 100%, adicional, DSR, cálculo trabalhista",
     canonical: "/clt/horas-extras",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -47,9 +47,18 @@ const HorasExtras = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Horas Extras"
-            description="Adicionais personalizáveis, valor-hora, total por grupo e DSR opcional (domingos/feriados)."
+            title="Calculadora Horas Extras CLT 2025"
+            description="Adicionais personalizáveis conforme CLT 2025, valor-hora, total por grupo e DSR opcional (domingos/feriados). Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular Horas Extras CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de horas extras CLT 2025 permite personalizar adicionais (50%, 60%, 70%, 100%), 
+              calcular valor-hora baseado no salário, agrupar horas por adicional e incluir DSR opcional. 
+              Ideal para pequenas e médias empresas que precisam de cálculos trabalhistas precisos.
+            </p>
+          </div>
 
           {/* Upsell padrão (contador/benefícios/CTA) — some automaticamente se o usuário já for PRO */}
           <ProUpsell />

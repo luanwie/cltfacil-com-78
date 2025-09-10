@@ -39,10 +39,10 @@ const INSS = () => {
   ];
 
   useSEO({
-    title: "INSS Mensal + 13º | CLT Fácil",
+    title: "Calculadora INSS CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule sua contribuição ao INSS nas faixas progressivas, com opção de incluir 13º e outras remunerações do mês. Resultado completo e atualizado.",
-    keywords: "INSS, contribuição, faixas progressivas, 13º salário, alíquota efetiva",
+      "Calcule INSS conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Faixas progressivas, 13º e outras remunerações.",
+    keywords: "calculadora INSS, CLT 2025, pequenas empresas, contribuição previdenciária, faixas progressivas, 13º salário, alíquota efetiva",
     canonical: "/clt/inss",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -59,9 +59,18 @@ const INSS = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de INSS (Mês + 13º)"
-            description="Cálculo progressivo oficial, com outras remunerações do mês e 13º opcional."
+            title="Calculadora INSS CLT 2025"
+            description="Cálculo progressivo oficial conforme CLT 2025, com outras remunerações do mês e 13º opcional. Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular INSS CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de INSS CLT 2025 aplica as faixas progressivas oficiais com alíquotas de 7,5% a 14%. 
+              Calcula automaticamente a alíquota efetiva, inclui outras remunerações do mês e 13º salário separadamente. 
+              Ideal para pequenas e médias empresas que precisam de cálculos previdenciários precisos.
+            </p>
+          </div>
 
           {/* Banner global de uso/CTA PRO (mesmo padrão das demais) */}
           <div id="usage-banner">

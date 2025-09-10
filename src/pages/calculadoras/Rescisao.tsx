@@ -50,11 +50,11 @@ const Rescisao = () => {
   ];
 
   useSEO({
-    title: "Calculadora de Rescisão Trabalhista | Cálculo CLT Completo",
+    title: "Calculadora de Rescisão Trabalhista CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule rescisão trabalhista completa: saldo salário, 13º, férias, aviso prévio e FGTS. Todos os tipos de rescisão CLT. Ferramenta gratuita e confiável.",
+      "Calcule rescisão trabalhista conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Todos os tipos de rescisão.",
     keywords:
-      "rescisão trabalhista, cálculo rescisão, CLT, demissão, aviso prévio, FGTS, 13º salário, férias proporcionais",
+      "calculadora rescisão, CLT 2025, pequenas empresas, rescisão trabalhista, demissão, aviso prévio, FGTS, 13º salário, férias proporcionais",
     canonical: "/clt/rescisao",
     jsonLd: {
       "@context": "https://schema.org",
@@ -74,9 +74,18 @@ const Rescisao = () => {
       <section className="py-12">
         <Container>
           <PageHeader
-            title="Calculadora de Rescisão Trabalhista"
-            description="Calcule todos os valores da rescisão trabalhista CLT de forma completa e precisa. Inclui saldo de salário, 13º proporcional, férias, aviso prévio e FGTS."
+            title="Calculadora de Rescisão Trabalhista CLT 2025"
+            description="Calcule todos os valores da rescisão trabalhista conforme CLT 2025. Ferramenta completa para PMEs com cálculos precisos de saldo, 13º proporcional, férias, aviso prévio e FGTS."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Calculadora Completa de Rescisão CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de rescisão trabalhista CLT 2025 é desenvolvida especialmente para pequenas e médias empresas. 
+              Calcule com precisão todos os valores devidos na rescisão: saldo de salário, 13º proporcional, férias vencidas e proporcionais, 
+              aviso prévio progressivo e FGTS com multa. Suporte completo para todos os tipos de rescisão conforme a legislação vigente.
+            </p>
+          </div>
         </Container>
       </section>
 

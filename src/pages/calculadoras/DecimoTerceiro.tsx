@@ -32,9 +32,9 @@ const DecimoTerceiro = () => {
   ];
 
   useSEO({
-    title: "Décimo Terceiro | CLT Fácil",
-    description: "Calcule o 13º salário: meses/avos, base com variáveis, parcelas e explicações práticas.",
-    keywords: "13º salário, décimo terceiro, avos, CLT, proporcional",
+    title: "Calculadora de Décimo Terceiro CLT 2025 - Grátis | CLTFácil",
+    description: "Calcule 13º salário conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Meses/avos, base com variáveis e parcelas.",
+    keywords: "calculadora 13º salário, CLT 2025, pequenas empresas, décimo terceiro, avos, proporcional, variáveis",
     canonical: "/clt/decimo-terceiro",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -49,9 +49,18 @@ const DecimoTerceiro = () => {
   return (
     <Container className="py-8 space-y-8">
       <PageHeader
-        title="Calculadora de Décimo Terceiro"
-        description="Apure os avos (mês a mês ou por total de meses), base com variáveis e valor bruto das duas parcelas."
+        title="Calculadora de Décimo Terceiro CLT 2025"
+        description="Apure os avos conforme CLT 2025 (mês a mês ou por total de meses), base com variáveis e valor bruto das duas parcelas. Ferramenta completa para PMEs."
       />
+
+      <div className="bg-card rounded-lg p-6 border mb-6">
+        <h2 className="text-xl font-semibold mb-4">Como Calcular o Décimo Terceiro CLT 2025</h2>
+        <p className="text-muted-foreground">
+          Nossa calculadora de 13º salário CLT 2025 apura automaticamente os avos (1/12 por mês válido com 15+ dias trabalhados). 
+          Inclui base com média de variáveis (comissões, horas extras, adicionais) e calcula as duas parcelas. 
+          Ideal para pequenas e médias empresas.
+        </p>
+      </div>
 
       <div className="max-w-4xl mx-auto space-y-6">
         <ProUpsell />

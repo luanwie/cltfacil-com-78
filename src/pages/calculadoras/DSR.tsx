@@ -7,11 +7,11 @@ import ProUpsell from "@/components/ProUpsell";
 import { useSEO } from "@/hooks/useSEO";
 
 const DSR = () => {
-  useSEO({
-    title: "Calculadora DSR - Descanso Semanal Remunerado | CLT Fácil",
-    description: "Calcule o DSR sobre horas extras conforme a Súmula 172/TST. Modo manual ou automático por mês/ano.",
-    keywords: "DSR, descanso semanal remunerado, horas extras, CLT, calculadora trabalhista",
-    canonical: "/clt/dsr",
+    useSEO({
+      title: "Calculadora DSR CLT 2025 - Grátis | CLTFácil",
+      description: "Calcule DSR sobre horas extras conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Modo manual ou automático.",
+      keywords: "calculadora DSR, CLT 2025, pequenas empresas, descanso semanal remunerado, horas extras, Súmula 172",
+      canonical: "/clt/dsr",
     type: "website",
     jsonLd: {
       "@context": "https://schema.org",
@@ -38,9 +38,18 @@ const DSR = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-8">
           <PageHeader
-            title="Calculadora DSR - Descanso Semanal Remunerado"
-            description="Calcule o DSR sobre horas extras com apuração manual ou automática (mês/ano, domingos, feriados e sábados)."
+            title="Calculadora DSR CLT 2025"
+            description="Calcule o DSR sobre horas extras conforme CLT 2025. Apuração manual ou automática (mês/ano, domingos, feriados e sábados). Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular DSR sobre Horas Extras CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de DSR CLT 2025 aplica a Súmula 172 do TST para calcular o descanso semanal remunerado 
+              sobre horas extras. Modo manual ou automático por mês/ano, considerando domingos, feriados, sábados e faltas. 
+              Ideal para pequenas e médias empresas que precisam de cálculos precisos.
+            </p>
+          </div>
 
           <ProUpsell />
 

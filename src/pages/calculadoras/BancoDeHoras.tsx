@@ -17,9 +17,9 @@ const BancoDeHoras = () => {
   ];
 
   useSEO({
-    title: "Banco de Horas | CLT Fácil",
-    description: "Calcule saldo e prazos do banco de horas, incluindo projeção de pagamento ao expirar. Aceita decimal e hh:mm.",
-    keywords: "banco de horas, compensação, prazo, CLT, hora extra, adicional",
+    title: "Calculadora de Banco de Horas CLT 2025 - Grátis | CLTFácil",
+    description: "Calcule banco de horas conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Saldo, prazos e compensação.",
+    keywords: "calculadora banco de horas, CLT 2025, pequenas empresas, compensação, prazo, hora extra, adicional, saldo horas",
     canonical: "/clt/banco-de-horas",
     jsonLd: {
       ...generateCalculatorSchema("Calculadora de Banco de Horas", "Calcule saldo e prazos do banco de horas", "/clt/banco-de-horas"),
@@ -30,9 +30,18 @@ const BancoDeHoras = () => {
   return (
     <Container className="py-8 space-y-8">
       <PageHeader
-        title="Calculadora de Banco de Horas"
-        description="Controle o saldo do banco de horas e visualize prazos de compensação e estimativa de pagamento ao expirar."
+        title="Calculadora de Banco de Horas CLT 2025"
+        description="Controle o saldo do banco de horas conforme CLT 2025. Visualize prazos de compensação e estimativa de pagamento ao expirar. Ferramenta completa para PMEs."
       />
+
+      <div className="bg-card rounded-lg p-6 border mb-6">
+        <h2 className="text-xl font-semibold mb-4">Como Funciona o Banco de Horas CLT 2025</h2>
+        <p className="text-muted-foreground">
+          Nossa calculadora de banco de horas CLT 2025 permite controlar o saldo de horas extras e compensações. 
+          Aceita formato decimal (10.5h) ou hh:mm (10:30). Calcula prazos de compensação conforme acordo coletivo 
+          e estima valores de pagamento caso expire o prazo. Ideal para pequenas e médias empresas.
+        </p>
+      </div>
 
       <div className="max-w-4xl mx-auto space-y-6">
         <ProUpsell />

@@ -35,10 +35,10 @@ const IRRF = () => {
   ];
 
   useSEO({
-    title: "IRRF Mensal (Comparativo Completo × Simplificado) | CLT Fácil",
+    title: "Calculadora IRRF CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule o IRRF mensal comparando automaticamente os regimes completo e simplificado (abatimento fixo R$ 528). Inclua dependentes, pensão e outras deduções.",
-    keywords: "IRRF, imposto de renda, tabela progressiva, dependentes, simplificado mensal, abatimento 528",
+      "Calcule IRRF conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Comparativo completo × simplificado automático.",
+    keywords: "calculadora IRRF, CLT 2025, pequenas empresas, imposto de renda, tabela progressiva, dependentes, simplificado mensal, abatimento 528",
     canonical: "/clt/irrf",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -55,9 +55,18 @@ const IRRF = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de IRRF Mensal"
-            description="Compare automaticamente o regime completo e o simplificado (abatimento R$ 528) e escolha o mais vantajoso."
+            title="Calculadora IRRF CLT 2025"
+            description="Compare automaticamente o regime completo e simplificado (abatimento R$ 528) conforme CLT 2025 e escolha o mais vantajoso. Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular IRRF Mensal CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de IRRF CLT 2025 compara automaticamente os regimes completo (com dependentes e deduções) 
+              e simplificado (abatimento fixo de R$ 528). Mostra qual é mais vantajoso para cada situação. 
+              Ideal para pequenas e médias empresas e trabalhadores que querem otimizar seu desconto de IR.
+            </p>
+          </div>
 
           {/* Banner no topo da página (padrão) */}
           <div id="usage-banner">

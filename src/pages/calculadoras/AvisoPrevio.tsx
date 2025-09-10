@@ -24,9 +24,9 @@ const AvisoPrevio = () => {
   ];
 
   useSEO({
-    title: "Aviso Prévio | CLT Fácil",
-    description: "Calcule dias, data projetada e indenização do aviso prévio (dispensa, pedido, acordo 484-A, justa causa).",
-    keywords: "aviso prévio, indenização, dias aviso, 12.506/2011, CLT",
+    title: "Calculadora de Aviso Prévio CLT 2025 - Grátis | CLTFácil",
+    description: "Calcule aviso prévio conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Dias, data projetada e indenização.",
+    keywords: "calculadora aviso prévio, CLT 2025, pequenas empresas, indenização, dias aviso, 12.506/2011, progressivo",
     canonical: "/clt/aviso-previo",
     jsonLd: {
       ...generateCalculatorSchema("Calculadora de Aviso Prévio", "Calcule dias, data projetada e indenização do aviso prévio", "/clt/aviso-previo"),
@@ -39,9 +39,18 @@ const AvisoPrevio = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Aviso Prévio"
-            description="Calcule dias, data projetada e indenização conforme tempo de serviço e modalidade de desligamento."
+            title="Calculadora de Aviso Prévio CLT 2025"
+            description="Calcule dias, data projetada e indenização do aviso prévio conforme CLT 2025. Ferramenta completa para PMEs com todos os tipos de desligamento."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Calculadora de Aviso Prévio Progressivo CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de aviso prévio CLT 2025 aplica a Lei 12.506/2011 com progressão automática: 
+              30 dias base + 3 dias por ano trabalhado (máximo 90 dias). Suporte para dispensa, pedido, 
+              acordo 484-A e justa causa. Ideal para pequenas e médias empresas.
+            </p>
+          </div>
 
           <div className="mb-6">
             <ProUpsell />

@@ -34,10 +34,10 @@ const SalarioLiquido = () => {
   ];
 
   useSEO({
-    title: "Salário Líquido | CLT Fácil",
+    title: "Calculadora Salário Líquido CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule seu salário líquido com INSS progressivo, IRRF com deduções e descontos facultativos (VT, VA/VR, plano de saúde).",
-    keywords: "salário líquido, INSS, IRRF, vale-transporte, VA, VR, plano de saúde",
+      "Calcule salário líquido conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. INSS progressivo, IRRF e descontos facultativos.",
+    keywords: "calculadora salário líquido, CLT 2025, pequenas empresas, INSS, IRRF, vale-transporte, VA, VR, plano de saúde, descontos",
     canonical: "/clt/salario-liquido",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -54,9 +54,18 @@ const SalarioLiquido = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Salário Líquido"
-            description="Simule seu salário líquido com todos os descontos obrigatórios e facultativos: INSS, IRRF, VT, VA/VR, plano de saúde e outros."
+            title="Calculadora Salário Líquido CLT 2025"
+            description="Simule seu salário líquido conforme CLT 2025 com todos os descontos obrigatórios e facultativos: INSS, IRRF, VT, VA/VR, plano de saúde e outros. Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular Salário Líquido CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de salário líquido CLT 2025 aplica INSS progressivo, IRRF com deduções por dependentes e 
+              descontos facultativos (vale-transporte até 6%, VA/VR, plano de saúde). Considera outros proventos que integram 
+              o salário e impactam os cálculos. Ideal para pequenas e médias empresas.
+            </p>
+          </div>
 
           {/* Banner GLOBAL com contador + CTA PRO */}
           <div id="usage-banner">

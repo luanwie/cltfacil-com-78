@@ -34,10 +34,10 @@ const ValeTransporte = () => {
   ];
 
   useSEO({
-    title: "Vale-Transporte (até 6%) | CLT Fácil",
+    title: "Calculadora Vale-Transporte CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule desconto e custo do vale-transporte com limite de até 6%. Suporte a ida/volta com tarifas diferentes, dias sem uso e políticas internas.",
-    keywords: "vale-transporte, desconto 6%, custo VT, transporte público, CLT",
+      "Calcule vale-transporte conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Limite até 6%, ida/volta com tarifas diferentes.",
+    keywords: "calculadora vale-transporte, CLT 2025, pequenas empresas, desconto 6%, custo VT, transporte público, tarifa única, ida volta",
     canonical: "/clt/vale-transporte",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -54,9 +54,18 @@ const ValeTransporte = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Vale-Transporte"
-            description="Simule o vale-transporte com tarifa única ou ida/volta, dias úteis, dias sem uso e limite do empregado (até 6%)."
+            title="Calculadora Vale-Transporte CLT 2025"
+            description="Simule o vale-transporte conforme CLT 2025 com tarifa única ou ida/volta, dias úteis, dias sem uso e limite do empregado (até 6%). Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular Vale-Transporte CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de vale-transporte CLT 2025 aplica o limite de desconto de até 6% do salário do empregado. 
+              Suporte para tarifa única ou ida/volta com valores diferentes, dias úteis personalizáveis e dias sem uso do benefício. 
+              Calcula o custo da empresa e desconto do funcionário. Ideal para pequenas e médias empresas.
+            </p>
+          </div>
 
           {/* Banner GLOBAL com contador + CTA PRO */}
           <div id="usage-banner">

@@ -39,10 +39,10 @@ const Insalubridade = () => {
   ];
 
   useSEO({
-    title: "Insalubridade (10/20/40% + personalizado) | CLT Fácil",
+    title: "Calculadora Insalubridade CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule o adicional de insalubridade com base no salário mínimo ou contratual, incluindo proporcionalidade, valor-hora e FGTS.",
-    keywords: "insalubridade, adicional, NR-15, salário mínimo, CCT, CLT, grau 10 20 40",
+      "Calcule insalubridade conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Graus 10/20/40% + personalizado, reflexos FGTS.",
+    keywords: "calculadora insalubridade, CLT 2025, pequenas empresas, adicional insalubridade, NR-15, salário mínimo, grau 10 20 40, CCT",
     canonical: "/clt/insalubridade",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -59,9 +59,18 @@ const Insalubridade = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Insalubridade"
-            description="Base mínima ou contratual, grau personalizado, proporcionalidade, valor-hora e FGTS — tudo em um só lugar."
+            title="Calculadora Insalubridade CLT 2025"
+            description="Base mínima ou contratual conforme CLT 2025, grau personalizado, proporcionalidade, valor-hora e FGTS. Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular Insalubridade CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de insalubridade CLT 2025 aplica a NR-15 com graus mínimo (10%), médio (20%) e máximo (40%). 
+              Base no salário mínimo ou contratual conforme CCT, proporcionalidade por exposição, valor-hora e reflexos no FGTS. 
+              Ideal para pequenas e médias empresas que lidam com agentes nocivos.
+            </p>
+          </div>
 
           {/* Banner global de uso/CTA PRO */}
           <div id="usage-banner">

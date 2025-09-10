@@ -27,9 +27,9 @@ const DSRComissoes = () => {
   ];
 
   useSEO({
-    title: "DSR sobre Comissões | CLT Fácil",
-    description: "Calcule o DSR proporcional sobre comissões com apuração manual ou automática (mês/ano).",
-    keywords: "DSR comissões, descanso semanal remunerado, vendas variáveis, CLT",
+    title: "Calculadora DSR sobre Comissões CLT 2025 - Grátis | CLTFácil",
+    description: "Calcule DSR sobre comissões conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Apuração manual ou automática.",
+    keywords: "calculadora DSR comissões, CLT 2025, pequenas empresas, descanso semanal remunerado, vendas variáveis, comissionados",
     canonical: "/clt/dsr-comissoes",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -46,9 +46,18 @@ const DSRComissoes = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de DSR sobre Comissões"
-            description="Apure o DSR sobre comissões por modo manual ou automático (mês/ano, domingos/feriados/sábados e faltas)."
+            title="Calculadora DSR sobre Comissões CLT 2025"
+            description="Apure o DSR sobre comissões conforme CLT 2025. Modo manual ou automático (mês/ano, domingos/feriados/sábados e faltas). Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular DSR sobre Comissões CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de DSR sobre comissões CLT 2025 calcula o descanso semanal remunerado proporcional 
+              sobre vendas variáveis. Suporte para apuração manual ou automática considerando dias trabalhados, 
+              domingos, feriados, sábados e faltas. Ideal para pequenas e médias empresas com vendedores comissionados.
+            </p>
+          </div>
 
           <ProUpsell />
 

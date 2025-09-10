@@ -27,9 +27,9 @@ const FeriasProporcionais = () => {
   ];
 
   useSEO({
-    title: "Férias Proporcionais | CLT Fácil",
-    description: "Calcule férias proporcionais por meses ou automaticamente por datas (regra dos 15 dias), com base em salário + médias.",
-    keywords: "férias proporcionais, 1/3 constitucional, CLT, calculadora",
+    title: "Calculadora Férias Proporcionais CLT 2025 - Grátis | CLTFácil",
+    description: "Calcule férias proporcionais conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Por meses ou datas automáticas.",
+    keywords: "calculadora férias proporcionais, CLT 2025, pequenas empresas, 1/3 constitucional, regra 15 dias, avos férias",
     canonical: "/clt/ferias-proporcionais",
     jsonLd: {
       "@context": "https://schema.org",
@@ -50,9 +50,18 @@ const FeriasProporcionais = () => {
         <Container size="md">
           <div className="max-w-4xl mx-auto space-y-6">
             <PageHeader
-              title="Calculadora de Férias Proporcionais"
-              description="Escolha entre informar meses (0–12) ou deixar que a ferramenta conte automaticamente pelos dias trabalhados no período."
+              title="Calculadora Férias Proporcionais CLT 2025"
+              description="Escolha entre informar meses (0–12) ou deixar que a ferramenta conte automaticamente pelos dias trabalhados no período conforme CLT 2025."
             />
+
+            <div className="bg-card rounded-lg p-6 border mb-6">
+              <h2 className="text-xl font-semibold mb-4">Como Calcular Férias Proporcionais CLT 2025</h2>
+              <p className="text-muted-foreground">
+                Nossa calculadora de férias proporcionais CLT 2025 aplica a regra dos 15 dias: cada mês válido conta 2,5 dias de férias (30÷12). 
+                Calcule por meses informados manualmente ou automaticamente por período trabalhado. Inclui salário + médias de variáveis e 1/3 constitucional. 
+                Ideal para pequenas e médias empresas.
+              </p>
+            </div>
 
             <ProUpsell />
 

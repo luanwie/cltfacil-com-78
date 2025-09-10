@@ -35,10 +35,10 @@ const Periculosidade = () => {
   ];
 
   useSEO({
-    title: "Periculosidade (30%) + Reflexos | CLT Fácil",
+    title: "Calculadora Periculosidade CLT 2025 - Grátis | CLTFácil",
     description:
-      "Calcule o adicional de periculosidade (30%) com base flexível, exposição, e veja reflexos em férias, 13º e FGTS. Conforme NR-16.",
-    keywords: "periculosidade, adicional 30%, NR-16, inflamáveis, eletricidade, vigilância",
+      "Calcule periculosidade conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Adicional 30% + reflexos (férias, 13º, FGTS).",
+    keywords: "calculadora periculosidade, CLT 2025, pequenas empresas, adicional 30%, NR-16, inflamáveis, eletricidade, vigilância, reflexos",
     canonical: "/clt/periculosidade",
     jsonLd: {
       ...generateCalculatorSchema(
@@ -55,9 +55,18 @@ const Periculosidade = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Periculosidade (30%)"
-            description="Informe salário, adicionais fixos (opcional), exposição e veja adicional + reflexos (férias, 13º, FGTS)."
+            title="Calculadora Periculosidade CLT 2025"
+            description="Informe salário, adicionais fixos (opcional), exposição conforme CLT 2025 e veja adicional + reflexos (férias, 13º, FGTS). Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular Periculosidade CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de periculosidade CLT 2025 aplica o adicional de 30% conforme NR-16 para atividades perigosas 
+              (inflamáveis, explosivos, energia elétrica, vigilância). Calcula base flexível, proporcionalidade por exposição e 
+              reflexos em férias, 13º e FGTS. Ideal para pequenas e médias empresas.
+            </p>
+          </div>
 
           {/* Banner global de uso/CTA PRO (padrão) */}
           <div id="usage-banner">

@@ -8,8 +8,9 @@ import ProUpsell from "@/components/ProUpsell";
 
 const FeriasAbono = () => {
   useSEO({
-    title: "Férias + Abono (1/3) | CLT Fácil",
-    description: "Calcule férias com venda de até 1/3, base com médias de variáveis e opção de 1/3 sobre o abono (quando aplicável).",
+    title: "Calculadora Férias + Abono CLT 2025 - Grátis | CLTFácil",
+    description: "Calcule férias com abono 1/3 conforme CLT 2025. Ferramenta gratuita para PMEs com cálculos exatos, exportação PDF e histórico. Base com médias de variáveis.",
+    keywords: "calculadora férias abono, CLT 2025, pequenas empresas, 1/3 constitucional, venda férias, médias variáveis",
     canonical: "/clt/ferias-abono",
     jsonLd: generateCalculatorSchema(
       "Calculadora de Férias + Abono",
@@ -23,9 +24,18 @@ const FeriasAbono = () => {
       <Container className="py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <PageHeader
-            title="Calculadora de Férias + Abono (1/3)"
-            description="Simule férias com dias proporcionais, venda de 1/3 automática ou manual, e base com médias de variáveis."
+            title="Calculadora Férias + Abono CLT 2025"
+            description="Simule férias com venda de 1/3 conforme CLT 2025. Dias proporcionais, venda automática ou manual, base com médias de variáveis. Ferramenta completa para PMEs."
           />
+
+          <div className="bg-card rounded-lg p-6 border mb-6">
+            <h2 className="text-xl font-semibold mb-4">Como Calcular Férias com Abono CLT 2025</h2>
+            <p className="text-muted-foreground">
+              Nossa calculadora de férias + abono CLT 2025 permite simular a venda de até 1/3 das férias. 
+              Calcula dias proporcionais, aplica médias de variáveis (comissões, horas extras, adicionais) e 
+              inclui opção de 1/3 sobre o abono conforme convenção coletiva. Ideal para pequenas e médias empresas.
+            </p>
+          </div>
 
           <ProUpsell />
 
