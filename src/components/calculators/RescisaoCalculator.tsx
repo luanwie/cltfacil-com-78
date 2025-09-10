@@ -6,14 +6,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Calculator, Info, DollarSign, RotateCcw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Calculator, Info, DollarSign, RotateCcw, AlertCircle } from "lucide-react";
 
 import { NumberInput } from "@/components/ui/number-input";
 import { formatBRL } from "@/lib/currency";
-import { useProAndUsage } from "@/hooks/useProAndUsage";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ensureCanCalculate } from "@/utils/usageGuard";
-import { incrementCalcIfNeeded } from "@/utils/incrementCalc";
+import { useUsageLimit } from "@/hooks/useUsageLimit";
+
+// Constantes CLT 2025
+const SALARIO_MINIMO_2025 = 1518.00;
+const ALIQUOTA_FGTS = 0.08;
 
 // ---------------- utils de datas/contas ----------------
 const diaMs = 24 * 60 * 60 * 1000;
@@ -137,7 +139,7 @@ function computeRescisao(params: {
     else if (tipo === "acordo") multaFgts = saldoFgtsInformado * 0.20;
   }
 
-  // 7) Total estimado (bruto) e total após “outros descontos”
+  // 7) Total estimado (bruto) e total após "outros descontos"
   const totalBruto =
     saldoSalario +
     decimoTerceiro +
@@ -196,14 +198,48 @@ const RescisaoCalculator = () => {
   const [mostrarDetalhe, setMostrarDetalhe] = useState(false);
 
   const [resultado, setResultado] = useState<Resultado>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const navigate = useNavigate();
-  const location = useLocation();
-  const ctx = useProAndUsage();
-  const { canUse, isPro, remaining, isLogged } = ctx;
+  const { allowOrRedirect, incrementCount, remaining, isPro, loading } = useUsageLimit();
 
-  const isValid =
-    !!tipoRescisao && !!salarioBase && salarioBase > 0 && !!dataAdmissao && !!dataDesligamento;
+  // Validação com mensagens de erro
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!tipoRescisao) {
+      newErrors.tipoRescisao = "Selecione o tipo de rescisão";
+    }
+    
+    if (!salarioBase || salarioBase <= 0) {
+      newErrors.salarioBase = "Informe um salário válido";
+    } else if (salarioBase < SALARIO_MINIMO_2025) {
+      newErrors.salarioBase = `Salário não pode ser inferior ao mínimo (${formatBRL(SALARIO_MINIMO_2025)})`;
+    }
+    
+    if (!dataAdmissao) {
+      newErrors.dataAdmissao = "Informe a data de admissão";
+    }
+    
+    if (!dataDesligamento) {
+      newErrors.dataDesligamento = "Informe a data de desligamento";
+    }
+    
+    if (dataAdmissao && dataDesligamento) {
+      const adm = new Date(dataAdmissao);
+      const desl = new Date(dataDesligamento);
+      
+      if (desl <= adm) {
+        newErrors.dataDesligamento = "Data de desligamento deve ser posterior à admissão";
+      }
+      
+      if (desl > new Date()) {
+        newErrors.dataDesligamento = "Data de desligamento não pode ser futura";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // dias de aviso sugerido
   let diasAvisoAuto = 30;
@@ -219,16 +255,10 @@ const RescisaoCalculator = () => {
     tipoRescisao === "pedido_demissao" && modoAvisoPrevio === "trabalhado";
 
   const handleCalculate = async () => {
-    if (!isValid) return;
+    if (!validateForm() || loading) return;
 
-    const ok = await ensureCanCalculate({
-      ...ctx,
-      navigate,
-      currentPath: location.pathname,
-      focusUsage: () =>
-        document.getElementById("usage-banner")?.scrollIntoView({ behavior: "smooth" }),
-    });
-    if (!ok) return;
+    const canCalculate = await allowOrRedirect();
+    if (!canCalculate) return;
 
     try {
       const salario = salarioBase ?? 0;
@@ -252,9 +282,11 @@ const RescisaoCalculator = () => {
         outrosDescontos: Math.max(0, outrosDescontos ?? 0),
       });
 
-      await incrementCalcIfNeeded(isPro);
+      await incrementCount();
       setResultado(res);
-    } catch {
+      setErrors({}); // Limpa erros após cálculo bem-sucedido
+    } catch (error) {
+      console.error("Erro no cálculo:", error);
       setResultado(null);
     }
   };
@@ -272,14 +304,15 @@ const RescisaoCalculator = () => {
     setOutrosDescontos(0);
     setMostrarDetalhe(false);
     setResultado(null);
+    setErrors({});
   };
 
   const tiposRescisao = [
-    { value: "sem_justa_causa", label: "Sem justa causa (empregador)" },
-    { value: "pedido_demissao", label: "Pedido de demissão" },
-    { value: "acordo", label: "Acordo entre as partes (art. 484-A)" },
-    { value: "termino_contrato", label: "Término de contrato determinado" },
-    { value: "justa_causa", label: "Justa causa (empregado)" },
+    { value: "sem_justa_causa", label: "Demissão sem justa causa", desc: "Iniciativa do empregador" },
+    { value: "pedido_demissao", label: "Pedido de demissão", desc: "Iniciativa do empregado" },
+    { value: "acordo", label: "Acordo mútuo (CLT 484-A)", desc: "Acordo entre empregador e empregado" },
+    { value: "termino_contrato", label: "Término de contrato determinado", desc: "Fim do prazo contratual" },
+    { value: "justa_causa", label: "Demissão por justa causa", desc: "Falta grave do empregado" },
   ];
 
   return (
@@ -292,22 +325,38 @@ const RescisaoCalculator = () => {
           </CardTitle>
           <CardDescription>Preencha as informações do contrato e tipo de rescisão</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="space-y-6">
+          {/* Validação geral */}
+          {Object.keys(errors).length > 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Por favor, corrija os erros nos campos destacados abaixo.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Tipo de rescisão *</Label>
               <Select value={tipoRescisao} onValueChange={setTipoRescisao}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
+                <SelectTrigger className={errors.tipoRescisao ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Selecione o tipo de rescisão" />
                 </SelectTrigger>
                 <SelectContent>
                   {tiposRescisao.map((tipo) => (
                     <SelectItem key={tipo.value} value={tipo.value}>
-                      {tipo.label}
+                      <div>
+                        <div className="font-medium">{tipo.label}</div>
+                        <div className="text-sm text-muted-foreground">{tipo.desc}</div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {errors.tipoRescisao && (
+                <p className="text-sm text-destructive">{errors.tipoRescisao}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -318,69 +367,112 @@ const RescisaoCalculator = () => {
                 prefix="R$"
                 decimal
                 min={0}
-                placeholder="0,00"
+                placeholder="Ex: 1.518,00"
+                className={errors.salarioBase ? "border-destructive" : ""}
               />
+              {errors.salarioBase && (
+                <p className="text-sm text-destructive">{errors.salarioBase}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Salário mínimo 2025: {formatBRL(SALARIO_MINIMO_2025)}
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label>Data de admissão *</Label>
               <input
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={`w-full h-11 rounded-md border bg-background px-3 py-2 text-sm ${
+                  errors.dataAdmissao ? "border-destructive" : "border-input"
+                }`}
                 type="date"
                 value={dataAdmissao}
                 onChange={(e) => setDataAdmissao(e.target.value)}
               />
+              {errors.dataAdmissao && (
+                <p className="text-sm text-destructive">{errors.dataAdmissao}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label>Data de desligamento *</Label>
               <input
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={`w-full h-11 rounded-md border bg-background px-3 py-2 text-sm ${
+                  errors.dataDesligamento ? "border-destructive" : "border-input"
+                }`}
                 type="date"
                 value={dataDesligamento}
                 onChange={(e) => setDataDesligamento(e.target.value)}
               />
+              {errors.dataDesligamento && (
+                <p className="text-sm text-destructive">{errors.dataDesligamento}</p>
+              )}
             </div>
           </div>
 
           <Separator />
 
           <div className="space-y-4">
-            <h3 className="font-medium">Aviso Prévio</h3>
+            <div>
+              <h3 className="font-semibold text-lg">Aviso Prévio</h3>
+              <p className="text-sm text-muted-foreground">
+                Configurações específicas do aviso prévio conforme CLT 2025
+              </p>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Modo</Label>
+                <Label>Modalidade</Label>
                 <Select value={modoAvisoPrevio} onValueChange={setModoAvisoPrevio}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="trabalhado">Trabalhado</SelectItem>
-                    <SelectItem value="indenizado">Indenizado</SelectItem>
-                    <SelectItem value="nao">Não se aplica</SelectItem>
+                    <SelectItem value="trabalhado">
+                      <div>
+                        <div>Trabalhado</div>
+                        <div className="text-xs text-muted-foreground">Empregado cumpre aviso</div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="indenizado">
+                      <div>
+                        <div>Indenizado</div>
+                        <div className="text-xs text-muted-foreground">Empresa paga o aviso</div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="nao">
+                      <div>
+                        <div>Não se aplica</div>
+                        <div className="text-xs text-muted-foreground">Sem direito ao aviso</div>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Dias de aviso (auto: {diasAvisoAuto})</Label>
+                <Label>Dias de aviso</Label>
                 <NumberInput
                   value={overrideDiasAviso}
                   onChange={setOverrideDiasAviso}
                   min={0}
                   max={90}
-                  placeholder={String(diasAvisoAuto)}
+                  placeholder={`Padrão: ${diasAvisoAuto} dias`}
                 />
+                <p className="text-xs text-muted-foreground">
+                  CLT: 30 dias + 3 por ano (máx. 90)
+                </p>
               </div>
 
               {showDescontarAviso && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 pt-6">
                   <Checkbox
                     id="descontar"
                     checked={descontarAviso}
                     onCheckedChange={(checked) => setDescontarAviso(checked === true)}
                   />
-                  <Label htmlFor="descontar">Descontar aviso não cumprido</Label>
+                  <Label htmlFor="descontar" className="text-sm">
+                    Descontar aviso não cumprido
+                  </Label>
                 </div>
               )}
             </div>
@@ -388,43 +480,58 @@ const RescisaoCalculator = () => {
 
           <Separator />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Férias vencidas (dias)</Label>
-              <NumberInput
-                value={feriasVencidasDias}
-                onChange={setFeriasVencidasDias}
-                min={0}
-                max={30}
-                placeholder="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Saldo FGTS informado (R$) — opcional</Label>
-              <NumberInput
-                value={saldoFgts}
-                onChange={setSaldoFgts}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Outros descontos (R$)</Label>
-              <NumberInput
-                value={outrosDescontos}
-                onChange={setOutrosDescontos}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
-              <p className="text-xs text-muted-foreground">
-                Adiantamentos, faltas ou descontos diversos aplicáveis na rescisão.
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold text-lg">Informações Complementares</h3>
+              <p className="text-sm text-muted-foreground">
+                Dados adicionais para cálculo preciso da rescisão
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Férias vencidas (dias)</Label>
+                <NumberInput
+                  value={feriasVencidasDias}
+                  onChange={setFeriasVencidasDias}
+                  min={0}
+                  max={30}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Férias já adquiridas não gozadas
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Saldo FGTS (R$)</Label>
+                <NumberInput
+                  value={saldoFgts}
+                  onChange={setSaldoFgts}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="0,00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Para cálculo da multa FGTS (40% ou 20%)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Outros descontos (R$)</Label>
+                <NumberInput
+                  value={outrosDescontos}
+                  onChange={setOutrosDescontos}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="0,00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Adiantamentos, faltas, etc.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -435,194 +542,255 @@ const RescisaoCalculator = () => {
             <Label htmlFor="detalhe">Mostrar detalhe de contas</Label>
           </div>
 
-          {/* Banner global/CTA PRO (padrão do projeto) */}
-          <div id="usage-banner" className="mt-2">
-            {/* Use o mesmo componente de banner da página se quiser exibir aqui também */}
-          </div>
-
           {/* Ações */}
-          <div className="flex gap-2 pt-2">
-            <Button onClick={handleCalculate} disabled={!isValid || !canUse} className="flex-1">
-              <Calculator className="w-4 h-4 mr-2" />
-              {!canUse ? "Limite atingido" : "Calcular Rescisão"}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <Button 
+              onClick={handleCalculate} 
+              disabled={loading || (remaining !== null && remaining <= 0)} 
+              className="flex-1 h-12 text-base font-medium"
+              size="lg"
+            >
+              <Calculator className="w-5 h-5 mr-2" />
+              {loading ? "Calculando..." : remaining !== null && remaining <= 0 ? "Limite atingido" : "Calcular Rescisão"}
             </Button>
-            <Button variant="outline" onClick={limpar}>
-              <RotateCcw className="w-4 h-4" />
+            <Button variant="outline" onClick={limpar} className="h-12" size="lg">
+              <RotateCcw className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Limpar</span>
             </Button>
           </div>
+          
+          {remaining !== null && (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                {remaining > 0 ? `${remaining} cálculo${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}` : 'Limite de cálculos atingido'}
+                {!isPro && (
+                  <span className="text-primary font-medium"> • Assine PRO para cálculos ilimitados</span>
+                )}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {resultado && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Saldo de Salário</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
-                  {formatBRL(resultado.saldoSalario)}
-                </p>
-                {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {resultado.detalhes.diasTrabalhadosMes} dias trabalhados no mês
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-center mb-4">Resultado da Rescisão</h2>
+              <p className="text-center text-muted-foreground text-sm">
+                Valores calculados conforme CLT 2025 • Base: {formatBRL(salarioBase ?? 0)}
+              </p>
+            </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">13º Proporcional</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
-                  {formatBRL(resultado.decimoTerceiro)}
-                </p>
-                {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {resultado.detalhes.avos13}/12 avos
+            {/* Cards dos componentes individuais */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card className="border-l-4 border-l-blue-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-blue-700">Saldo de Salário</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatBRL(resultado.saldoSalario)}
                   </p>
-                )}
-              </CardContent>
-            </Card>
+                  {mostrarDetalhe && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {resultado.detalhes.diasTrabalhadosMes} dias trabalhados no mês
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Férias Vencidas + 1/3</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
-                  {formatBRL(resultado.feriasVencidasComTerco)}
-                </p>
-                {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {resultado.detalhes.feriasVencidasDiasNum} dias informados
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-green-700">13º Proporcional</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatBRL(resultado.decimoTerceiro)}
                   </p>
-                )}
-              </CardContent>
-            </Card>
+                  {mostrarDetalhe && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {resultado.detalhes.avos13}/12 avos proporcionais
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Férias Proporcionais + 1/3</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
-                  {formatBRL(resultado.feriasProporcionaisComTerco)}
-                </p>
-                {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {resultado.detalhes.mesesAq} meses = {resultado.detalhes.diasFeriasProp} dias
+              <Card className="border-l-4 border-l-purple-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-purple-700">Férias Vencidas + 1/3</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {formatBRL(resultado.feriasVencidasComTerco)}
                   </p>
-                )}
-              </CardContent>
-            </Card>
+                  {mostrarDetalhe && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {resultado.detalhes.feriasVencidasDiasNum} dias informados
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">
-                  Aviso Prévio {resultado.avisoValor < 0 ? "(Desconto)" : "(Indenizado)"}
+              <Card className="border-l-4 border-l-indigo-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-indigo-700">Férias Proporcionais + 1/3</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {formatBRL(resultado.feriasProporcionaisComTerco)}
+                  </p>
+                  {mostrarDetalhe && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {resultado.detalhes.mesesAq} meses = {resultado.detalhes.diasFeriasProp} dias
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-orange-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-orange-700">
+                    Aviso Prévio {resultado.avisoValor < 0 ? "(Desconto)" : "(Indenizado)"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p
+                    className={`text-2xl font-bold ${
+                      resultado.avisoValor >= 0 ? "text-orange-600" : "text-red-600"
+                    }`}
+                  >
+                    {formatBRL(resultado.avisoValor)}
+                  </p>
+                  {mostrarDetalhe && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {resultado.detalhes.diasAviso} dias de aviso
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-amber-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold text-amber-700">Multa FGTS</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-amber-600">
+                    {formatBRL(resultado.multaFgts)}
+                  </p>
+                  {mostrarDetalhe && saldoFgts && saldoFgts > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {tipoRescisao === "sem_justa_causa" ? "40%" : tipoRescisao === "acordo" ? "20%" : "0%"} sobre {formatBRL(saldoFgts)}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Total destacado */}
+            <Card className="border-2 border-primary bg-gradient-to-r from-primary/5 to-primary/10">
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center gap-3 text-2xl">
+                  <DollarSign className="w-7 h-7 text-primary" />
+                  Total Estimado {resultado.totalEstimado >= 0 ? "a Receber" : "a Pagar"}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-center space-y-3">
                 <p
-                  className={`text-2xl font-bold ${
-                    resultado.avisoValor >= 0 ? "text-primary" : "text-destructive"
-                  }`}
-                >
-                  {formatBRL(resultado.avisoValor)}
-                </p>
-                {mostrarDetalhe && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {resultado.detalhes.diasAviso} dias
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Multa FGTS</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-primary">
-                  {formatBRL(resultado.multaFgts)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-primary" />
-                Total Estimado {resultado.totalEstimado >= 0 ? "a Receber" : "a Pagar"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p
-                  className={`text-3xl font-bold ${
-                    resultado.totalEstimado >= 0 ? "text-primary" : "text-destructive"
+                  className={`text-4xl font-bold ${
+                    resultado.totalEstimado >= 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
                   {formatBRL(resultado.totalEstimado)}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Valor bruto consolidado − “Outros descontos”
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Saque FGTS</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg font-medium">{resultado.saqueFgts}</p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Valor bruto: {formatBRL(resultado.totalBruto)}</p>
+                  {outrosDescontos && outrosDescontos > 0 && (
+                    <p>Outros descontos: -{formatBRL(outrosDescontos)}</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
+            {/* Informações adicionais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Info className="w-5 h-5 text-blue-600" />
+                    Saque FGTS
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold text-blue-700">{resultado.saqueFgts}</p>
+                    {tipoRescisao === "acordo" && (
+                      <p className="text-sm text-muted-foreground">
+                        No acordo mútuo você pode sacar até 80% do saldo FGTS
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-50 border-green-200">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Info className="w-5 h-5 text-green-600" />
+                    Seguro-Desemprego
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold text-green-700">{resultado.seguroDesemprego}</p>
+                    {resultado.seguroDesemprego.includes("Elegível") && (
+                      <p className="text-sm text-muted-foreground">
+                        Solicite entre 7 e 120 dias após a demissão
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Explicação dos cálculos */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Seguro-Desemprego</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="w-5 h-5" />
+                  Como Calculamos (CLT 2025)
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-lg font-medium">{resultado.seguroDesemprego}</p>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-semibold text-blue-700 mb-2">Parcelas Principais:</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• <strong>Saldo Salário:</strong> dias trabalhados no mês ÷ 30 × salário</li>
+                      <li>• <strong>13º Proporcional:</strong> meses com 15+ dias ÷ 12 × salário</li>
+                      <li>• <strong>Férias:</strong> vencidas + proporcionais (2,5 dias/mês) + 1/3</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-orange-700 mb-2">Aviso Prévio & FGTS:</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• <strong>Aviso:</strong> 30 dias + 3 dias/ano (máx. 90 dias)</li>
+                      <li>• <strong>Acordo 484-A:</strong> 50% do aviso indenizado</li>
+                      <li>• <strong>Multa FGTS:</strong> 40% (demissão) ou 20% (acordo)</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Importante:</strong> Valores são estimativas brutas. Descontos de INSS e IRRF podem incidir 
+                    sobre algumas parcelas. Para cálculos específicos, consulte um profissional especializado.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Info className="w-5 h-5" />
-                Como Calculamos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p>
-                <strong>1. Saldo de Salário:</strong> dias trabalhados no mês ÷ 30 × salário.
-              </p>
-              <p>
-                <strong>2. 13º Proporcional:</strong> avos com 15+ dias no ano ÷ 12 × salário.
-              </p>
-              <p>
-                <strong>3. Férias:</strong> vencidas (dias informados) + proporcionais (meses×2,5) com 1/3.
-              </p>
-              <p>
-                <strong>4. Aviso Prévio:</strong> 30 dias + 3 dias por ano após o 1º (máx. 90). No 484-A metade do aviso indenizado.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Os valores exibidos são estimativas brutas. Descontos legais (INSS/IRRF) variam conforme
-                o caso. Informe “Outros descontos” para aproximar o líquido ou ative o modo avançado futuramente.
-              </p>
-            </CardContent>
-          </Card>
         </>
       )}
     </div>
