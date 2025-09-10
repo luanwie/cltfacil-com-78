@@ -12,6 +12,7 @@ import Notice from "@/components/ui/notice";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 /** Tipos de contrato suportados */
 type Contrato = "clt" | "aprendiz" | "domestico";
@@ -586,7 +587,25 @@ export default function FGTSCalculator() {
 
       {/* Botão Exportar PDF */}
       {resultado && (
-        <div className="flex justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
+          <SaveCalcButton
+            calculator="fgts"
+            calculationType="fgts"
+            input={{
+              salario,
+              meses,
+              saldoInicial,
+              contrato,
+              multa,
+              considerarRendimento,
+              trAA,
+              incluir13,
+              meses13,
+              simularSaque
+            }}
+            result={resultado}
+            disabled={!resultado}
+          />
           <PDFExportButton
             calculatorName="Calculadora de FGTS"
             results={[

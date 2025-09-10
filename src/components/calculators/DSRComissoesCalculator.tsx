@@ -11,6 +11,7 @@ import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type ModoDias = "manual" | "automatico";
 

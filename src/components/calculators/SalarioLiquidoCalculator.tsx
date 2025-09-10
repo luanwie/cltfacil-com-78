@@ -9,6 +9,7 @@ import { calcularINSSSync, calcularIRRFSync } from "@/lib/tabelas";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type Resultado = {
   // bases

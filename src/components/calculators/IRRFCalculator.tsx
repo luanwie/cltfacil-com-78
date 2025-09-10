@@ -11,6 +11,7 @@ import { calcularIRRFSync, calcularINSSSync } from "@/lib/tabelas";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { useToast } from "@/hooks/use-toast";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 const DEDUCAO_SIMPLIFICADA_MENSAL = 528.0; // regra vigente (abatimento fixo mensal)
 

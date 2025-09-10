@@ -10,6 +10,7 @@ import { Calculator, DollarSign, Clock, Calendar as CalendarIcon, Settings2, Ale
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type ModoDias = "manual" | "automatico";
 
@@ -586,7 +587,14 @@ const DSRCalculator = () => {
 
       {/* Botão Exportar PDF */}
       {result && (
-        <div className="flex justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
+          <SaveCalcButton
+            calculator="dsr"
+            calculationType="dsr"
+            input={data}
+            result={result}
+            disabled={!result}
+          />
           <PDFExportButton
             calculatorName="Calculadora de DSR (Horas Extras)"
             results={[

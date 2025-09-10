@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { formatBRL } from "@/lib/currency";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type ModalidadePrazo = "mensal_30d" | "acordo_individual_6m" | "acordo_coletivo_12m" | "personalizado";
 
@@ -447,7 +448,21 @@ const BancoDeHorasCalculator = () => {
 
       {/* Botão Exportar PDF */}
       {resultado && (
-        <div className="flex justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
+          <SaveCalcButton
+            calculator="banco_horas"
+            calculationType="banco_horas"
+            input={{
+              salarioMensal,
+              jornadaMensal,
+              horasTrabalhadas,
+              horasCompensadas,
+              dataFechamento,
+              modalidadePrazo
+            }}
+            result={resultado}
+            disabled={!resultado}
+          />
           <PDFExportButton
             calculatorName="Calculadora de Banco de Horas"
             results={[

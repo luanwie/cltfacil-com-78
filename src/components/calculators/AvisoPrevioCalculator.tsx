@@ -9,6 +9,7 @@ import { formatBRL } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
+import SaveCalcButton from "@/components/SaveCalcButton";
 
 type Modalidade = "dispensa" | "pedido" | "acordo" | "justa_causa";
 type ExecucaoAviso = "Trabalhado" | "Indenizado";
@@ -412,7 +413,21 @@ const AvisoPrevioCalculator = () => {
 
       {/* Botão Exportar PDF */}
       {resultado && (
-        <div className="flex justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
+          <SaveCalcButton
+            calculator="aviso_previo"
+            calculationType="aviso_previo"
+            input={{
+              modalidade,
+              salario,
+              dataAdmissao,
+              dataComunicacao,
+              execucao,
+              reducaoTrabalhado
+            }}
+            result={resultado}
+            disabled={!resultado}
+          />
           <PDFExportButton
             calculatorName="Calculadora de Aviso Prévio"
             results={[
