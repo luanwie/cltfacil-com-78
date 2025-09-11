@@ -30,6 +30,7 @@ import FeriasAbono from "./pages/calculadoras/FeriasAbono";
 import FeriasDobro from "./pages/calculadoras/FeriasDobro";
 import AvisoPrevio from "./pages/calculadoras/AvisoPrevio";
 import ValeTransporte from "./pages/calculadoras/ValeTransporte";
+import CustoFuncionario from "./pages/calculadoras/CustoFuncionario";
 import DebugCalculadoras from "./pages/DebugCalculadoras";
 import Widget from "./pages/Widget";
 import AssinarPro from "./pages/AssinarPro";
@@ -95,6 +96,7 @@ const App = () => (
                 <Route path="/clt/ferias-dobro" element={<ProtectedRoute><FeriasDobro /></ProtectedRoute>} />
                 <Route path="/clt/aviso-previo" element={<ProtectedRoute><AvisoPrevio /></ProtectedRoute>} />
                 <Route path="/clt/vale-transporte" element={<ProtectedRoute><ValeTransporte /></ProtectedRoute>} />
+                <Route path="/clt/custo-funcionario" element={<ProtectedRoute><CustoFuncionario /></ProtectedRoute>} />
 
                 {/* SEO-friendly aliases */}
                 <Route path="/calculadora-rescisao" element={<ProtectedRoute><Rescisao /></ProtectedRoute>} />

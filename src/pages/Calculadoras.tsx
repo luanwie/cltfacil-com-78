@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
 import EducationalSection from "@/components/ui/educational-section";
-import EmployeeCostCalculator from "@/components/ui/employee-cost-calculator";
 
 
 
@@ -181,7 +180,60 @@ const Calculadoras = () => {
       {/* Employee Cost Calculator - Highlighted Tool */}
       <section className="pb-12">
         <Container>
-          <EmployeeCostCalculator />
+          <Card className="relative overflow-hidden">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10" />
+            
+            <div className="relative">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center">
+                  <DollarSign className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">💼 Ferramenta Exclusiva: Custo Real do Funcionário</CardTitle>
+                <CardDescription className="text-lg">
+                  Calcule o custo total de contratar um funcionário CLT com todos os encargos e benefícios
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="text-center">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-primary" />
+                      </div>
+                      <span>Salário + Encargos</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-primary" />
+                      </div>
+                      <span>13º + Férias</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                      </div>
+                      <span>FGTS + INSS</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-primary" />
+                      </div>
+                      <span>Benefícios</span>
+                    </div>
+                  </div>
+                  
+                  <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Link to="/clt/custo-funcionario">
+                      <Calculator className="w-5 h-5" />
+                      Calcular Custo Total Agora
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </div>
+          </Card>
         </Container>
       </section>
 
