@@ -42,7 +42,7 @@ export const UsageTopBanner = () => {
   // Show signup banner for non-logged users after they've used calculations
   if (!isLogged && remaining < 1) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-[hsl(var(--info-banner))] text-[hsl(var(--info-banner-foreground))] px-4 py-3">
+      <div className="sticky top-0 z-40 bg-[hsl(var(--info-banner))] text-[hsl(var(--info-banner-foreground))] px-4 py-3 border-b border-[hsl(var(--info-banner-foreground)/0.2)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <span className="text-xl">💼</span>
@@ -75,7 +75,7 @@ export const UsageTopBanner = () => {
   // Show PRO upgrade banner for logged users who reached limit
   if (isLogged && remaining === 0) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-[hsl(var(--pro-banner))] text-[hsl(var(--pro-banner-foreground))] px-4 py-3">
+      <div className="sticky top-0 z-40 bg-[hsl(var(--pro-banner))] text-[hsl(var(--pro-banner-foreground))] px-4 py-3 border-b border-white/20">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <span className="text-xl">🚀</span>
