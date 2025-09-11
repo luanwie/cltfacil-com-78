@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
+import EducationalSection from "@/components/ui/educational-section";
 
 
 
@@ -226,6 +227,8 @@ const Calculadoras = () => {
         </Container>
       </section>
 
+      {/* Educational Section */}
+      <EducationalSection />
 
     </>
   );
