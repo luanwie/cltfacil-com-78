@@ -49,6 +49,14 @@ All colors MUST be HSL.
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
+    /* Info banner - light blue for signup prompts */
+    --info-banner: 217 92% 95%;
+    --info-banner-foreground: 217 71% 25%;
+
+    /* Pro banner - orange for upgrade prompts */
+    --pro-banner: 25 95% 53%;
+    --pro-banner-foreground: 0 0% 100%;
+
     /* Borders and inputs */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
@@ -114,6 +122,14 @@ All colors MUST be HSL.
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+
+    /* Info banner - light blue for signup prompts */
+    --info-banner: 217 50% 20%;  
+    --info-banner-foreground: 217 92% 90%;
+
+    /* Pro banner - orange for upgrade prompts */
+    --pro-banner: 25 95% 53%;
+    --pro-banner-foreground: 0 0% 100%;
 
     --border: 220 27% 18%;
     --input: 220 27% 18%;
