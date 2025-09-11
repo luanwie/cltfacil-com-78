@@ -11,6 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
 import { useCalculationReload } from "@/hooks/useCalculationReload";
+import { 
+  MobileCalcLayout, 
+  MobileInputGroup, 
+  MobileResultCard, 
+  MobileResultRow, 
+  MobileButtonGroup 
+} from "@/components/ui/mobile-calc-layout";
 
 type Resultado = {
   // bases
@@ -162,28 +169,28 @@ const SalarioLiquidoCalculator = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="salario-bruto">Salário bruto mensal (R$)</Label>
-              <NumberInput
-                id="salario-bruto"
-                value={salarioBruto}
-                onChange={setSalarioBruto}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
+                <NumberInput
+                  id="salario-bruto"
+                  value={salarioBruto}
+                  onChange={setSalarioBruto}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Ex: 3500,00"
+                />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="outros-proventos">Outros proventos (variáveis) (R$)</Label>
-              <NumberInput
-                id="outros-proventos"
-                value={outrosProventos}
-                onChange={setOutrosProventos}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
+                <NumberInput
+                  id="outros-proventos"
+                  value={outrosProventos}
+                  onChange={setOutrosProventos}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Ex: 500,00"
+                />
               <p className="text-xs text-muted-foreground">
                 Comissões, adicionais, HE etc. (que integrem a base)
               </p>
@@ -194,27 +201,27 @@ const SalarioLiquidoCalculator = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="dependentes">Dependentes para IR</Label>
-              <NumberInput
-                id="dependentes"
-                value={dependentes}
-                onChange={setDependentes}
-                min={0}
-                max={20}
-                placeholder="0"
-              />
+                <NumberInput
+                  id="dependentes"
+                  value={dependentes}
+                  onChange={setDependentes}
+                  min={0}
+                  max={20}
+                  placeholder="Ex: 2"
+                />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="pensao">Pensão alimentícia (R$)</Label>
-              <NumberInput
-                id="pensao"
-                value={pensaoAlimenticia}
-                onChange={setPensaoAlimenticia}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
+                <NumberInput
+                  id="pensao"
+                  value={pensaoAlimenticia}
+                  onChange={setPensaoAlimenticia}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Ex: 800,00"
+                />
             </div>
           </div>
 
@@ -222,29 +229,29 @@ const SalarioLiquidoCalculator = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="vale-transporte">Custo vale-transporte (R$)</Label>
-              <NumberInput
-                id="vale-transporte"
-                value={custoValeTransporte}
-                onChange={setCustoValeTransporte}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
+                <NumberInput
+                  id="vale-transporte"
+                  value={custoValeTransporte}
+                  onChange={setCustoValeTransporte}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Ex: 180,00"
+                />
               <p className="text-xs text-muted-foreground">Desconto limitado a 6% do bruto total</p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="vrva">Coparticipação VA/VR (R$)</Label>
-              <NumberInput
-                id="vrva"
-                value={coparticipacaoVRVA}
-                onChange={setCoparticipacaoVRVA}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
+                <NumberInput
+                  id="vrva"
+                  value={coparticipacaoVRVA}
+                  onChange={setCoparticipacaoVRVA}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Ex: 15,00"
+                />
             </div>
 
             <div className="space-y-2">
@@ -262,27 +269,37 @@ const SalarioLiquidoCalculator = () => {
 
             <div className="space-y-2">
               <Label htmlFor="outros-descontos">Outros descontos (R$)</Label>
-              <NumberInput
-                id="outros-descontos"
-                value={outrosDescontos}
-                onChange={setOutrosDescontos}
-                prefix="R$"
-                decimal
-                min={0}
-                placeholder="0,00"
-              />
+                <NumberInput
+                  id="outros-descontos"
+                  value={outrosDescontos}
+                  onChange={setOutrosDescontos}
+                  prefix="R$"
+                  decimal
+                  min={0}
+                  placeholder="Ex: 50,00"
+                />
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={calcular} disabled={disabled} className="flex-1">
+          <MobileButtonGroup>
+            <Button 
+              onClick={calcular} 
+              disabled={disabled} 
+              size="mobile-touch"
+              className="flex-1"
+            >
               <Calculator className="w-4 h-4 mr-2" />
               {overLimit ? "Limite atingido" : "Calcular Salário Líquido"}
             </Button>
-            <Button variant="outline" onClick={limpar}>
+            <Button 
+              variant="outline" 
+              onClick={limpar}
+              size="mobile-touch"
+              className="flex-none w-12 sm:w-auto"
+            >
               <RotateCcw className="w-4 h-4" />
             </Button>
-          </div>
+          </MobileButtonGroup>
         </CardContent>
       </Card>
 

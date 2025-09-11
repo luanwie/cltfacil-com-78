@@ -11,6 +11,13 @@ import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { PDFExportButton } from "@/components/ui/pdf-export-button";
 import SaveCalcButton from "@/components/SaveCalcButton";
 import { useCalculationReload } from "@/hooks/useCalculationReload";
+import { 
+  MobileCalcLayout, 
+  MobileInputGroup, 
+  MobileResultCard, 
+  MobileResultRow, 
+  MobileButtonGroup 
+} from "@/components/ui/mobile-calc-layout";
 
 type Resultado = {
   valorHora: number;
@@ -198,7 +205,7 @@ export default function HorasExtrasCalculator({
                 prefix="R$"
                 decimal
                 min={0}
-                placeholder="0,00"
+                placeholder="Ex: 2500,00"
               />
             </div>
 
@@ -209,7 +216,7 @@ export default function HorasExtrasCalculator({
                 value={jornadaMensal}
                 onChange={setJornadaMensal}
                 min={1}
-                placeholder="220"
+                placeholder="Ex: 220"
               />
               <p className="text-xs text-muted-foreground">Padrão: 220h (44h/semana)</p>
             </div>
@@ -221,7 +228,7 @@ export default function HorasExtrasCalculator({
                 value={horas50}
                 onChange={setHoras50}
                 min={0}
-                placeholder="0"
+                placeholder="Ex: 15"
               />
             </div>
 
@@ -245,7 +252,7 @@ export default function HorasExtrasCalculator({
                 value={horas100}
                 onChange={setHoras100}
                 min={0}
-                placeholder="0"
+                placeholder="Ex: 8"
               />
               <p className="text-xs text-muted-foreground">Domingos/feriados, salvo regra coletiva</p>
             </div>
@@ -272,7 +279,7 @@ export default function HorasExtrasCalculator({
                 value={diasTrabalhados}
                 onChange={setDiasTrabalhados}
                 min={1}
-                placeholder="22"
+                placeholder="Ex: 22"
               />
             </div>
             <div className="space-y-2">
@@ -282,21 +289,31 @@ export default function HorasExtrasCalculator({
                 value={diasDescanso}
                 onChange={setDiasDescanso}
                 min={0}
-                placeholder="8"
+                placeholder="Ex: 8"
               />
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={handleCalcular} disabled={!canCalc || overLimit} className="flex-1">
+          <MobileButtonGroup>
+            <Button 
+              onClick={handleCalcular} 
+              disabled={!canCalc || overLimit}
+              size="mobile-touch"
+              className="flex-1"
+            >
               <Calculator className="w-4 h-4 mr-2" />
               {overLimit ? "Limite atingido" : "Calcular"}
             </Button>
-            <Button variant="outline" onClick={handleClear}>
+            <Button 
+              variant="outline" 
+              onClick={handleClear}
+              size="mobile-touch"
+              className="flex-none w-auto"
+            >
               <RotateCcw className="w-4 h-4" />
-              Limpar
+              <span className="hidden sm:inline ml-2">Limpar</span>
             </Button>
-          </div>
+          </MobileButtonGroup>
         </CardContent>
       </Card>
 

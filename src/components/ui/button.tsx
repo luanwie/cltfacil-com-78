@@ -25,7 +25,9 @@ const buttonVariants = cva(
         default: "h-11 px-6 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-12 rounded-md px-8 text-base",
+        xl: "h-14 rounded-md px-6 text-lg min-h-[48px] touch-manipulation", // Mobile-optimized
         icon: "h-10 w-10",
+        "mobile-touch": "min-h-[48px] h-12 px-6 py-3 touch-manipulation", // Specific mobile touch target
       },
     },
     defaultVariants: {

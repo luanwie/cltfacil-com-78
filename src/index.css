@@ -159,7 +159,96 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Mobile-optimized touch targets and spacing */
+  @media (max-width: 768px) {
+    .mobile-spacing > * + * {
+      margin-top: 1rem;
+    }
+    
+    .mobile-card-spacing {
+      padding: 1.5rem 1rem;
+    }
+    
+    .mobile-result-spacing > * + * {
+      margin-top: 1.5rem;
+    }
+
+    /* Calculator-specific mobile optimizations */
+    .calculator-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .calculator-input-group .grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .calculator-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .calculator-buttons .flex {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    /* Better focus states for mobile */
+    input:focus,
+    button:focus {
+      outline: 2px solid hsl(var(--primary));
+      outline-offset: 2px;
+    }
+
+    /* Improved readability for results */
+    .result-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    /* Safe area for mobile devices */
+    .mobile-safe-padding {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+
+  /* iPhone SE and similar small screens */
+  @media (max-width: 375px) {
+    .mobile-card-spacing {
+      padding: 1rem 0.75rem;
+    }
+
+    .calculator-input-group {
+      gap: 0.75rem;
+    }
+
+    .result-value {
+      font-size: 1rem;
+    }
+  }
+
+  /* Landscape mobile optimization */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .mobile-card-spacing {
+      padding: 1rem;
+    }
+    
+    .mobile-spacing > * + * {
+      margin-top: 0.75rem;
+    }
   }
 }
