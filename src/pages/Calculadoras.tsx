@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Container from "@/components/ui/container";
 import PageHeader from "@/components/ui/page-header";
 import EducationalSection from "@/components/ui/educational-section";
+import EmployeeCostCalculator from "@/components/ui/employee-cost-calculator";
 
 
 
@@ -177,6 +178,12 @@ const Calculadoras = () => {
         </Container>
       </section>
 
+      {/* Employee Cost Calculator - Highlighted Tool */}
+      <section className="pb-12">
+        <Container>
+          <EmployeeCostCalculator />
+        </Container>
+      </section>
 
       {/* Active Calculators */}
       <section className="pb-12">
