@@ -6,8 +6,8 @@ import { ChatInterface } from '@/components/IA/ChatInterface';
 import { useIAUsage } from '@/hooks/useIAUsage';
 import { useSEO } from '@/hooks/useSEO';
 import Layout from '@/components/layout/layout';
-import { Container } from '@/components/ui/container';
-import { PageHeader } from '@/components/ui/page-header';
+import Container from '@/components/ui/container';
+import PageHeader from '@/components/ui/page-header';
 import { Bot, Crown, LogIn, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 

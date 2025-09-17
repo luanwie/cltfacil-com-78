@@ -27,7 +27,7 @@ export const useIAUsage = () => {
         .from('profiles')
         .select('ia_usage_count, is_pro')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

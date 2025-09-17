@@ -33,6 +33,7 @@ import ValeTransporte from "./pages/calculadoras/ValeTransporte";
 import CustoFuncionario from "./pages/calculadoras/CustoFuncionario";
 import DebugCalculadoras from "./pages/DebugCalculadoras";
 import Widget from "./pages/Widget";
+import IAClt from "./pages/IAClt";
 import AssinarPro from "./pages/AssinarPro";
 import Sobre from "./pages/Sobre";
 import Contato from "./pages/Contato";
@@ -114,6 +115,7 @@ const App = () => (
                 <Route path="/calculos-salvos" element={<ProtectedRoute><CalculosSalvos /></ProtectedRoute>} />
 
                 <Route path="/debug-calculadoras" element={<DebugCalculadoras />} />
+                <Route path="/ia-clt" element={<IAClt />} />
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/contato" element={<Contato />} />
                 <Route path="/termos" element={<Termos />} />

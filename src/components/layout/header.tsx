@@ -15,6 +15,7 @@ const Header = () => {
   const { user, userProfile, signOut } = useAuth();
 
   const navItems = [
+    { label: "🤖 IA CLT", href: "/ia-clt" },
     { label: "Sobre", href: "/sobre" },
     { label: "Privacidade", href: "/privacidade" },
     { label: "Plano PRO", href: "/assinar-pro" },
