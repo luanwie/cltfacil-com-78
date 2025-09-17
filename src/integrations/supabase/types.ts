@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           calc_count: number | null
           created_at: string
+          ia_usage_count: number | null
           id: string
           is_pro: boolean | null
           logo_url: string | null
@@ -62,6 +63,7 @@ export type Database = {
         Insert: {
           calc_count?: number | null
           created_at?: string
+          ia_usage_count?: number | null
           id?: string
           is_pro?: boolean | null
           logo_url?: string | null
@@ -73,6 +75,7 @@ export type Database = {
         Update: {
           calc_count?: number | null
           created_at?: string
+          ia_usage_count?: number | null
           id?: string
           is_pro?: boolean | null
           logo_url?: string | null
@@ -89,6 +92,10 @@ export type Database = {
     }
     Functions: {
       increment_calc_count: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      increment_ia_usage: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
