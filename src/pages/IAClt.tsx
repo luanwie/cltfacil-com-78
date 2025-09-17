@@ -56,7 +56,7 @@ const IAClt = () => {
                     <h3 className="font-semibold">Status da Conta</h3>
                     {isPro ? (
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Crown className="w-4 h-4 text-yellow-500" />
+                        <Crown className="w-4 w-4 text-yellow-500" />
                         PRO - Perguntas ilimitadas
                       </p>
                     ) : isLogged ? (
