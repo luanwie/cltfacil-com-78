@@ -89,11 +89,6 @@ const SalarioLiquido = () => {
                 calculatorName="Salário Líquido"
                 calculatorContext="Esta calculadora permite calcular o salário líquido considerando descontos de INSS, IRRF, vale-transporte, plano de saúde e outros benefícios. Use a IA para esclarecer dúvidas sobre cálculos, legislação trabalhista ou situações específicas."
               />
-              
-              {/* FAQ Section */}
-              <div className="lg:sticky lg:top-8">
-                <FAQ items={faqItems} />
-              </div>
             </div>
           </div>
 
@@ -101,6 +96,9 @@ const SalarioLiquido = () => {
             Este cálculo é uma estimativa baseada na legislação atual. Convenções coletivas e acordos específicos podem alterar os valores.
             Consulte sempre o RH da sua empresa.
           </Notice>
+
+          {/* FAQ Section */}
+          <FAQ items={faqItems} />
         </div>
       </Container>
     </div>
