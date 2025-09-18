@@ -5,11 +5,11 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import PericulosidadeCalculator from "@/components/calculators/PericulosidadeCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
-
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const Periculosidade = () => {
   const navigate = useNavigate();
@@ -78,7 +78,18 @@ const Periculosidade = () => {
             />
           </div>
 
-          <PericulosidadeCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <PericulosidadeCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="Periculosidade"
+                calculatorContext="Esta calculadora permite calcular adicional de periculosidade (30%) com reflexos trabalhistas. Use a IA para esclarecer dúvidas sobre NR-16, atividades perigosas ou cálculos específicos."
+              />
+            </div>
+          </div>
 
           <Notice variant="warning">
             O direito ao adicional depende de **laudo técnico** e do enquadramento na **NR-16**.

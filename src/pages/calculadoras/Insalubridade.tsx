@@ -9,6 +9,7 @@ import { useProAndUsage } from '@/hooks/useProAndUsage';
 import UsageBanner from '@/components/UsageBanner';
 import { goPro } from '@/utils/proRedirect';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const Insalubridade = () => {
   const navigate = useNavigate();
@@ -82,7 +83,18 @@ const Insalubridade = () => {
             />
           </div>
 
-          <InsalubridadeCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <InsalubridadeCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="Insalubridade"
+                calculatorContext="Esta calculadora permite calcular adicional de insalubridade por graus (10%, 20%, 40%) conforme NR-15. Use a IA para esclarecer dúvidas sobre agentes nocivos, laudos técnicos ou cálculos específicos."
+              />
+            </div>
+          </div>
 
           <Notice variant="warning">
             O direito ao adicional depende de <strong>laudo técnico</strong>. Regras específicas podem

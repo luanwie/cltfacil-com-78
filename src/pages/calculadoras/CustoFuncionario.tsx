@@ -9,6 +9,7 @@ import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const CustoFuncionario = () => {
   const navigate = useNavigate();
@@ -83,7 +84,18 @@ const CustoFuncionario = () => {
             />
           </div>
 
-          <CustoFuncionarioCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <CustoFuncionarioCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="Custo Funcionário"
+                calculatorContext="Esta calculadora permite calcular o custo total do funcionário incluindo salário, encargos, benefícios e tributos. Use a IA para esclarecer dúvidas sobre custos trabalhistas ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Este cálculo é uma estimativa baseada na legislação trabalhista atual. Valores podem variar conforme 

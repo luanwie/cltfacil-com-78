@@ -6,6 +6,7 @@ import FGTSCalculator from "@/components/calculators/FGTSCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
 import ProUpsell from "@/components/ProUpsell";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const FGTS = () => {
   const faqItems = [
@@ -75,7 +76,18 @@ const FGTS = () => {
           <ProUpsell />
 
           {/* Sem gate aqui: a calculadora faz o controle de uso internamente */}
-          <FGTSCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <FGTSCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="FGTS"
+                calculatorContext="Esta calculadora permite calcular depósitos do FGTS, projeções com rendimento, multa rescisória e saque-aniversário. Use a IA para esclarecer dúvidas sobre FGTS, saques ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Os rendimentos exibidos são <strong>estimativas</strong> (3% a.a. + TR a.a. com

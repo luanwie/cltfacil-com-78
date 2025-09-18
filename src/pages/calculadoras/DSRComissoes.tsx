@@ -6,6 +6,7 @@ import DSRComissoesCalculator from "@/components/calculators/DSRComissoesCalcula
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
 import ProUpsell from "@/components/ProUpsell";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const DSRComissoes = () => {
   const faqItems = [
@@ -61,7 +62,18 @@ const DSRComissoes = () => {
 
           <ProUpsell />
 
-          <DSRComissoesCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <DSRComissoesCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="DSR Comissões"
+                calculatorContext="Esta calculadora permite calcular DSR sobre comissões e remuneração variável. Use a IA para esclarecer dúvidas sobre cálculos de DSR, vendas variáveis ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Consideramos práticas usuais de cálculo. Acordos/Convenções Coletivas podem prever regras próprias.

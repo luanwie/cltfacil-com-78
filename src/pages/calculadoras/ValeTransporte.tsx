@@ -9,6 +9,7 @@ import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const ValeTransporte = () => {
   const navigate = useNavigate();
@@ -77,7 +78,18 @@ const ValeTransporte = () => {
             />
           </div>
 
-          <ValeTransporteCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <ValeTransporteCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="Vale Transporte"
+                calculatorContext="Esta calculadora permite calcular desconto de vale transporte (máximo 6% do salário) e custo para empresa. Use a IA para esclarecer dúvidas sobre cálculos, legislação ou situações específicas do VT."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             O desconto do empregado é limitado a 6% do salário pela legislação. Empresas podem aplicar limite menor por política interna.

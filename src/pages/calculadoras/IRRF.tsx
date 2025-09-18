@@ -5,11 +5,11 @@ import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import IRRFCalculator from "@/components/calculators/IRRFCalculator";
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
-
 import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const IRRF = () => {
   const navigate = useNavigate();
@@ -78,7 +78,18 @@ const IRRF = () => {
             />
           </div>
 
-          <IRRFCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <IRRFCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="IRRF"
+                calculatorContext="Esta calculadora permite calcular Imposto de Renda Retido na Fonte com faixas progressivas e deduções. Use a IA para esclarecer dúvidas sobre IRRF, deduções ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             A ferramenta usa a tabela progressiva vigente. Para situações específicas (múltiplos vínculos,

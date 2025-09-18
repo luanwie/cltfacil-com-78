@@ -5,6 +5,7 @@ import { generateCalculatorSchema } from "@/lib/seo";
 import FeriasAbonoCalculator from "@/components/calculators/FeriasAbonoCalculator";
 import Notice from "@/components/ui/notice";
 import ProUpsell from "@/components/ProUpsell";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const FeriasAbono = () => {
   useSEO({
@@ -39,7 +40,18 @@ const FeriasAbono = () => {
 
           <ProUpsell />
 
-          <FeriasAbonoCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <FeriasAbonoCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="Férias + Abono"
+                calculatorContext="Esta calculadora permite calcular férias com abono pecuniário (venda de 1/3) incluindo 1/3 constitucional. Use a IA para esclarecer dúvidas sobre férias, abono ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Resultados em valores brutos. Acordos/Convenções podem prever particularidades (ex.: 1/3 sobre o abono).

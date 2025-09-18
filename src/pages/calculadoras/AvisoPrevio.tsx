@@ -6,6 +6,7 @@ import AvisoPrevioCalculator from "@/components/calculators/AvisoPrevioCalculato
 import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
 import ProUpsell from "@/components/ProUpsell";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const AvisoPrevio = () => {
   const faqItems = [
@@ -56,7 +57,18 @@ const AvisoPrevio = () => {
             <ProUpsell />
           </div>
 
-          <AvisoPrevioCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <AvisoPrevioCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="Aviso Prévio"
+                calculatorContext="Esta calculadora permite calcular aviso prévio proporcional (30 dias + 3 dias por ano) indenizado ou trabalhado. Use a IA para esclarecer dúvidas sobre aviso prévio ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Cálculo baseado na Lei 12.506/2011 e regras da CLT (arts. 487–488 e 484-A). Situações específicas ou normas coletivas podem alterar o resultado.
