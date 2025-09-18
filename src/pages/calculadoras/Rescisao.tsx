@@ -10,6 +10,7 @@ import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const Rescisao = () => {
   const navigate = useNavigate();
@@ -105,7 +106,7 @@ const Rescisao = () => {
 
       <section className="pb-12">
         <Container>
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className="max-w-6xl mx-auto space-y-8">
             {/* Banner GLOBAL + CTA PRO */}
             <div id="usage-banner">
               <UsageBanner
@@ -116,7 +117,19 @@ const Rescisao = () => {
               />
             </div>
 
-            <RescisaoCalculator />
+            <div className="grid gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <RescisaoCalculator />
+              </div>
+              
+              <div className="space-y-6">
+                {/* Mini Chat IA */}
+                <MiniChatPrompt 
+                  calculatorName="Rescisão Trabalhista"
+                  calculatorContext="Esta calculadora abrange todos os tipos de rescisão: demissão sem justa causa, pedido de demissão, acordo 484-A, término de contrato e justa causa. Calcula saldo de salário, férias, 13º, aviso prévio progressivo e FGTS com multa."
+                />
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card rounded-lg p-6 border">

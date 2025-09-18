@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Calculator, Shield, Zap, ChevronRight } from "lucide-react";
+import { Calculator, Shield, Zap, ChevronRight, Bot, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Container from "@/components/ui/container";
@@ -91,9 +91,15 @@ const Index = () => {
                 </Link>
               </Button>
 
-              {/* Apenas UM botão para o PRO */}
               <Button asChild variant="outline" size="lg" aria-label="Conhecer o plano PRO">
                 <Link to="/assinar-pro">Conhecer Plano PRO</Link>
+              </Button>
+
+              <Button asChild variant="outline" size="lg" className="border-primary/30 bg-primary/5 hover:bg-primary/10" aria-label="IA Especialista em CLT">
+                <Link to="/ia-clt">
+                  <Bot className="w-5 h-5 mr-2" />
+                  IA Especialista CLT
+                </Link>
               </Button>
             </div>
 
@@ -112,6 +118,43 @@ const Index = () => {
                 );
               })}
             </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* IA CLT Feature Section */}
+      <section className="py-20 bg-primary/5">
+        <Container>
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-primary/20 bg-gradient-hero text-primary-foreground shadow-elevated">
+              <CardContent className="p-8 text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
+                    <Bot className="w-8 h-8" />
+                  </div>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                  Assistente Jurídico Especializado em CLT
+                </h2>
+                <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
+                  Tire suas dúvidas sobre direito trabalhista brasileiro com nossa IA especializada. 
+                  Obtenha respostas precisas sobre CLT, cálculos e jurisprudências.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button asChild variant="secondary" size="lg">
+                    <Link to="/ia-clt">
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Conversar com IA CLT
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10">
+                    <Link to="/assinar-pro">
+                      Acesso Ilimitado PRO
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </Container>
       </section>
@@ -184,6 +227,15 @@ const Index = () => {
                   <ChevronRight className="w-5 h-5" />
                 </Link>
               </Button>
+              
+              <div className="mt-4">
+                <Button asChild variant="ghost" size="sm" className="text-primary">
+                  <Link to="/ia-clt">
+                    <Bot className="w-4 h-4 mr-2" />
+                    Precisa de ajuda? Converse com nossa IA especialista
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </Container>

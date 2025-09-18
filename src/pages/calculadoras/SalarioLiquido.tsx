@@ -9,6 +9,7 @@ import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const SalarioLiquido = () => {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const SalarioLiquido = () => {
   return (
     <div className="min-h-screen bg-background">
       <Container className="py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
           <PageHeader
             title="Calculadora Salário Líquido CLT 2025"
             description="Simule seu salário líquido conforme CLT 2025 com todos os descontos obrigatórios e facultativos: INSS, IRRF, VT, VA/VR, plano de saúde e outros. Ferramenta completa para PMEs."
@@ -77,14 +78,29 @@ const SalarioLiquido = () => {
             />
           </div>
 
-          <SalarioLiquidoCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <SalarioLiquidoCalculator />
+            </div>
+
+            <div className="space-y-6">
+              {/* Mini Chat IA */}
+              <MiniChatPrompt 
+                calculatorName="Salário Líquido"
+                calculatorContext="Esta calculadora permite calcular o salário líquido considerando descontos de INSS, IRRF, vale-transporte, plano de saúde e outros benefícios. Use a IA para esclarecer dúvidas sobre cálculos, legislação trabalhista ou situações específicas."
+              />
+              
+              {/* FAQ Section */}
+              <div className="lg:sticky lg:top-8">
+                <FAQ items={faqItems} />
+              </div>
+            </div>
+          </div>
 
           <Notice variant="info">
             Este cálculo é uma estimativa baseada na legislação atual. Convenções coletivas e acordos específicos podem alterar os valores.
             Consulte sempre o RH da sua empresa.
           </Notice>
-
-          <FAQ items={faqItems} />
         </div>
       </Container>
     </div>
