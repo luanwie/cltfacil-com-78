@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, Send, Loader2, MessageCircle, Sparkles } from 'lucide-react';
+import { Bot, Send, Loader2, Sparkles, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +17,6 @@ export const MiniChatPrompt = ({ calculatorName, calculatorContext }: MiniChatPr
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { canUseIA, incrementIAUsage } = useIAUsage();
 
@@ -51,135 +49,147 @@ export const MiniChatPrompt = ({ calculatorName, calculatorContext }: MiniChatPr
   };
 
   const handleFullChat = () => {
-    setOpen(false);
     navigate('/ia-clt');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendQuestion();
+    }
   };
 
   if (!canUseIA) {
     return (
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 sticky top-8">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
               <Bot className="w-5 h-5 text-primary" />
             </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-sm">IA Especialista em CLT</h4>
-              <p className="text-xs text-muted-foreground">
-                Tire dúvidas sobre esta calculadora
-              </p>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/ia-clt')}
-              className="text-xs"
-            >
-              Fazer Login
-            </Button>
-          </div>
+            IA Especialista CLT
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Tire dúvidas sobre {calculatorName.toLowerCase()} e direito trabalhista com nossa IA especializada.
+          </p>
+          <Button 
+            onClick={() => navigate('/ia-clt')}
+            className="w-full"
+            variant="outline"
+          >
+            Fazer Login para Usar IA
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
+    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 sticky top-8">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
           <div className="p-2 bg-primary/10 rounded-lg">
             <Bot className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <h4 className="font-medium text-sm flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              IA Especialista em CLT
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Tire dúvidas sobre {calculatorName.toLowerCase()}
-            </p>
+            <div className="flex items-center gap-1">
+              <Sparkles className="w-4 h-4" />
+              IA Especialista CLT
+            </div>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs">
-                <MessageCircle className="w-3 h-3 mr-1" />
-                Perguntar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-primary" />
-                  IA Especialista - {calculatorName}
-                </DialogTitle>
-                <DialogDescription>
-                  Faça uma pergunta específica sobre {calculatorName.toLowerCase()} e direito trabalhista
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <div>
-                  <Textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={`Ex: Como calcular ${calculatorName.toLowerCase()} para funcionário que trabalha...`}
-                    className="min-h-[80px]"
-                    disabled={loading}
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      {input.length}/500 caracteres
-                    </span>
-                    <Button
-                      onClick={handleSendQuestion}
-                      disabled={!input.trim() || loading || input.length > 500}
-                      size="sm"
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                      ) : (
-                        <Send className="w-4 h-4 mr-1" />
-                      )}
-                      Perguntar
-                    </Button>
-                  </div>
-                </div>
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Tire dúvidas sobre {calculatorName.toLowerCase()} e direito trabalhista
+        </p>
 
-                {response && (
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <h5 className="font-medium text-sm mb-2 flex items-center gap-1">
-                      <Bot className="w-4 h-4 text-primary" />
-                      Resposta da IA:
-                    </h5>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{response}</p>
-                  </div>
-                )}
+        <div className="space-y-3">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={`Ex: Como calcular ${calculatorName.toLowerCase()} para funcionário que...`}
+            className="min-h-[80px] max-h-[120px] resize-none text-sm"
+            disabled={loading}
+          />
+          
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
+            <span>Shift + Enter para quebrar linha</span>
+            <span>{input.length}/500</span>
+          </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleFullChat}
-                    className="flex-1"
-                  >
-                    Chat Completo
-                  </Button>
-                  {response && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setInput('');
-                        setResponse('');
-                      }}
-                      size="sm"
-                    >
-                      Nova Pergunta
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            onClick={handleSendQuestion}
+            disabled={!input.trim() || loading || input.length > 500}
+            className="w-full"
+            size="sm"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Perguntando...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Perguntar à IA
+              </>
+            )}
+          </Button>
         </div>
+
+        {response && (
+          <div className="space-y-3 pt-3 border-t border-border/50">
+            <div className="bg-background/50 p-3 rounded-lg border border-border/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Bot className="w-4 h-4 text-primary" />
+                <span className="font-medium text-sm">Resposta da IA:</span>
+              </div>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
+                {response}
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setInput('');
+                  setResponse('');
+                }}
+                className="flex-1"
+              >
+                Nova Pergunta
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleFullChat}
+                className="flex-1"
+              >
+                Chat Completo
+                <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!response && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleFullChat}
+            className="w-full text-primary hover:text-primary hover:bg-primary/10"
+          >
+            Abrir Chat Completo
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
