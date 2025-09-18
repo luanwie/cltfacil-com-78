@@ -6,6 +6,7 @@ import Notice from "@/components/ui/notice";
 import ProUpsell from "@/components/ProUpsell";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const DecimoTerceiro = () => {
   const faqItems = [
@@ -64,7 +65,20 @@ const DecimoTerceiro = () => {
 
       <div className="max-w-4xl mx-auto space-y-6">
         <ProUpsell />
-        <DecimoTerceiroCalculator />
+        
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <DecimoTerceiroCalculator />
+          </div>
+
+          <div className="space-y-6">
+            {/* Mini Chat IA */}
+            <MiniChatPrompt 
+              calculatorName="Décimo Terceiro"
+              calculatorContext="Esta calculadora permite calcular o 13º salário considerando os avos mensais, média de variáveis e as duas parcelas. Use a IA para esclarecer dúvidas sobre cálculos, prazos de pagamento ou situações específicas do décimo terceiro."
+            />
+          </div>
+        </div>
 
         <Notice>
           <strong>Aviso:</strong> O resultado é uma estimativa bruta. Para descontos e situações específicas,

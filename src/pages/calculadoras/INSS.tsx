@@ -9,6 +9,7 @@ import { useProAndUsage } from "@/hooks/useProAndUsage";
 import UsageBanner from "@/components/UsageBanner";
 import { goPro } from "@/utils/proRedirect";
 import { useNavigate, useLocation } from "react-router-dom";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const INSS = () => {
   const navigate = useNavigate();
@@ -82,7 +83,18 @@ const INSS = () => {
             />
           </div>
 
-          <INSSCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <INSSCalculator />
+            </div>
+
+            <div className="space-y-6">
+              <MiniChatPrompt 
+                calculatorName="INSS"
+                calculatorContext="Esta calculadora permite calcular INSS com faixas progressivas, incluindo 13º salário e outras remunerações. Use a IA para esclarecer dúvidas sobre contribuições previdenciárias, faixas ou situações específicas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Os resultados são estimativas baseadas na tabela vigente. Em casos específicos

@@ -6,6 +6,7 @@ import AdicionalNoturnoCalculator from "@/components/calculators/AdicionalNoturn
 import ProUpsell from "@/components/ProUpsell";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const AdicionalNoturno = () => {
   const faqItems = [
@@ -69,12 +70,25 @@ const AdicionalNoturno = () => {
             <ProUpsell />
           </div>
 
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <AdicionalNoturnoCalculator
+                showShareButtons={false}
+                showAds={true}
+                suppressUsageUi={true}
+              />
+            </div>
+
+            <div className="space-y-6">
+              {/* Mini Chat IA */}
+              <MiniChatPrompt 
+                calculatorName="Adicional Noturno"
+                calculatorContext="Esta calculadora permite calcular o adicional noturno (20% urbano, 25% rural) conforme CLT. Use a IA para esclarecer dúvidas sobre horários noturnos, cálculos específicos ou regras da sua categoria profissional."
+              />
+            </div>
+          </div>
+
           <div className="max-w-4xl mx-auto space-y-6">
-            <AdicionalNoturnoCalculator
-              showShareButtons={false}
-              showAds={true}
-              suppressUsageUi={true}
-            />
             <Notice variant="warning">
               <strong>Atenção:</strong> Este cálculo é uma estimativa baseada na CLT e na Súmula 60 do TST. Verifique sempre a CCT/ACT da sua categoria para percentuais e regras específicas.
             </Notice>

@@ -6,6 +6,7 @@ import Notice from "@/components/ui/notice";
 import ProUpsell from "@/components/ProUpsell";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const BancoDeHoras = () => {
   const faqItems = [
@@ -45,7 +46,20 @@ const BancoDeHoras = () => {
 
       <div className="max-w-4xl mx-auto space-y-6">
         <ProUpsell />
-        <BancoDeHorasCalculator />
+        
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <BancoDeHorasCalculator />
+          </div>
+
+          <div className="space-y-6">
+            {/* Mini Chat IA */}
+            <MiniChatPrompt 
+              calculatorName="Banco de Horas"
+              calculatorContext="Esta calculadora permite controlar o saldo do banco de horas, calcular prazos de compensação e estimar pagamentos. Use a IA para esclarecer dúvidas sobre acordos coletivos, prazos de compensação ou situações específicas do banco de horas."
+            />
+          </div>
+        </div>
 
         <Notice>
           <strong>Aviso legal:</strong> Resultados são estimativas. Regras específicas podem constar em acordo/convênio coletivo. Consulte o RH.

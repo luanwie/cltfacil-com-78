@@ -3,8 +3,10 @@ import PageHeader from "@/components/ui/page-header";
 import DSRCalculator from "@/components/calculators/DSRCalculator";
 import FAQ from "@/components/ui/faq";
 import Notice from "@/components/ui/notice";
-import ProUpsell from "@/components/ProUpsell";
 import { useSEO } from "@/hooks/useSEO";
+import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
+import ProUpsell from "@/components/ProUpsell";
 
 const DSR = () => {
     useSEO({
@@ -53,7 +55,19 @@ const DSR = () => {
 
           <ProUpsell />
 
-          <DSRCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <DSRCalculator />
+            </div>
+
+            <div className="space-y-6">
+              {/* Mini Chat IA */}
+              <MiniChatPrompt 
+                calculatorName="DSR"
+                calculatorContext="Esta calculadora permite calcular o Descanso Semanal Remunerado sobre comissões, horas extras e outros adicionais variáveis. Use a IA para esclarecer dúvidas sobre a legislação do DSR, cálculos específicos ou situações especiais."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Resultados são estimativas. CCT/ACT e escalas (12x36, 6x1, etc.) podem

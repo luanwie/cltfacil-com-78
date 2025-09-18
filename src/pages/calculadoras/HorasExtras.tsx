@@ -3,8 +3,9 @@ import PageHeader from "@/components/ui/page-header";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
 import HorasExtrasCalculator from "@/components/calculators/HorasExtrasCalculator";
-import Notice from "@/components/ui/notice";
 import FAQ from "@/components/ui/faq";
+import Notice from "@/components/ui/notice";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 import ProUpsell from "@/components/ProUpsell";
 
 const HorasExtras = () => {
@@ -63,8 +64,19 @@ const HorasExtras = () => {
           {/* Upsell padrão (contador/benefícios/CTA) — some automaticamente se o usuário já for PRO */}
           <ProUpsell />
 
-          {/* Sem gate aqui: a calculadora controla o uso internamente */}
-          <HorasExtrasCalculator />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <HorasExtrasCalculator />
+            </div>
+
+            <div className="space-y-6">
+              {/* Mini Chat IA */}
+              <MiniChatPrompt 
+                calculatorName="Horas Extras"
+                calculatorContext="Esta calculadora permite calcular horas extras com diferentes adicionais (50%, 60%, 70%, 100%), valor-hora baseado no salário e DSR opcional. Use a IA para esclarecer dúvidas sobre legislação trabalhista, cálculos específicos ou convenções coletivas."
+              />
+            </div>
+          </div>
 
           <Notice variant="info">
             Os resultados são estimativas. Regras específicas podem variar por CCT/ACT.

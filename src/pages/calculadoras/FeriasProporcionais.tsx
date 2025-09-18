@@ -6,6 +6,7 @@ import ProUpsell from "@/components/ProUpsell";
 import FeriasProporcionaisCalculator from "@/components/calculators/FeriasProporcionaisCalculator";
 import { useSEO } from "@/hooks/useSEO";
 import { generateCalculatorSchema, generateFAQSchema } from "@/lib/seo";
+import { MiniChatPrompt } from "@/components/IA/MiniChatPrompt";
 
 const FeriasProporcionais = () => {
   const faqItems = [
@@ -65,7 +66,18 @@ const FeriasProporcionais = () => {
 
             <ProUpsell />
 
-            <FeriasProporcionaisCalculator />
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <FeriasProporcionaisCalculator />
+              </div>
+
+              <div className="space-y-6">
+                <MiniChatPrompt 
+                  calculatorName="Férias Proporcionais"
+                  calculatorContext="Esta calculadora permite calcular férias proporcionais por meses ou datas automáticas, incluindo 1/3 constitucional. Use a IA para esclarecer dúvidas sobre cálculos, regras ou situações específicas de férias."
+                />
+              </div>
+            </div>
 
             <Notice variant="warning">
               <strong>Atenção:</strong> Resultado bruto (não inclui INSS/IRRF). Regras de arredondamento e médias podem variar por CCT/ACT.
