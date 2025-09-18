@@ -2,155 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CLT Fácil Design System - Cores profissionais para ferramentas trabalhistas
+/* CLT Fácil Design System - Modern Layout
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Core theme - clean and professional */
-    --background: 0 0% 100%;
-    --foreground: 220 9% 15%;
+    --background: 248 250 252;
+    --foreground: 15 23 42;
 
-    /* Cards with subtle elevation */
     --card: 0 0% 100%;
-    --card-foreground: 220 9% 15%;
+    --card-foreground: 15 23 42;
 
-    /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 9% 15%;
+    --popover-foreground: 15 23 42;
 
-    /* Primary - Professional blue for CTAs */
-    --primary: 217 71% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 71% 48%;
+    --primary: 59 130 246;
+    --primary-foreground: 248 250 252;
+    --primary-hover: 37 99 235;
 
-    /* Secondary - Light gray actions */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 15%;
+    --secondary: 241 245 249;
+    --secondary-foreground: 51 65 85;
 
-    /* Muted elements */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
 
-    /* Accent - Subtle blue highlights */
-    --accent: 217 32% 96%;
-    --accent-foreground: 217 71% 53%;
+    --accent: 241 245 249;
+    --accent-foreground: 51 65 85;
 
-    /* Destructive */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
 
-    /* Success - for positive calculations */
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 34 197 94;
+    --success-foreground: 248 250 252;
 
-    /* Warning - for alerts */
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 245 158 11;
+    --warning-foreground: 15 23 42;
 
-    /* Info banner - light blue for signup prompts */
-    --info-banner: 217 92% 95%;
-    --info-banner-foreground: 217 71% 25%;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 59 130 246;
 
-    /* Pro banner - orange for upgrade prompts */
-    --pro-banner: 25 95% 53%;
-    --pro-banner-foreground: 0 0% 100%;
+    --radius: 0.5rem;
 
-    /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 71% 53%;
-
-    /* Border radius */
-    --radius: 0.75rem;
-
-    /* Hero gradient */
-    --gradient-hero: linear-gradient(135deg, hsl(217 71% 53%), hsl(217 71% 43%));
+    /* Gradientes e sombras */
+    --gradient-hero: linear-gradient(135deg, hsl(217.2 91.2% 59.8%), hsl(142.1 76.2% 36.3%));
+    --gradient-subtle: linear-gradient(135deg, hsl(248 250 252), hsl(241 245 249));
     
-    /* Subtle background gradient */
-    --gradient-subtle: linear-gradient(180deg, hsl(220 14% 99%), hsl(220 14% 96%));
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-    /* Shadow */
-    --shadow-card: 0 1px 3px 0 hsl(220 9% 15% / 0.1), 0 1px 2px -1px hsl(220 9% 15% / 0.1);
-    --shadow-elevated: 0 10px 15px -3px hsl(220 9% 15% / 0.1), 0 4px 6px -4px hsl(220 9% 15% / 0.1);
-
-    /* Transitions */
-    --transition-fast: all 0.15s ease-out;
-    --transition-medium: all 0.3s ease-out;
-
-    /* Sidebar */
-    --sidebar-background: 220 14% 98%;
-    --sidebar-foreground: 220 9% 26%;
-    --sidebar-primary: 220 9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 14% 95%;
-    --sidebar-accent-foreground: 220 9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 71% 53%;
+    /* Sidebar colors */
+    --sidebar-background: 30 41 59;
+    --sidebar-foreground: 248 250 252;
+    --sidebar-primary: 59 130 246;
+    --sidebar-primary-foreground: 248 250 252;
+    --sidebar-accent: 51 65 85;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 71 85 105;
+    --sidebar-ring: 59 130 246;
   }
 
   .dark {
-    /* Dark theme - maintaining professional feel */
-    --background: 220 27% 8%;
-    --foreground: 220 14% 96%;
+    --background: 15 23 42;
+    --foreground: 248 250 252;
 
-    --card: 220 27% 9%;
-    --card-foreground: 220 14% 96%;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
 
-    --popover: 220 27% 9%;
-    --popover-foreground: 220 14% 96%;
+    --popover: 30 41 59;
+    --popover-foreground: 248 250 252;
 
-    --primary: 217 71% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 71% 58%;
+    --primary: 59 130 246;
+    --primary-foreground: 15 23 42;
+    --primary-hover: 37 99 235;
 
-    --secondary: 220 27% 14%;
-    --secondary-foreground: 220 14% 96%;
+    --secondary: 51 65 85;
+    --secondary-foreground: 248 250 252;
 
-    --muted: 220 27% 14%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 51 65 85;
+    --muted-foreground: 148 163 184;
 
-    --accent: 220 27% 14%;
-    --accent-foreground: 217 71% 53%;
+    --accent: 51 65 85;
+    --accent-foreground: 248 250 252;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 239 68 68;
+    --destructive-foreground: 248 250 252;
 
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 34 197 94;
+    --success-foreground: 15 23 42;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 245 158 11;
+    --warning-foreground: 15 23 42;
 
-    /* Info banner - light blue for signup prompts */
-    --info-banner: 217 50% 20%;  
-    --info-banner-foreground: 217 92% 90%;
+    --border: 71 85 105;
+    --input: 71 85 105;
+    --ring: 59 130 246;
 
-    /* Pro banner - orange for upgrade prompts */
-    --pro-banner: 25 95% 53%;
-    --pro-banner-foreground: 0 0% 100%;
-
-    --border: 220 27% 18%;
-    --input: 220 27% 18%;
-    --ring: 217 71% 53%;
-
-    /* Dark gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(217 71% 53%), hsl(217 71% 48%));
-    --gradient-subtle: linear-gradient(180deg, hsl(220 27% 9%), hsl(220 27% 7%));
-
-    /* Dark shadows */
-    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.3), 0 1px 2px -1px hsl(0 0% 0% / 0.3);
-    --shadow-elevated: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
-
-    --sidebar-background: 220 27% 7%;
-    --sidebar-foreground: 220 14% 95%;
-    --sidebar-primary: 217 71% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 27% 12%;
-    --sidebar-accent-foreground: 220 14% 95%;
-    --sidebar-border: 220 27% 18%;
-    --sidebar-ring: 217 71% 53%;
+    /* Sidebar dark mode */
+    --sidebar-background: 15 23 42;
+    --sidebar-foreground: 248 250 252;
+    --sidebar-primary: 59 130 246;
+    --sidebar-primary-foreground: 248 250 252;
+    --sidebar-accent: 30 41 59;
+    --sidebar-accent-foreground: 248 250 252;
+    --sidebar-border: 51 65 85;
+    --sidebar-ring: 59 130 246;
   }
 }
 
@@ -158,97 +115,50 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
   body {
     @apply bg-background text-foreground;
   }
+}
 
-  /* Mobile-optimized touch targets and spacing */
-  @media (max-width: 768px) {
-    .mobile-spacing > * + * {
-      margin-top: 1rem;
-    }
-    
-    .mobile-card-spacing {
-      padding: 1.5rem 1rem;
-    }
-    
-    .mobile-result-spacing > * + * {
-      margin-top: 1.5rem;
-    }
-
-    /* Calculator-specific mobile optimizations */
-    .calculator-input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .calculator-input-group .grid {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    .calculator-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      width: 100%;
-    }
-
-    .calculator-buttons .flex {
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    /* Better focus states for mobile */
-    input:focus,
-    button:focus {
-      outline: 2px solid hsl(var(--primary));
-      outline-offset: 2px;
-    }
-
-    /* Improved readability for results */
-    .result-value {
-      font-size: 1.125rem;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-
-    /* Safe area for mobile devices */
-    .mobile-safe-padding {
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-    }
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    @apply px-4;
+  }
+  
+  .card {
+    @apply rounded-lg;
+  }
+  
+  /* Focus states for mobile */
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
   }
 
-  /* iPhone SE and similar small screens */
-  @media (max-width: 375px) {
-    .mobile-card-spacing {
-      padding: 1rem 0.75rem;
-    }
-
-    .calculator-input-group {
-      gap: 0.75rem;
-    }
-
-    .result-value {
-      font-size: 1rem;
-    }
+  /* Touch targets */
+  button, 
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
   }
+}
 
-  /* Landscape mobile optimization */
-  @media (max-height: 500px) and (orientation: landscape) {
-    .mobile-card-spacing {
-      padding: 1rem;
-    }
-    
-    .mobile-spacing > * + * {
-      margin-top: 0.75rem;
-    }
+/* Calculator specific styles */
+.calculator-container {
+  @apply space-y-6 md:space-y-8;
+}
+
+.calculator-result {
+  @apply bg-card border rounded-lg p-6 shadow-card;
+}
+
+/* Safe area padding for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-padding {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
   }
 }

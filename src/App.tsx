@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import Layout from "./components/layout/layout";
+import AppLayout from "./components/layout/app-layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -65,7 +66,7 @@ const App = () => (
         <Route
           path="/*"
           element={
-            <Layout>
+            <AppLayout>
               <Routes>
                 <Route path="/" element={<Index />} />
 
@@ -124,7 +125,7 @@ const App = () => (
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Layout>
+            </AppLayout>
           }
         />
       </Routes>
