@@ -203,10 +203,10 @@ export const ChatInterface = ({
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Chat Messages Container */}
       <div className="relative">
-        <Card className="min-h-[500px] max-h-[700px] border-0 shadow-elevated bg-gradient-subtle">
-          <div className="p-6 h-full overflow-y-auto">
+        <Card className="border-0 shadow-elevated bg-gradient-subtle">
+          <div className="p-6 h-[500px] overflow-y-auto flex flex-col">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[450px] text-center space-y-6">
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl"></div>
                   <div className="relative bg-primary/10 p-6 rounded-full">
@@ -254,13 +254,13 @@ export const ChatInterface = ({
                     )}
                     
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] relative ${
+                      className={`max-w-[85%] sm:max-w-[75%] relative overflow-hidden ${
                         message.role === 'assistant'
                           ? 'bg-card border border-border/50 text-card-foreground shadow-card'
                           : 'bg-primary text-primary-foreground shadow-elevated'
                       } rounded-2xl px-4 py-3 transition-all duration-medium`}
                     >
-                      <div className="whitespace-pre-wrap leading-relaxed text-sm sm:text-base">
+                      <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-base max-h-96 overflow-y-auto">
                         {message.mode === 'calculator' && message.parsed?.explanation_markdown ? (
                           <div dangerouslySetInnerHTML={{ 
                             __html: message.parsed.explanation_markdown.replace(/\n/g, '<br/>') 
