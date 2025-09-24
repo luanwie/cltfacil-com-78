@@ -52,13 +52,24 @@ export const ChatInterface = ({
     try {
       await onUsageIncrement();
 
-      // Adicionar contexto da calculadora se fornecido
-      const prompt = calculatorContext 
-        ? `${calculatorContext}\n\nPergunta do usuário: ${input}`
-        : input;
+      // Preparar histórico de conversa para manter contexto
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Adicionar mensagem atual do usuário
+      conversationHistory.push({
+        role: 'user',
+        content: input
+      });
 
       const { data, error } = await supabase.functions.invoke('ia-clt', {
-        body: { prompt, mode }
+        body: { 
+          messages: conversationHistory,
+          mode,
+          calculatorContext
+        }
       });
 
       if (error) throw error;
